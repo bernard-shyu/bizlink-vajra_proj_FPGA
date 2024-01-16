@@ -10,7 +10,7 @@ cd ~/.local/share/applications
 #	 files=($(find -type f -print0 -name "Vitis*.desktop" -o -name "Vivado*.desktop" -o -name "Xilinx*.desktop" | xargs -0 ls -1 -t))
 # TO Debug: for file in "${files[@]}"; do echo "$file"; done
 #------------------------------------------------
-IFS=$'\n' files=($(ls -1 Vitis*.desktop Vivado*.desktop Xilinx*.desktop))
+IFS=$'\n' files=($(ls -1 Vitis*.desktop Vivado*.desktop Xilinx*.desktop Documentation\ Navigator*.desktop Add\ Design\ Tools*.desktop Manage\ Licenses*.desktop))
 
 #------------------------------------------------
 # Display the menu and get the user input
@@ -31,7 +31,8 @@ fi
 #------------------------------------------------
 if [[ $REPLY -ge 1 && $REPLY -le ${#files[@]} ]]; then
 	echo -e "\n>>> You selected '$file' which is option $REPLY\n"
-	echo -e "gtk-launch $file"
+	cd $HOME 
+	gtk-launch $file
 elif [[ $REPLY == $(( ${#files[@]}+1 )) ]]; then
 	echo "Goodbye!"
 	exit

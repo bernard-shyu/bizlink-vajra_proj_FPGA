@@ -7,16 +7,24 @@ JTAG_PORT=${JTAG_PORT:=3121}		# Xilinx default 3121, thus adopt 3199 to avoid co
 # kill all previous instances
 killall -9 hw_server cs_server jupyter-notebook
 
-cd /opt/Xilinx/tools/Vivado_Lab/2023.2/bin
+TOOLPATH=/opt/Xilinx/tools/Vivado_Lab/2023.2/bin
+[ ! -d "$TOOLPATH" ] &&
+TOOLPATH=/fpga_share/Xilinx_tools/Vivado_Lab/2023.2/bin
+cd $TOOLPATH
+
 ./cs_server & disown
 ./hw_server  -d -L/tmp/FPGA-$XVC_SERVER.`date +%F_%H%M`.log -stcp::$JTAG_PORT
 #./hw_server -d -L/tmp/FPGA-$XVC_SERVER.`date +%F_%H%M`.log -stcp::$JTAG_PORT -e "set xvc-servers $XVC_SERVER:localhost:3000"
 
-cd $HOME/fpgaspace/chipscopy-examples
+EXAMPLEPATH=$HOME/fpgaspace/chipscopy-examples
+[ ! -d "$EXAMPLEPATH" ] &&
+EXAMPLEPATH=$HOME/chipscopy-examples
+cd $EXAMPLEPATH
 source ~/venv/bin/activate;
 
+MYIP=$(grep `uname -n` /etc/hosts | awk '{print $1}')
 echo -e "\n\n\nIn local machine BASH terminal, run below: \n\t" \
-	"ssh -NfL localhost:$JUPYTER_PORT:localhost:$JUPYTER_PORT `id -un`@10.20.2.29\n" \
+	"ssh -NfL localhost:$JUPYTER_PORT:localhost:$JUPYTER_PORT `id -un`@$MYIP \n" \
 	"\n============================================================================\n"
 
 jupyter notebook --no-browser --port=$JUPYTER_PORT & disown

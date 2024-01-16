@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------------
-2x QSFP-DD links creation  (53 Gbps) -- External QSFP-DD Cable
+# 2x QSFP-DD links creation  (53 Gbps) -- External QSFP-DD Cable
 ------------------------------------------------------------------------------
 
 set xil_newLinks [list]
@@ -28,7 +28,7 @@ unset xil_newLinks
 
 
 ------------------------------------------------------------------------------
-2x QSFP-DD links creation  (106 Gbps) -- External QSFP-DD Cable
+# 2x QSFP-DD links creation  (106 Gbps) -- External QSFP-DD Cable
 ------------------------------------------------------------------------------
 
 set xil_newLinks [list]
@@ -51,7 +51,7 @@ unset xil_newLinks
 
 
 ------------------------------------------------------------------------------
-2x QSFP-DD links creation  (106 Gbps) -- Loopback dongle
+# 2x QSFP-DD links creation  (106 Gbps) -- Loopback dongle
 ------------------------------------------------------------------------------
 
 set xil_newLinks [list]
