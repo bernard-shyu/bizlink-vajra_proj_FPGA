@@ -1,9 +1,20 @@
-#!/bin/sh
+#!/bin/bash
+xrdb $HOME/.Xresources
+#xsetroot -solid grey
 
-xrdb "$HOME/.Xresources"
-xsetroot -solid grey
 #x-terminal-emulator -geometry 80x24+10+10 -ls -title "$VNCDESKTOP Desktop" &
 #x-window-manager &
+
 # Fix to make GNOME work
-export XKL_XMODMAP_DISABLE=1
-/etc/X11/Xsession
+#export XKL_XMODMAP_DISABLE=1
+
+#xhost +    # beware, this command gives access to anyone
+
+#-------------------------------------------------------
+# X11 session startup command
+# 1. Default from <tightvncserver> package: /etc/X11/Xsession
+# 2. Suggested way from digitalocean.com: startxfce4 &
+# 3. Fix of session manager connection issue: sudo -u farmer startxfce4 &
+#-------------------------------------------------------
+#sudo DISPLAY=:0.0 -u $USER startxfce4 &
+sudo -u $USER startxfce4 &
