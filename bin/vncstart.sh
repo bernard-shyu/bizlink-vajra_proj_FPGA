@@ -1,5 +1,11 @@
 #!/bin/bash
 #----------------------------------------------------------------------------
+if [ "$1" = "-h" ]; then
+	echo -e "`dirname $0` [ VNC_geometry ] \n" \
+		"\tVNC_geometry: 1280x800 / 1920x1080 / 2048x1280 / 2560x1440  Default: 1280x800\n";
+	exit
+fi
+
 echo "kill previous VNC Server instances"
 for i in `seq 1 9`; do 
 	vncserver -kill :$i               > /dev/null  2>&1

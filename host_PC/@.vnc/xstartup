@@ -17,4 +17,4 @@ xrdb $HOME/.Xresources
 # 3. Fix of session manager connection issue: sudo -u farmer startxfce4 &
 #-------------------------------------------------------
 #sudo DISPLAY=:0.0 -u $USER startxfce4 &
-sudo -u $USER startxfce4 &
+sudo -u $USER PATH=$HOME/bin:$HOME/.local/bin:$PATH startxfce4 &
