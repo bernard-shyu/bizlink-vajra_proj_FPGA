@@ -26,12 +26,17 @@ else
 	done
 fi
 
+# to suppress WARNING: (gtk-launch:100): dbind-WARNING **: ... Couldn't connect to accessibility bus: Failed to connect to socket /run/user/1000/at-spi/bus:
+export NO_AT_BRIDGE=1
+
 #------------------------------------------------
 # Launch the desktop file or quit the script
 #------------------------------------------------
 if [[ $REPLY -ge 1 && $REPLY -le ${#files[@]} ]]; then
 	echo -e "\n>>> You selected '$file' which is option $REPLY\n"
 	cd $HOME 
+	[ -e $HOME/fpgaspace ] && cd $HOME/fpgaspace
+	rm vivado* 2> /dev/null
 	gtk-launch $file
 elif [[ $REPLY == $(( ${#files[@]}+1 )) ]]; then
 	echo "Goodbye!"

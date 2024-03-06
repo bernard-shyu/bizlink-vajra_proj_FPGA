@@ -4,19 +4,29 @@ JUPYTER_PORT=${JUPYTER_PORT:=8080}	# externally defined export JUPYTER_PORT
 JUPYTER_PORT=${1:-$JUPYTER_PORT}	# input parameter %1 for JUPYTER_PORT
 JTAG_PORT=${JTAG_PORT:=3121}		# Xilinx default 3121, thus adopt 3199 to avoid conflict
 
-# kill all previous instances
-sudo killall -9 hw_server cs_server jupyter-notebook
 rm -f /tmp/FPGA-$JTAG_PORT.*   # remove old LOGFILE
 
 TOOLPATH=/opt/Xilinx/tools/Vivado_Lab/2023.2/bin
 [ ! -d "$TOOLPATH" ] && TOOLPATH=/opt/Xilinx/tools/Vivado/2023.2/bin
 [ ! -d "$TOOLPATH" ] && TOOLPATH=/fpga_share/Xilinx_tools/Vivado_Lab/2023.2/bin
 [ ! -d "$TOOLPATH" ] && TOOLPATH=/fpga_share/Xilinx_tools/Vivado/2023.2/bin
-cd $TOOLPATH
 
-./cs_server & disown
-./hw_server  -d -L/tmp/FPGA-$JTAG_PORT.`date +%F_%H%M`.log -stcp::$JTAG_PORT
-#./hw_server -d -L/tmp/FPGA-$JTAG_PORT.`date +%F_%H%M`.log -stcp::$JTAG_PORT -e "set xvc-servers $XVC_SERVER:localhost:3000"
+if [ -d "$TOOLPATH" ]; then
+	cd $TOOLPATH
+
+	sudo killall -9 cs_server     # kill all previous instances
+	if ! ps -ef | egrep '[c]s_server' > /dev/null; then
+		echo -e "\nRestart cs_server"
+		./cs_server & disown
+	fi
+
+	# sudo killall -9 hw_server     # kill all previous instances   ## NO KILL
+	if ! ps -ef | egrep '[h]w_server' > /dev/null; then
+		echo -e "\nRestart hw_server"
+		./hw_server  -d -L/tmp/FPGA-$JTAG_PORT.`date +%F_%H%M`.log -stcp::$JTAG_PORT
+		#./hw_server -d -L/tmp/FPGA-$JTAG_PORT.`date +%F_%H%M`.log -stcp::$JTAG_PORT -e "set xvc-servers $XVC_SERVER:localhost:3000"
+	fi
+fi
 
 EXAMPLEPATH=$HOME/fpgaspace/chipscopy-examples
 [ ! -d "$EXAMPLEPATH" ] &&
@@ -24,11 +34,15 @@ EXAMPLEPATH=$HOME/chipscopy-examples
 cd $EXAMPLEPATH
 source ~/venv/bin/activate;
 
+SSH_PORT=""
+netstat -lnt | grep '0.0.0.0:2222' > /dev/null && SSH_PORT="-p 2222"
+
 MYIP=$(grep `uname -n` /etc/hosts | awk '{print $1}')
 echo -e "\n\n\nIn local machine BASH terminal, run below: \n\t" \
-	"ssh -NfL localhost:$JUPYTER_PORT:localhost:$JUPYTER_PORT `id -un`@$MYIP \n" \
+	"ssh $SSH_PORT -NL localhost:$JUPYTER_PORT:localhost:$JUPYTER_PORT `id -un`@$MYIP \n" \
 	"\n============================================================================\n"
 
+sudo killall -9 jupyter-notebook    # kill all previous instances
 jupyter notebook --no-browser --port=$JUPYTER_PORT & disown
 
 exit
