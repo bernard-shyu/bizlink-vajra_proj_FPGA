@@ -11,7 +11,7 @@ TOOLPATH=/opt/Xilinx/tools/Vivado_Lab/2023.2/bin
 [ ! -d "$TOOLPATH" ] && TOOLPATH=/fpga_share/Xilinx_tools/Vivado_Lab/2023.2/bin
 [ ! -d "$TOOLPATH" ] && TOOLPATH=/fpga_share/Xilinx_tools/Vivado/2023.2/bin
 
-if [ -d "$TOOLPATH" ]; then
+if [ "$LOCAL_FPGA_HW" = "True" ] && [ -d "$TOOLPATH" ]; then
 	cd $TOOLPATH
 
 	sudo killall -9 cs_server     # kill all previous instances
@@ -28,10 +28,14 @@ if [ -d "$TOOLPATH" ]; then
 	fi
 fi
 
-EXAMPLEPATH=$HOME/fpgaspace/chipscopy-examples
-[ ! -d "$EXAMPLEPATH" ] &&
-EXAMPLEPATH=$HOME/chipscopy-examples
-cd $EXAMPLEPATH
+if [ -d "$MYCHIPSCOPY_PATH" ]; then
+	cd $MYCHIPSCOPY_PATH
+else
+	EXAMPLEPATH=$HOME/fpgaspace/chipscopy-examples
+	[ ! -d "$EXAMPLEPATH" ] &&
+	EXAMPLEPATH=$HOME/chipscopy-examples
+	cd $EXAMPLEPATH
+fi
 source ~/venv/bin/activate;
 
 SSH_PORT=""
