@@ -1,9 +1,9 @@
 #-------------------------------------------------------------------------------------------------------
 # Script execution examples: 
-#	BASH_shell:   export MY_HW_ID=111  MY_PATH=BZProj_iBERT_Testing  MY_PROJ=VPK120_iBERT_2xQDD_56G;  TCL_Vivado.sh -source ~/fpgaspace/TCL_scripts/bxu_vivado_proj.tcl -tclargs $HOME/VIVADO_projects/$MY_PATH $MY_PROJ $MY_HW_ID  -I -S vpk120_ibert_ChMap_56G.tcl
+#	BASH_shell:   export MY_HW_ID=111 MY_RATE=56G MY_PATH=BZProj_iBERT_Testing; export MY_PROJ=VPK120_iBERT_2xQDD_${MY_RATE};  TCL_Vivado.sh -source ~/fpgaspace/TCL_scripts/bxu_vivado_proj.tcl -tclargs $HOME/VIVADO_projects/$MY_PATH $MY_PROJ $MY_HW_ID  -I -S vpk120_ibert_ChMap2_${MY_RATE}.tcl
 #	TCL_Console%  set MY_HW_ID 111; set MY_RATE 56G; set MY_PATH BZProj_iBERT_Testing; set MY_PROJ VPK120_iBERT_2xQDD_${MY_RATE};
-#	TCL_Console%  set argc 5; set argv [list $env(HOME)/VIVADO_projects/$MY_PATH $MY_PROJ $MY_HW_ID -S vpk120_ibert_ChMap_${MY_RATE}.tcl];    source $env(HOME)/fpgaspace/TCL_scripts/bxu_vivado_proj.tcl
-#	TCL_Console%  set argc 6; set argv [list $env(HOME)/VIVADO_projects/$MY_PATH $MY_PROJ $MY_HW_ID -S vpk120_ibert_ChMap_${MY_RATE}.tcl -I]; source $env(HOME)/fpgaspace/TCL_scripts/bxu_vivado_proj.tcl
+#	TCL_Console%  set argc 5; set argv [list $env(HOME)/VIVADO_projects/$MY_PATH $MY_PROJ $MY_HW_ID -S vpk120_ibert_ChMap2_${MY_RATE}.tcl];    source $env(HOME)/fpgaspace/TCL_scripts/bxu_vivado_proj.tcl
+#	TCL_Console%  set argc 6; set argv [list $env(HOME)/VIVADO_projects/$MY_PATH $MY_PROJ $MY_HW_ID -S vpk120_ibert_ChMap2_${MY_RATE}.tcl -I]; source $env(HOME)/fpgaspace/TCL_scripts/bxu_vivado_proj.tcl
 #-------------------------------------------------------------------------------------------------------
 #	BASH_shell:   export MY_HW_ID=111   MY_PATH=XilinxCEDStore-Learning      MY_PROJ=bxu_vpk120_ChipScoPy_Example_Design;  TCL_Vivado.sh -source ~/fpgaspace/TCL_scripts/bxu_vivado_proj.tcl  -tclargs $HOME/VIVADO_projects/$MY_PATH $MY_PROJ $MY_HW_ID  -B
 #	TCL_Console%  set MY_HW_ID 111; set MY_PATH XilinxCEDStore-Learning; set MY_PROJ bxu_vpk120_ChipScoPy_Example_Design;
@@ -57,7 +57,8 @@ puts "Extra TCL File: $BXU_EXTRA_TCL_FILE"
 # Open Vivado Project file
 #-------------------------------------------------------------------------------------------------------
 set CurrProj [get_projects];         # Check if Project is opened already or not
-if { $CurrProj != "" && $CurrProj != $BXU_PROJ_FILE } {
+puts "CurrProj: $CurrProj"
+if { $CurrProj != "" && $CurrProj != $BXU_PROJ_NAME } {
 	close_project
 	set CurrProj ""
 }
