@@ -71,6 +71,58 @@ import matplotlib.pyplot as plt
 from chipscopy import create_session, report_versions, report_hierarchy, get_design_files
 from chipscopy.api.ibert import create_yk_scans
 
+#------------------------------------------------------------------------------------------
+# BXU is here
+#------------------------------------------
+"""
+source ~/venv/bin/activate
+cd ~/SDK_WIP/project/vajra_proj_FPGA/ChipScoPy/my_learning/versal_gtm
+export ip="10.20.2.146"; export  CS_SERVER_URL="TCP:$ip:3042" HW_SERVER_URL="TCP:$ip:3121"
+export QT_QPA_PLATFORM=wayland
+
+python bxu_GTM_test.py
+"""
+#------------------------------------------
+from PyQt5 import QtWidgets
+from PyQt5.QtGui  import *
+from PyQt5.QtCore import *
+import sys
+import time
+
+import numpy as np
+import matplotlib
+
+matplotlib.use("Qt5Agg")      # 表示使用 Qt5
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+
+
+RESOLUTION_X = 800
+RESOLUTION_Y = 600
+
+#------------------------------------------
+class MyWidget(QtWidgets.QWidget):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle('BizLink HPC Cable Test')
+        self.resize(RESOLUTION_X, RESOLUTION_Y)
+        self.t = 0
+        # self.ui()
+
+    def ui(self, fig):
+        self.canvas = FigureCanvas(fig)
+
+        self.graphicview = QtWidgets.QGraphicsView(self)
+        self.graphicview.setGeometry(0, 0, RESOLUTION_X, RESOLUTION_Y)
+
+        self.graphicscene = QtWidgets.QGraphicsScene()
+        self.graphicscene.setSceneRect(0, 0, RESOLUTION_X - 20, RESOLUTION_Y - 20)
+        self.graphicscene.addWidget(self.canvas)
+
+        self.graphicview.setScene(self.graphicscene)
+
+#------------------------------------------------------------------------------------------
+
 # %% [markdown]
 # ## 2 - Create a session and connect to the hw_server and cs_server
 #
@@ -94,6 +146,7 @@ design_files = get_design_files(f"{HW_PLATFORM}/production/chipscopy_ced")
 PDI_FILE = design_files.programming_file
 
 print(f"PROGRAMMING_FILE: {PDI_FILE}")
+print(f"Servers URL: {CS_URL} {HW_URL}   Do_Programming: {PROG_DEVICE}")
 
 session = create_session(cs_server_url=CS_URL, hw_server_url=HW_URL)
 report_versions(session)
@@ -233,14 +286,23 @@ ax2.set_title("Histogram")
 ax3.set_xlabel("SNR Sample")
 ax3.set_ylabel("SNR (dB)")
 ax3.set_xlim(0,10)
-ax3.set_ylim(-10,100)
+ax3.set_ylim(-10,50)
 ax3.set_title("Signal-to-Noise Ratio")
 
-yk.start()
+#------------------------------------------------------------------------------------------
+# BXU is here
+#------------------------------------------
+if __name__ == '__main__':
+    app = QtWidgets.QApplication(sys.argv)
+    Form = MyWidget()
 
-# %% [markdown]
-# ## 9 - Stop YK Scan
-# Stops the YK scan from running.
+    Form.ui(figure)
+    yk.start()
+    Form.show()
+    #yk.stop() # Stops the YK scan from running.
 
-# %%
-yk.stop()
+    sys.exit(app.exec_())
+
+#------------------------------------------------------------------------------------------
+
+
