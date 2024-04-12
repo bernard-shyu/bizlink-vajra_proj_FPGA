@@ -109,6 +109,10 @@ class MyWidget(QtWidgets.QWidget):
         self.t = 0
         # self.ui()
 
+    def closeEvent(self, event):
+        yk.stop() # Stops the YK scan from running.
+        event.accept()  # Close the widget
+
     def ui(self, fig):
         self.canvas = FigureCanvas(fig)
 
@@ -217,30 +221,32 @@ gt_group = ibert_gtm.gt_groups.filter_by(name="Quad_204")[0]
 # %matplotlib widget
 
 def yk_scan_updates(obj):
-    global count, figure, ax, ax2, ax3
-    if ax.lines:
-        for line in ax.lines:
+    global count, figure, ax_EYE, ax_HIST, ax_SNR
+    if ax_EYE.lines:
+        for line in ax_EYE.lines:
             line.set_xdata(range(len(obj.scan_data[-1].slicer)))
             line.set_ydata(list(obj.scan_data[-1].slicer))
     else:
-        ax.scatter(range(len(obj.scan_data[-1].slicer)), list(obj.scan_data[-1].slicer), color='blue')
+        ax_EYE.scatter(range(len(obj.scan_data[-1].slicer)), list(obj.scan_data[-1].slicer), color='blue')
     
-    if ax2.lines:
-        for line2 in ax2.lines:
-            ax2.set_xlim(0, ax2.get_xlim()[1] + len(obj.scan_data[-1].slicer))
+    if ax_HIST.lines:
+        for line2 in ax_HIST.lines:
+            ax_HIST.set_xlim(0, ax_HIST.get_xlim()[1] + len(obj.scan_data[-1].slicer))
             line2.set_xdata(list(line2.get_xdata()) + list(range(len(line2.get_xdata()), len(line2.get_xdata()) + len(obj.scan_data[-1].slicer))))
             line2.set_ydata(list(line2.get_ydata()) + list(obj.scan_data[-1].slicer))
     else:
-        ax2.scatter(range(len(obj.scan_data[-1].slicer)), list(obj.scan_data[-1].slicer), color='blue')
+        ax_HIST.scatter(range(len(obj.scan_data[-1].slicer)), list(obj.scan_data[-1].slicer), color='blue')
         
-    if ax3.lines:
-        for line3 in ax3.lines:
-            if len(obj.scan_data) - 1 > ax3.get_xlim()[1]:
-                ax3.set_xlim(0, ax3.get_xlim()[1]+10)
+    if ax_SNR.lines:
+        for line3 in ax_SNR.lines:
+            if len(obj.scan_data) - 1 > ax_SNR.get_xlim()[1]:
+                ax_SNR.set_xlim(0, ax_SNR.get_xlim()[1]+10)
             line3.set_xdata(list(line3.get_xdata()) + [len(obj.scan_data) - 1])
-            line3.set_ydata(list(line3.get_ydata()) + [obj.scan_data[-1].snr])
+            val_snr =  obj.scan_data[-1].snr
+            line3.set_ydata(list(line3.get_ydata()) + [val_snr])
+            ax_SNR.set_xlabel(f"SNR Sample: {val_snr:.3f}")
     else:
-        ax3.plot(len(obj.scan_data) - 1, obj.scan_data[-1].snr)
+        ax_SNR.plot(len(obj.scan_data) - 1, obj.scan_data[-1].snr)
 
 
     figure.canvas.draw_idle()
@@ -267,27 +273,27 @@ yk.updates_callback = yk_scan_updates
 # %matplotlib widget
 
 #This sets up the subplots necessary for the 
-figure, (ax, ax2, ax3) = plt.subplots(3, constrained_layout = True, num="YK Scan")
+figure, (ax_EYE, ax_HIST, ax_SNR) = plt.subplots(3, constrained_layout = True, num="YK Scan")
 
-ax.set_xlabel("ES Sample")
-ax.set_ylabel("Amplitude (%)")
-ax.set_xlim(0,2000)
-ax.set_ylim(0,100)
-ax.set_yticks(range(0, 100, 20))
-ax.set_title("Slicer eye")
+ax_EYE.set_xlabel("ES Sample")
+ax_EYE.set_ylabel("Amplitude (%)")
+ax_EYE.set_xlim(0,2000)
+ax_EYE.set_ylim(0,100)
+ax_EYE.set_yticks(range(0, 100, 20))
+ax_EYE.set_title("Slicer eye")
 
-ax2.set_xlabel("Count")
-ax2.set_ylabel("Amplitude (%)")
-ax2.set_xlim(0,2000)
-ax2.set_ylim(0,100)
-ax2.set_yticks(range(0, 100, 20))
-ax2.set_title("Histogram")
+ax_HIST.set_xlabel("Count")
+ax_HIST.set_ylabel("Amplitude (%)")
+ax_HIST.set_xlim(0,2000)
+ax_HIST.set_ylim(0,100)
+ax_HIST.set_yticks(range(0, 100, 20))
+ax_HIST.set_title("Histogram")
 
-ax3.set_xlabel("SNR Sample")
-ax3.set_ylabel("SNR (dB)")
-ax3.set_xlim(0,10)
-ax3.set_ylim(-10,50)
-ax3.set_title("Signal-to-Noise Ratio")
+ax_SNR.set_xlabel("SNR Sample")
+ax_SNR.set_ylabel("SNR (dB)")
+ax_SNR.set_xlim(0,10)
+ax_SNR.set_ylim(-10,50)
+ax_SNR.set_title("Signal-to-Noise Ratio")
 
 #------------------------------------------------------------------------------------------
 # BXU is here
