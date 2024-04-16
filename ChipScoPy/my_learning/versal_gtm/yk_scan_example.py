@@ -74,18 +74,9 @@ from chipscopy.api.ibert import create_yk_scans
 #------------------------------------------------------------------------------------------
 # BXU is here
 #------------------------------------------
-"""
-source ~/venv/bin/activate
-cd ~/SDK_WIP/project/vajra_proj_FPGA/ChipScoPy/my_learning/versal_gtm
-export ip="10.20.2.146"; export  CS_SERVER_URL="TCP:$ip:3042" HW_SERVER_URL="TCP:$ip:3121"
-export QT_QPA_PLATFORM=wayland
-
-python bxu_GTM_test.py
-"""
-#------------------------------------------
 from PyQt5 import QtWidgets
-from PyQt5.QtGui  import *
-from PyQt5.QtCore import *
+#from PyQt5.QtGui  import *
+#from PyQt5.QtCore import *
 import sys
 import time
 
@@ -93,15 +84,16 @@ import numpy as np
 import matplotlib
 
 matplotlib.use("Qt5Agg")      # 表示使用 Qt5
-import matplotlib.pyplot as plt
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+#import matplotlib.pyplot as plt
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas, NavigationToolbar2QT as NavigationToolbar
 
 
-RESOLUTION_X = 800
-RESOLUTION_Y = 600
+RESOLUTION_X = 1250
+RESOLUTION_Y = 1150
+SCOPE_X_SAMPLES = 2500
 
 #------------------------------------------
-class MyWidget(QtWidgets.QWidget):
+class MyWidget(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle('BizLink HPC Cable Test')
@@ -124,6 +116,22 @@ class MyWidget(QtWidgets.QWidget):
         self.graphicscene.addWidget(self.canvas)
 
         self.graphicview.setScene(self.graphicscene)
+
+    def ui2(self, fig):
+        self.canvas = FigureCanvas(fig)
+
+        # Create toolbar, passing canvas as first parament, parent (self, the MainWindow) as second.
+        toolbar = NavigationToolbar(self.canvas, self)
+
+        layout = QtWidgets.QVBoxLayout()
+        layout.addWidget(toolbar)
+        layout.addWidget(self.canvas)
+
+        # Create a placeholder widget to hold our toolbar and canvas.
+        widget = QtWidgets.QWidget()
+        widget.setLayout(layout)
+        self.setCentralWidget(widget)
+
 
 #------------------------------------------------------------------------------------------
 
@@ -150,7 +158,7 @@ design_files = get_design_files(f"{HW_PLATFORM}/production/chipscopy_ced")
 PDI_FILE = design_files.programming_file
 
 print(f"PROGRAMMING_FILE: {PDI_FILE}")
-print(f"Servers URL: {CS_URL} {HW_URL}   Do_Programming: {PROG_DEVICE}")
+print(f"Servers URL: {CS_URL} {HW_URL} HW: {HW_PLATFORM}  Do_Programming: {PROG_DEVICE}\n")
 
 session = create_session(cs_server_url=CS_URL, hw_server_url=HW_URL)
 report_versions(session)
@@ -228,6 +236,10 @@ def yk_scan_updates(obj):
             line.set_ydata(list(obj.scan_data[-1].slicer))
     else:
         ax_EYE.scatter(range(len(obj.scan_data[-1].slicer)), list(obj.scan_data[-1].slicer), color='blue')
+        #ax_EYE.scatter(len(obj.scan_data) - 1, obj.scan_data[-1].slicer[-1], s=1, color='blue')
+
+    ax_EYE.set_xlabel("ES Sample:  ({}, {}) ({:.2f}, {:.2f}, {:.2f})".format(len(obj.scan_data), len(obj.scan_data[-1].slicer),
+      obj.scan_data[-1].slicer[-1], obj.scan_data[-1].slicer[-2], obj.scan_data[-1].slicer[-3]))
     
     if ax_HIST.lines:
         for line2 in ax_HIST.lines:
@@ -235,7 +247,9 @@ def yk_scan_updates(obj):
             line2.set_xdata(list(line2.get_xdata()) + list(range(len(line2.get_xdata()), len(line2.get_xdata()) + len(obj.scan_data[-1].slicer))))
             line2.set_ydata(list(line2.get_ydata()) + list(obj.scan_data[-1].slicer))
     else:
-        ax_HIST.scatter(range(len(obj.scan_data[-1].slicer)), list(obj.scan_data[-1].slicer), color='blue')
+        ## BAD drawing ## ax_HIST.scatter(range(len(obj.scan_data[-1].slicer)), list(obj.scan_data[-1].slicer), color='blue')
+        ax_HIST.hist(list(obj.scan_data[-1].slicer), orientation = 'horizontal', color='blue')
+        #ax_HIST.hist(obj.scan_data[-1].slicer, orientation = 'horizontal', color='blue')
         
     if ax_SNR.lines:
         for line3 in ax_SNR.lines:
@@ -273,18 +287,18 @@ yk.updates_callback = yk_scan_updates
 # %matplotlib widget
 
 #This sets up the subplots necessary for the 
-figure, (ax_EYE, ax_HIST, ax_SNR) = plt.subplots(3, constrained_layout = True, num="YK Scan")
+figure, (ax_EYE, ax_HIST, ax_SNR) = plt.subplots(3, constrained_layout = True, num="YK Scan", figsize=[12,10])
 
 ax_EYE.set_xlabel("ES Sample")
 ax_EYE.set_ylabel("Amplitude (%)")
-ax_EYE.set_xlim(0,2000)
+ax_EYE.set_xlim(0,SCOPE_X_SAMPLES)     # ax_EYE.set_xlim(0,2000)
 ax_EYE.set_ylim(0,100)
 ax_EYE.set_yticks(range(0, 100, 20))
 ax_EYE.set_title("Slicer eye")
 
 ax_HIST.set_xlabel("Count")
 ax_HIST.set_ylabel("Amplitude (%)")
-ax_HIST.set_xlim(0,2000)
+ax_HIST.set_xlim(0,SCOPE_X_SAMPLES)    # ax_HIST.set_xlim(0,2000)
 ax_HIST.set_ylim(0,100)
 ax_HIST.set_yticks(range(0, 100, 20))
 ax_HIST.set_title("Histogram")
