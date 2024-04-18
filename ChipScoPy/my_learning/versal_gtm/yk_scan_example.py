@@ -74,64 +74,25 @@ from chipscopy.api.ibert import create_yk_scans
 #------------------------------------------------------------------------------------------
 # BXU is here
 #------------------------------------------
-from PyQt5 import QtWidgets
-#from PyQt5.QtGui  import *
-#from PyQt5.QtCore import *
+"""
+export ip="10.20.2.146";     export CS_SERVER_URL="TCP:$ip:3042" HW_SERVER_URL="TCP:$ip:3121"
+export HW_PLATFORM="vpk120"; export PROG_DEVICE=True
+"""
+#------------------------------------------
+from PyQt5 import QtWidgets, QtCore, QtGui
 import sys
-import time
-
+import random
+import math
 import numpy as np
 import matplotlib
-
 matplotlib.use("Qt5Agg")      # 表示使用 Qt5
 #import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas, NavigationToolbar2QT as NavigationToolbar
 
-
-RESOLUTION_X = 1250
-RESOLUTION_Y = 1150
-SCOPE_X_SAMPLES = 2500
-
-#------------------------------------------
-class MyWidget(QtWidgets.QMainWindow):
-    def __init__(self):
-        super().__init__()
-        self.setWindowTitle('BizLink HPC Cable Test')
-        self.resize(RESOLUTION_X, RESOLUTION_Y)
-        self.t = 0
-        # self.ui()
-
-    def closeEvent(self, event):
-        yk.stop() # Stops the YK scan from running.
-        event.accept()  # Close the widget
-
-    def ui(self, fig):
-        self.canvas = FigureCanvas(fig)
-
-        self.graphicview = QtWidgets.QGraphicsView(self)
-        self.graphicview.setGeometry(0, 0, RESOLUTION_X, RESOLUTION_Y)
-
-        self.graphicscene = QtWidgets.QGraphicsScene()
-        self.graphicscene.setSceneRect(0, 0, RESOLUTION_X - 20, RESOLUTION_Y - 20)
-        self.graphicscene.addWidget(self.canvas)
-
-        self.graphicview.setScene(self.graphicscene)
-
-    def ui2(self, fig):
-        self.canvas = FigureCanvas(fig)
-
-        # Create toolbar, passing canvas as first parament, parent (self, the MainWindow) as second.
-        toolbar = NavigationToolbar(self.canvas, self)
-
-        layout = QtWidgets.QVBoxLayout()
-        layout.addWidget(toolbar)
-        layout.addWidget(self.canvas)
-
-        # Create a placeholder widget to hold our toolbar and canvas.
-        widget = QtWidgets.QWidget()
-        widget.setLayout(layout)
-        self.setCentralWidget(widget)
-
+RESOLUTION_X = int(os.getenv("RESOLUTION_X ", "900"))
+RESOLUTION_Y = int(os.getenv("RESOLUTION_Y ", "800"))
+QUAD_NAME    = os.getenv("QUAD_NAME ", "Quad_202")
+QUAD_CHAN    = int(os.getenv("QUAD_CHAN ", "0"))
 
 #------------------------------------------------------------------------------------------
 
@@ -217,109 +178,177 @@ if len(ibert_gtm.gt_groups) == 0:
 
 print(f"--> Enabled GT Groups - {ibert_gtm.gt_groups}")
 
-gt_group = ibert_gtm.gt_groups.filter_by(name="Quad_204")[0]
+gt_group = ibert_gtm.gt_groups.filter_by(name=QUAD_NAME)[0]
 
 
-# %% [markdown]
 # ## 6 - Define YK Scan Update Method
-#
-# This method will be called each time the yk scan updates, allowing it to update its graphs in real time. 
-
-# %%
-# %matplotlib widget
-
 def yk_scan_updates(obj):
-    global count, figure, ax_EYE, ax_HIST, ax_SNR
-    if ax_EYE.lines:
-        for line in ax_EYE.lines:
-            line.set_xdata(range(len(obj.scan_data[-1].slicer)))
-            line.set_ydata(list(obj.scan_data[-1].slicer))
-    else:
-        ax_EYE.scatter(range(len(obj.scan_data[-1].slicer)), list(obj.scan_data[-1].slicer), color='blue')
-        #ax_EYE.scatter(len(obj.scan_data) - 1, obj.scan_data[-1].slicer[-1], s=1, color='blue')
+    global yk_fig
 
-    ax_EYE.set_xlabel("ES Sample:  ({}, {}) ({:.2f}, {:.2f}, {:.2f})".format(len(obj.scan_data), len(obj.scan_data[-1].slicer),
-      obj.scan_data[-1].slicer[-1], obj.scan_data[-1].slicer[-2], obj.scan_data[-1].slicer[-3]))
-    
-    if ax_HIST.lines:
-        for line2 in ax_HIST.lines:
-            ax_HIST.set_xlim(0, ax_HIST.get_xlim()[1] + len(obj.scan_data[-1].slicer))
-            line2.set_xdata(list(line2.get_xdata()) + list(range(len(line2.get_xdata()), len(line2.get_xdata()) + len(obj.scan_data[-1].slicer))))
-            line2.set_ydata(list(line2.get_ydata()) + list(obj.scan_data[-1].slicer))
-    else:
-        ## BAD drawing ## ax_HIST.scatter(range(len(obj.scan_data[-1].slicer)), list(obj.scan_data[-1].slicer), color='blue')
-        ax_HIST.hist(list(obj.scan_data[-1].slicer), orientation = 'horizontal', color='blue')
-        #ax_HIST.hist(obj.scan_data[-1].slicer, orientation = 'horizontal', color='blue')
-        
-    if ax_SNR.lines:
-        for line3 in ax_SNR.lines:
-            if len(obj.scan_data) - 1 > ax_SNR.get_xlim()[1]:
-                ax_SNR.set_xlim(0, ax_SNR.get_xlim()[1]+10)
-            line3.set_xdata(list(line3.get_xdata()) + [len(obj.scan_data) - 1])
-            val_snr =  obj.scan_data[-1].snr
-            line3.set_ydata(list(line3.get_ydata()) + [val_snr])
-            ax_SNR.set_xlabel(f"SNR Sample: {val_snr:.3f}")
-    else:
-        ax_SNR.plot(len(obj.scan_data) - 1, obj.scan_data[-1].snr)
+    ber = random.random() / 1000000
+    yk_fig.update_yk_scan(obj, ber)
 
 
-    figure.canvas.draw_idle()
+#------------------------------------------
+class MyYKFigure():
 
-# %% [markdown]
-# ## 7 - Create YK Scan
-#
-# This step initializes the YK scan, setting its update method to the method we defined in the last step. 
+    # ## 8 - Run YK Scan
+    #
+    # Initialize the plots and start the YK Scan to begin updating the plots. 
+    # YK Scan plot should contain three subplots, these plots should look something like:
+    # ![yk_scan_example.png](./yk_scan_example.png)
+    # Note: Depending on the hardware setup and external loopback connection, the plot might look different.
+    def __init__(self, name, show_title):
+        #This sets up the subplots necessary for the figure
+        self.figure = plt.figure(layout='constrained', num="YK" + name, figsize=[12,10])
 
-# %%
-yk = create_yk_scans(target_objs=gt_group.gts[0].rx)[0]
+        self.ax_EYE = plt.subplot2grid((3,2), (0,0), rowspan=2)
+        self.ax_EYE.set_xlabel("ES Sample")
+        self.ax_EYE.set_ylabel("Amplitude (%)")
+        self.ax_EYE.set_xlim(0,2000)
+        self.ax_EYE.set_ylim(0,100)
+        self.ax_EYE.set_yticks(range(0, 100, 20))
+        if show_title: self.ax_EYE.set_title("Slicer eye")
 
-yk.updates_callback = yk_scan_updates
+        self.ax_HIST = plt.subplot2grid((3,2), (0,1), rowspan=2)
+        self.ax_HIST.set_xlabel("Count")
+        self.ax_HIST.set_ylabel("Amplitude (%)")
+        self.ax_HIST.set_xlim(0,1000)
+        self.ax_HIST.set_ylim(0,100)
+        self.ax_HIST.set_yticks(range(0, 100, 20))
+        if show_title: self.ax_HIST.set_title("Histogram")
 
-# %% [markdown]
-# ## 8 - Run YK Scan
-#
-# Initialize the plots and start the YK Scan to begin updating the plots. 
-# YK Scan plot should contain three subplots, these plots should look something like:
-# ![yk_scan_example.png](./yk_scan_example.png)
-# Note: Depending on the hardware setup and external loopback connection, the plot might look different.
+        self.ax_SNR = plt.subplot(3,2,5)
+        self.ax_SNR.set_xlabel("SNR Sample")
+        self.ax_SNR.set_ylabel("SNR (dB)")
+        self.ax_SNR.set_xlim(0,10)
+        self.ax_SNR.set_ylim(-10,50)
+        if show_title: self.ax_SNR.set_title("Signal-to-Noise Ratio")
 
-# %%
-# %matplotlib widget
+        self.ax_BER = plt.subplot(3,2,6)
+        self.ax_BER.set_xlabel("BER Sample")
+        self.ax_BER.set_ylabel("log10")
+        self.ax_BER.set_xlim(0,10)
+        self.ax_BER.set_ylim(-1,-20)
+        if show_title: self.ax_BER.set_title("Bit-Error-Rate (log10)")
 
-#This sets up the subplots necessary for the 
-figure, (ax_EYE, ax_HIST, ax_SNR) = plt.subplots(3, constrained_layout = True, num="YK Scan", figsize=[12,10])
+    # ## 6 - Define YK Scan Update Method
+    # This method will be called each time the yk scan updates, allowing it to update its graphs in real time. 
+    def update_yk_scan(self, obj, ber):
 
-ax_EYE.set_xlabel("ES Sample")
-ax_EYE.set_ylabel("Amplitude (%)")
-ax_EYE.set_xlim(0,SCOPE_X_SAMPLES)     # ax_EYE.set_xlim(0,2000)
-ax_EYE.set_ylim(0,100)
-ax_EYE.set_yticks(range(0, 100, 20))
-ax_EYE.set_title("Slicer eye")
+        if self.ax_EYE.lines:
+            for line in self.ax_EYE.lines:
+                line.set_xdata(range(len(obj.scan_data[-1].slicer)))
+                line.set_ydata(list(obj.scan_data[-1].slicer))
+        else:
+            #self.ax_EYE.cla()
+            self.ax_EYE.scatter(range(len(obj.scan_data[-1].slicer)), list(obj.scan_data[-1].slicer), s=1, color='blue')
 
-ax_HIST.set_xlabel("Count")
-ax_HIST.set_ylabel("Amplitude (%)")
-ax_HIST.set_xlim(0,SCOPE_X_SAMPLES)    # ax_HIST.set_xlim(0,2000)
-ax_HIST.set_ylim(0,100)
-ax_HIST.set_yticks(range(0, 100, 20))
-ax_HIST.set_title("Histogram")
+        self.ax_EYE.set_xlabel("ES Sample:  ({}, {}) ({:.2f}, {:.2f})".format(len(obj.scan_data), len(obj.scan_data[-1].slicer),
+          obj.scan_data[-1].slicer[-1], obj.scan_data[-1].slicer[-2]))
 
-ax_SNR.set_xlabel("SNR Sample")
-ax_SNR.set_ylabel("SNR (dB)")
-ax_SNR.set_xlim(0,10)
-ax_SNR.set_ylim(-10,50)
-ax_SNR.set_title("Signal-to-Noise Ratio")
+        if self.ax_HIST.lines:
+            for line2 in self.ax_HIST.lines:
+                self.ax_HIST.set_xlim(0, self.ax_HIST.get_xlim()[1] + len(obj.scan_data[-1].slicer))
+                line2.set_xdata(list(line2.get_xdata()) + list(range(len(line2.get_xdata()), len(line2.get_xdata()) + len(obj.scan_data[-1].slicer))))
+                line2.set_ydata(list(line2.get_ydata()) + list(obj.scan_data[-1].slicer))
+        else:
+            #self.ax_HIST.cla()
+            self.ax_HIST.hist(list(obj.scan_data[-1].slicer), 50, orientation = 'horizontal', color='blue', stacked=True, range=(0,100))
+
+        if self.ax_SNR.lines:
+            for line3 in self.ax_SNR.lines:
+                if len(obj.scan_data) - 1 > self.ax_SNR.get_xlim()[1]:
+                    self.ax_SNR.set_xlim(0, self.ax_SNR.get_xlim()[1]+10)
+                line3.set_xdata(list(line3.get_xdata()) + [len(obj.scan_data) - 1])
+                val_snr =  obj.scan_data[-1].snr
+                line3.set_ydata(list(line3.get_ydata()) + [val_snr])
+                self.ax_SNR.set_xlabel(f"SNR Sample: {val_snr:.3f}")
+        else:
+            self.ax_SNR.plot(len(obj.scan_data) - 1, obj.scan_data[-1].snr)
+
+        if self.ax_BER.lines:
+            for line4 in self.ax_BER.lines:
+                if len(obj.scan_data) - 1 > self.ax_BER.get_xlim()[1]:
+                    self.ax_BER.set_xlim(0, self.ax_BER.get_xlim()[1]+10)
+                line4.set_xdata(list(line4.get_xdata()) + [len(obj.scan_data) - 1])
+                line4.set_ydata(list(line4.get_ydata()) + [math.log10(ber)])
+                self.ax_BER.set_xlabel(f"BER Sample: {ber}")
+        else:
+            self.ax_BER.plot(len(obj.scan_data) - 1, math.log10(ber))
+
+
+#------------------------------------------
+class MyWidget(QtWidgets.QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle('BizLink HPC Cable Test')
+        self.resize(RESOLUTION_X, RESOLUTION_Y)
+        self.t = 0
+
+        # Setup a timer to trigger the redraw by calling update_plot.
+        self.timer = QtCore.QTimer()
+        self.timer.setInterval(2000)
+        self.timer.timeout.connect(self.update_plot)
+        self.timer.start()
+        self.redraw_slot = False
+
+    def update_plot(self):
+        self.redraw_slot = True
+        self.canvas.draw_idle()
+
+    def closeEvent(self, event):
+        yk.stop() # Stops the YK scan from running.
+        event.accept()  # Close the widget
+
+    def create_figure(self, fig_name):
+        self.yk_fig = MyYKFigure(fig_name, True)
+        return self.yk_fig
+
+    def ui(self):
+        self.canvas = FigureCanvas(self.yk_fig.figure)
+
+        self.graphicview = QtWidgets.QGraphicsView(self)
+        self.graphicview.setGeometry(0, 0, RESOLUTION_X, RESOLUTION_Y)
+
+        self.graphicscene = QtWidgets.QGraphicsScene()
+        self.graphicscene.setSceneRect(0, 0, RESOLUTION_X - 20, RESOLUTION_Y - 20)
+        self.graphicscene.addWidget(self.canvas)
+
+        self.graphicview.setScene(self.graphicscene)
+
+    def ui2(self):
+        self.canvas = FigureCanvas(self.yk_fig.figure)
+
+        # Create toolbar, passing canvas as first parament, parent (self, the MainWindow) as second.
+        toolbar = NavigationToolbar(self.canvas, self)
+
+        layout = QtWidgets.QVBoxLayout()
+        layout.addWidget(toolbar)
+        layout.addWidget(self.canvas)
+
+        # Create a placeholder widget to hold our toolbar and canvas.
+        widget = QtWidgets.QWidget()
+        widget.setLayout(layout)
+        self.setCentralWidget(widget)
+
 
 #------------------------------------------------------------------------------------------
-# BXU is here
-#------------------------------------------
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
-    Form = MyWidget()
+    MainForm = MyWidget()
 
-    Form.ui(figure)
+    # ## 7 - Create YK Scan
+    # This step initializes the YK scan, setting its update method to the method we defined in the last step. 
+    print(f"--> GT Group channels - {gt_group.gts}")
+    yk = create_yk_scans(target_objs=gt_group.gts[QUAD_CHAN].rx)[0]
+    yk.updates_callback = yk_scan_updates
+
+    yk_fig = MainForm.create_figure(QUAD_NAME)
+
+    MainForm.ui2()
     yk.start()
-    Form.show()
-    #yk.stop() # Stops the YK scan from running.
+    MainForm.show()
 
     sys.exit(app.exec_())
 
