@@ -76,7 +76,9 @@ from chipscopy.api.ibert import create_yk_scans
 #------------------------------------------
 """
 export ip="10.20.2.146";     export CS_SERVER_URL="TCP:$ip:3042" HW_SERVER_URL="TCP:$ip:3121"
-export HW_PLATFORM="vpk120"; export PROG_DEVICE=True
+export HW_PLATFORM="vpk120"; export PROG_DEVICE=False
+export RESOLUTION_X=900;     export RESOLUTION_Y=800; 
+export QUAD_NAME="Quad_202"; export QUAD_CHAN=2;
 """
 #------------------------------------------
 from PyQt5 import QtWidgets, QtCore, QtGui
@@ -89,10 +91,10 @@ matplotlib.use("Qt5Agg")      # 表示使用 Qt5
 #import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas, NavigationToolbar2QT as NavigationToolbar
 
-RESOLUTION_X = int(os.getenv("RESOLUTION_X ", "900"))
-RESOLUTION_Y = int(os.getenv("RESOLUTION_Y ", "800"))
-QUAD_NAME    = os.getenv("QUAD_NAME ", "Quad_202")
-QUAD_CHAN    = int(os.getenv("QUAD_CHAN ", "0"))
+RESOLUTION_X = int(os.getenv("RESOLUTION_X", "900"))
+RESOLUTION_Y = int(os.getenv("RESOLUTION_Y", "800"))
+QUAD_NAME    =     os.getenv("QUAD_NAME", "Quad_202")
+QUAD_CHAN    = int(os.getenv("QUAD_CHAN", "0"))
 
 #------------------------------------------------------------------------------------------
 
@@ -151,7 +153,7 @@ else:
 # # Set any params as needed
 # params_to_set = {"IBERT.internal_mode": True}
 # session.set_param(params_to_set)
-device = session.devices.filter_by(family="versal").get()
+#device = session.devices.filter_by(family="versal").get()
 
 # Use the first available device and set up its debug cores
 
@@ -176,17 +178,33 @@ if len(ibert_gtm.gt_groups) == 0:
     print("No GT Groups available for use! Exiting...")
     exit()
 
-print(f"--> Enabled GT Groups - {ibert_gtm.gt_groups}")
+# We also ensure that all the quads instantiated by the ChipScoPy CED design are found by the APIs
+report_hierarchy(ibert_gtm)
+print(f"--> GT Groups available - {ibert_gtm.gt_groups}")
+#rint(f"==> GT Groups available - {[gt_group_obj.name for gt_group_obj in ibert_gtm.gt_groups]}")
 
-gt_group = ibert_gtm.gt_groups.filter_by(name=QUAD_NAME)[0]
 
+#------------------------------------------
+class MyYKScan():
+    def __init__(self, gt_group, gt_chan):
+        self.fig = MyYKFigure(gt_group.name, True)
+        self.RX  = gt_group.gts[gt_chan].rx
+        self.TX  = gt_group.gts[gt_chan].tx
+        self.PLL = gt_group.gts[gt_chan].pll
+        self.YK  = create_yk_scans(target_objs=gt_group.gts[gt_chan].rx)[0]
+        self.YK.updates_callback = lambda obj: self.yk_scan_updates(obj)
 
-# ## 6 - Define YK Scan Update Method
-def yk_scan_updates(obj):
-    global yk_fig
+        #------------------------------------------------------------------------------
+        print(f"GT:{gt_group.name} CH:{gt_chan}::  RX='{self.RX}'  RX-link='{self.RX.link}'  RX-pll='{self.RX.pll}' RX-yk_scan='{self.RX.yk_scan}' ")
+        print(f"GT:{gt_group.name} CH:{gt_chan}::  TX='{self.TX}'  TX-link='{self.TX.link}'  TX-pll='{self.TX.pll}' ")
+        #       GT:Quad_202 CH:0::  RX='IBERT_0.Quad_202.CH_0.RX(RX)'  RX-link='None'  RX-pll='IBERT_0.Quad_202.PLL_0(PLL/LCPLL0)' RX-yk_scan='YKScan_1' 
+        #       GT:Quad_202 CH:0::  TX='IBERT_0.Quad_202.CH_0.TX(TX)'  TX-link='None'  TX-pll='IBERT_0.Quad_202.PLL_0(PLL/LCPLL0)' 
+        #------------------------------------------------------------------------------
 
-    ber = random.random() / 1000000
-    yk_fig.update_yk_scan(obj, ber)
+    # ## 6 - Define YK Scan Update Method
+    def yk_scan_updates(self, obj):
+        ber = random.random() / 1000000
+        self.fig.update_yk_scan(obj, ber)
 
 
 #------------------------------------------
@@ -230,7 +248,7 @@ class MyYKFigure():
         self.ax_BER.set_ylabel("log10")
         self.ax_BER.set_xlim(0,10)
         self.ax_BER.set_ylim(-1,-20)
-        if show_title: self.ax_BER.set_title("Bit-Error-Rate (log10)")
+        if show_title: self.ax_BER.set_title("Bit-Error-Rate")
 
     # ## 6 - Define YK Scan Update Method
     # This method will be called each time the yk scan updates, allowing it to update its graphs in real time. 
@@ -273,7 +291,7 @@ class MyYKFigure():
                     self.ax_BER.set_xlim(0, self.ax_BER.get_xlim()[1]+10)
                 line4.set_xdata(list(line4.get_xdata()) + [len(obj.scan_data) - 1])
                 line4.set_ydata(list(line4.get_ydata()) + [math.log10(ber)])
-                self.ax_BER.set_xlabel(f"BER Sample: {ber}")
+                self.ax_BER.set_xlabel(f"BER Sample: {ber:.3E}")
         else:
             self.ax_BER.plot(len(obj.scan_data) - 1, math.log10(ber))
 
@@ -298,15 +316,17 @@ class MyWidget(QtWidgets.QMainWindow):
         self.canvas.draw_idle()
 
     def closeEvent(self, event):
-        yk.stop() # Stops the YK scan from running.
+        print("Close Widget & YK-Scan")
+        self.yk_obj.YK.stop() # Stops the YK scan from running.
         event.accept()  # Close the widget
 
-    def create_figure(self, fig_name):
-        self.yk_fig = MyYKFigure(fig_name, True)
-        return self.yk_fig
+    def create_YKScan_figure(self, gt_group, gt_chan):
+        self.yk_obj = MyYKScan(gt_group, gt_chan)
+        self.ui2(self.yk_obj.fig.figure)
+        self.yk_obj.YK.start()
 
-    def ui(self):
-        self.canvas = FigureCanvas(self.yk_fig.figure)
+    def ui(self, fig):
+        self.canvas = FigureCanvas(fig)
 
         self.graphicview = QtWidgets.QGraphicsView(self)
         self.graphicview.setGeometry(0, 0, RESOLUTION_X, RESOLUTION_Y)
@@ -317,8 +337,8 @@ class MyWidget(QtWidgets.QMainWindow):
 
         self.graphicview.setScene(self.graphicscene)
 
-    def ui2(self):
-        self.canvas = FigureCanvas(self.yk_fig.figure)
+    def ui2(self, fig):
+        self.canvas = FigureCanvas(fig)
 
         # Create toolbar, passing canvas as first parament, parent (self, the MainWindow) as second.
         toolbar = NavigationToolbar(self.canvas, self)
@@ -340,18 +360,11 @@ if __name__ == '__main__':
 
     # ## 7 - Create YK Scan
     # This step initializes the YK scan, setting its update method to the method we defined in the last step. 
+    gt_group = ibert_gtm.gt_groups.filter_by(name=QUAD_NAME)[0]
     print(f"--> GT Group channels - {gt_group.gts}")
-    yk = create_yk_scans(target_objs=gt_group.gts[QUAD_CHAN].rx)[0]
-    yk.updates_callback = yk_scan_updates
-
-    yk_fig = MainForm.create_figure(QUAD_NAME)
-
-    MainForm.ui2()
-    yk.start()
+    MainForm.create_YKScan_figure(gt_group, QUAD_CHAN)
     MainForm.show()
 
     sys.exit(app.exec_())
 
 #------------------------------------------------------------------------------------------
-
-
