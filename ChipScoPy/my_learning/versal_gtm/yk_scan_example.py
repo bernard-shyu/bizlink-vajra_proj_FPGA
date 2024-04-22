@@ -1,28 +1,8 @@
-# ---
-# jupyter:
-#   jupytext:
-#     formats: ipynb,py:percent
-#     text_representation:
-#       extension: .py
-#       format_name: percent
-#       format_version: '1.3'
-#       jupytext_version: 1.15.1
-#   kernelspec:
-#     display_name: Python 3 (ipykernel)
-#     language: python
-#     name: python3
-# ---
-
-# %% [markdown]
-# <link rel="preconnect" href="https://fonts.gstatic.com">
-# <link href="https://fonts.googleapis.com/css2?family=Fira+Code&display=swap" rel="stylesheet">
-#
 # ### License
-#
-# <p style="font-family: 'Fira Code', monospace; font-size: 1.2rem">
+#------------------------------------------------------------------------------------------
 # Copyright (C) 2022, Xilinx, Inc.
 # Copyright (C) 2022-2023, Advanced Micro Devices, Inc.
-# <br><br>
+#
 # Licensed under the Apache License, Version 2.0 (the "License");<br>
 # you may not use this file except in compliance with the License.<br><br>
 # You may obtain a copy of the License at <a href="http://www.apache.org/licenses/LICENSE-2.0"?>http://www.apache.org/licenses/LICENSE-2.0</a><br><br>
@@ -31,13 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.<br>
 # See the License for the specific language governing permissions and<br>
 # limitations under the License.<br>
-# </p>
 #
-
-# %% [markdown]
+#------------------------------------------------------------------------------------------
 # # IBERT yk scan example
-
-# %% [markdown]
 # ## Description
 # This example shows how to interact with the IBERT (Integrated Bit Error Ratio Tester) debug core service via ChipScoPy APIs.
 # - Program the ChipScoPy CED design onto the XCVP1202 device on a VPK120 board
@@ -55,50 +31,46 @@
 # - [External loopback](https://www.samtec.com/kits/optics-fpga/hspce-fmcp/)
 # - This example assumes that the device has already been programmed with the example design (ie the debug cores have already been initialized)
 
-# %% [markdown]
-# ## 1 - Initialization: Imports
-#
-# After this step,
-#
-# * Required functions and classes are imported
-# * Paths to server(s) and files are set correctly
-
-# %%
-import os
-from more_itertools import one
-import matplotlib.pyplot as plt
-
-from chipscopy import create_session, report_versions, report_hierarchy, get_design_files
-from chipscopy.api.ibert import create_yk_scans
-
-#------------------------------------------------------------------------------------------
-# BXU is here
 #------------------------------------------
 """
 export ip="10.20.2.146";     export CS_SERVER_URL="TCP:$ip:3042" HW_SERVER_URL="TCP:$ip:3121"
-export HW_PLATFORM="vpk120"; export PROG_DEVICE=False
+export HW_PLATFORM="vpk120"; export PROG_DEVICE=False; export CREATE_LGROUP=False
 export RESOLUTION_X=900;     export RESOLUTION_Y=800; 
 export QUAD_NAME="Quad_202"; export QUAD_CHAN=2;
 """
+
+#------------------------------------------------------------------------------------------
+# ## 1 - Initialization: Imports
+#
+# After this step,
+# * Required functions and classes are imported
+# * Paths to server(s) and files are set correctly
+#------------------------------------------------------------------------------------------
+import os
+from more_itertools import one
+
+from chipscopy import create_session, report_versions, report_hierarchy, get_design_files
+from chipscopy.api.ibert import create_yk_scans
+from chipscopy.api.ibert import delete_link_groups, get_all_links, get_all_link_groups, create_links, create_link_groups
+from chipscopy.api.ibert.aliases import ( PATTERN,
+    EYE_SCAN_HORZ_RANGE, EYE_SCAN_VERT_RANGE, EYE_SCAN_VERT_STEP, EYE_SCAN_HORZ_STEP, EYE_SCAN_TARGET_BER,
+    TX_PRE_CURSOR, TX_POST_CURSOR, TX_DIFFERENTIAL_SWING,
+    RX_LOOPBACK, RX_BER, RX_STATUS, RX_LINE_RATE, RX_RECEIVED_BIT_COUNT, RX_NORMALIZED_RECEIVED_BIT_COUNT, RX_PATTERN_CHECKER_ERROR_COUNT, RX_TERMINATION_VOLTAGE, RX_COMMON_MODE
+)
+
 #------------------------------------------
 from PyQt5 import QtWidgets, QtCore, QtGui
 import sys
 import random
 import math
 import numpy as np
+
 import matplotlib
 matplotlib.use("Qt5Agg")      # 表示使用 Qt5
-#import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas, NavigationToolbar2QT as NavigationToolbar
 
-RESOLUTION_X = int(os.getenv("RESOLUTION_X", "900"))
-RESOLUTION_Y = int(os.getenv("RESOLUTION_Y", "800"))
-QUAD_NAME    =     os.getenv("QUAD_NAME", "Quad_202")
-QUAD_CHAN    = int(os.getenv("QUAD_CHAN", "0"))
-
 #------------------------------------------------------------------------------------------
-
-# %% [markdown]
 # ## 2 - Create a session and connect to the hw_server and cs_server
 #
 # The session is a container that keeps track of devices and debug cores.
@@ -108,12 +80,20 @@ QUAD_CHAN    = int(os.getenv("QUAD_CHAN", "0"))
 
 # %%
 # Specify locations of the running hw_server and cs_server below.
+#------------------------------------------------------------------------------------------
+
+RESOLUTION_X = int(os.getenv("RESOLUTION_X", "900"))
+RESOLUTION_Y = int(os.getenv("RESOLUTION_Y", "800"))
+QUAD_NAME    =     os.getenv("QUAD_NAME", "Quad_202")
+QUAD_CHAN    = int(os.getenv("QUAD_CHAN", "0"))
+
 CS_URL = os.getenv("CS_SERVER_URL", "TCP:localhost:3042")
 HW_URL = os.getenv("HW_SERVER_URL", "TCP:localhost:3121")
 
 # specify hw and if programming is desired
 HW_PLATFORM = os.getenv("HW_PLATFORM", "vpk120")
 PROG_DEVICE = os.getenv("PROG_DEVICE", 'True').lower() in ('true', '1', 't')
+CREATE_LGROUP = os.getenv("CREATE_LGROUP", 'True').lower() in ('true', '1', 't')
 
 # The get_design_files() function tries to find the PDI and LTX files. In non-standard
 # configurations, you can put the path for PROGRAMMING_FILE and PROBES_FILE below.
@@ -184,7 +164,7 @@ print(f"--> GT Groups available - {ibert_gtm.gt_groups}")
 #rint(f"==> GT Groups available - {[gt_group_obj.name for gt_group_obj in ibert_gtm.gt_groups]}")
 
 
-#------------------------------------------
+#------------------------------------------------------------------------------------------
 class MyYKScan():
     def __init__(self, gt_group, gt_chan):
         self.fig = MyYKFigure(gt_group.name, True)
@@ -193,19 +173,50 @@ class MyYKScan():
         self.PLL = gt_group.gts[gt_chan].pll
         self.YK  = create_yk_scans(target_objs=gt_group.gts[gt_chan].rx)[0]
         self.YK.updates_callback = lambda obj: self.yk_scan_updates(obj)
+        self.link  = self.RX.link
+        self.ber   = self.link.ber
 
         #------------------------------------------------------------------------------
         print(f"GT:{gt_group.name} CH:{gt_chan}::  RX='{self.RX}'  RX-link='{self.RX.link}'  RX-pll='{self.RX.pll}' RX-yk_scan='{self.RX.yk_scan}' ")
         print(f"GT:{gt_group.name} CH:{gt_chan}::  TX='{self.TX}'  TX-link='{self.TX.link}'  TX-pll='{self.TX.pll}' ")
+        print(f"GT:{gt_group.name} CH:{gt_chan}::  SELF={self}  LINK='{self.link}' values=({self.link.ber}, {self.link.status}, {self.link.line_rate}, {self.link.bit_count}, {self.link.error_count}) ")
         #       GT:Quad_202 CH:0::  RX='IBERT_0.Quad_202.CH_0.RX(RX)'  RX-link='None'  RX-pll='IBERT_0.Quad_202.PLL_0(PLL/LCPLL0)' RX-yk_scan='YKScan_1' 
         #       GT:Quad_202 CH:0::  TX='IBERT_0.Quad_202.CH_0.TX(TX)'  TX-link='None'  TX-pll='IBERT_0.Quad_202.PLL_0(PLL/LCPLL0)' 
         #------------------------------------------------------------------------------
 
+    def update_link(self):
+        self.status      = self.link.status
+        self.line_rate   = self.link.line_rate
+        self.bit_count   = self.link.bit_count
+        self.error_count = self.link.error_count
+        self.ber         = self.link.ber                                                                                      # main BER read method: works
+        #self.ber1       = self.link.rx.property_for_alias(RX_BER)                                                            # another BER method 1: not working
+        self.ber2        = list(self.link.rx.property.refresh(self.link.rx.property_for_alias[RX_BER]).values())[0]           # another BER method 2: works, almost the same value as <self.link.ber>
+        print(f"SELF={self}  LINK='{self.link}' values=({self.ber}, {self.ber2}, {self.status}, {self.line_rate}, {self.bit_count}, {self.error_count}) ")
+
     # ## 6 - Define YK Scan Update Method
     def yk_scan_updates(self, obj):
+        #------------------------------------------------------------------------------
+        # BER by random number simulation: it works
+        #------------------------------------------------------------------------------
         ber = random.random() / 1000000
-        self.fig.update_yk_scan(obj, ber)
+        #self.fig.update_yk_ber(ber)
 
+        #------------------------------------------------------------------------------
+        # BER from chipscopy.api.ibert.rx.link for its BER / STAUS ...: NOT work
+        #------------------------------------------------------------------------------
+        """
+        # self.count += 1; if self.count % 64 == 0: self.update_link()
+        self.update_link()
+        self.fig.update_yk_ber(self.ber)
+        """
+
+        #------------------------------------
+        self.fig.update_yk_scan(obj)
+
+    def yk_link_updates(self):
+        self.update_link()
+        self.fig.update_yk_ber(self.ber)
 
 #------------------------------------------
 class MyYKFigure():
@@ -249,11 +260,13 @@ class MyYKFigure():
         self.ax_BER.set_xlim(0,10)
         self.ax_BER.set_ylim(-1,-20)
         if show_title: self.ax_BER.set_title("Bit-Error-Rate")
+        self.axis_X_Count = 0
 
     # ## 6 - Define YK Scan Update Method
     # This method will be called each time the yk scan updates, allowing it to update its graphs in real time. 
-    def update_yk_scan(self, obj, ber):
+    def update_yk_scan(self, obj):
 
+        self.axis_X_Count = len(obj.scan_data) - 1
         if self.ax_EYE.lines:
             for line in self.ax_EYE.lines:
                 line.set_xdata(range(len(obj.scan_data[-1].slicer)))
@@ -262,7 +275,7 @@ class MyYKFigure():
             #self.ax_EYE.cla()
             self.ax_EYE.scatter(range(len(obj.scan_data[-1].slicer)), list(obj.scan_data[-1].slicer), s=1, color='blue')
 
-        self.ax_EYE.set_xlabel("ES Sample:  ({}, {}) ({:.2f}, {:.2f})".format(len(obj.scan_data), len(obj.scan_data[-1].slicer),
+        self.ax_EYE.set_xlabel("ES Sample:  ({}, {}) ({:.2f}, {:.2f})".format(self.axis_X_Count, len(obj.scan_data[-1].slicer),
           obj.scan_data[-1].slicer[-1], obj.scan_data[-1].slicer[-2]))
 
         if self.ax_HIST.lines:
@@ -276,24 +289,26 @@ class MyYKFigure():
 
         if self.ax_SNR.lines:
             for line3 in self.ax_SNR.lines:
-                if len(obj.scan_data) - 1 > self.ax_SNR.get_xlim()[1]:
+                if self.axis_X_Count > self.ax_SNR.get_xlim()[1]:
                     self.ax_SNR.set_xlim(0, self.ax_SNR.get_xlim()[1]+10)
-                line3.set_xdata(list(line3.get_xdata()) + [len(obj.scan_data) - 1])
+                line3.set_xdata(list(line3.get_xdata()) + [self.axis_X_Count])
                 val_snr =  obj.scan_data[-1].snr
                 line3.set_ydata(list(line3.get_ydata()) + [val_snr])
                 self.ax_SNR.set_xlabel(f"SNR Sample: {val_snr:.3f}")
         else:
-            self.ax_SNR.plot(len(obj.scan_data) - 1, obj.scan_data[-1].snr)
+            self.ax_SNR.plot(self.axis_X_Count, obj.scan_data[-1].snr)
+
+    def update_yk_ber(self, ber):
 
         if self.ax_BER.lines:
             for line4 in self.ax_BER.lines:
-                if len(obj.scan_data) - 1 > self.ax_BER.get_xlim()[1]:
+                if self.axis_X_Count  > self.ax_BER.get_xlim()[1]:
                     self.ax_BER.set_xlim(0, self.ax_BER.get_xlim()[1]+10)
-                line4.set_xdata(list(line4.get_xdata()) + [len(obj.scan_data) - 1])
+                line4.set_xdata(list(line4.get_xdata()) + [self.axis_X_Count])
                 line4.set_ydata(list(line4.get_ydata()) + [math.log10(ber)])
                 self.ax_BER.set_xlabel(f"BER Sample: {ber:.3E}")
         else:
-            self.ax_BER.plot(len(obj.scan_data) - 1, math.log10(ber))
+            self.ax_BER.plot(self.axis_X_Count, math.log10(ber))
 
 
 #------------------------------------------
@@ -313,6 +328,7 @@ class MyWidget(QtWidgets.QMainWindow):
 
     def update_plot(self):
         self.redraw_slot = True
+        self.yk_obj.yk_link_updates()
         self.canvas.draw_idle()
 
     def closeEvent(self, event):
@@ -351,6 +367,101 @@ class MyWidget(QtWidgets.QMainWindow):
         widget = QtWidgets.QWidget()
         widget.setLayout(layout)
         self.setCentralWidget(widget)
+
+
+#------------------------------------------------------------------------------------------
+def create_links_common(RXs, TXs):
+    global myLinks
+
+    print(f"Links_TXs: {TXs}")
+    print(f"Links_RXs: {RXs}")
+    myLinks = create_links(txs=TXs, rxs=RXs)
+
+    dbg_print = True
+    for link in myLinks:
+        print(f"\n----- {link.name} :: RX={link.rx} TX={link.tx} -------")
+        _, tx_pattern_report = link.tx.property.report(link.tx.property_for_alias[PATTERN]).popitem()
+        _, rx_pattern_report = link.rx.property.report(link.rx.property_for_alias[PATTERN]).popitem()
+        _, rx_loopback_report = link.tx.property.report(
+            link.rx.property_for_alias[RX_LOOPBACK]
+        ).popitem()
+
+        if dbg_print:
+            print(f"--> Valid values for TX pattern - {tx_pattern_report['Valid values']}")
+            print(f"--> Valid values for RX pattern - {rx_pattern_report['Valid values']}")
+            print(f"--> Valid values for RX loopback - {rx_loopback_report['Valid values']}")
+            print(f"\nlink.RX:  {link.rx} / {link.rx.parent} \tlink.TX:  {link.tx} / {link.tx.parent}\n")
+            dbg_print = False
+
+        props = {link.tx.property_for_alias[PATTERN]: "PRBS 31"}
+        link.tx.property.set(**props)
+        link.tx.property.commit(list(props.keys()))
+
+        props = {
+            link.rx.property_for_alias[PATTERN]: "PRBS 31",
+            link.rx.property_for_alias[RX_LOOPBACK]: "Near-End PMA",
+        }
+        link.rx.property.set(**props)
+        link.rx.property.commit(list(props.keys()))
+        print(f"\n--> Set both patterns to 'PRBS 31' & loopback to 'Near-End PMA' for {link}")
+
+        assert link.rx.pll.locked and link.tx.pll.locked
+        print(f"--> RX and TX PLLs are locked for {link}. Checking for link lock...")
+        assert link.status != "No link"
+        print(f"--> {link} is linked as expected")
+
+        #print(f"--> {link} properties:  BER={link.ber}  Count={link.bit_count}")
+
+#------------------------------------------
+"""
+    Self-looped onnection scheme (TCL_scripts/vpk120_ibert_ChMap_56G.tcl / 112G):
+            VPK120 QDD-1 cage <--------+
+                                       | QSFP-DD cable
+            VPK120 QDD-2 cage <--------+
+"""
+def create_links_selfLooped():
+    global q205, q204, q203, q202
+    pass
+
+
+#------------------------------------------
+"""
+    Cross-connected connection scheme (TCL_scripts/vpk120_ibert_ChMap2_56G.tcl / 112G):
+    
+            VPK120 (S/N 111)                             VPK120 (S/N 112)
+            QDD-1 cage <-------------------------------> cage QDD-1
+                            2x QSFP-DD 400G cables
+            QDD-2 cage <-------------------------------> cage QDD-2
+"""
+def create_links_crossConnected():
+    global q202, q203, q204, q205
+
+    RXs = list(); TXs = list();
+    for q in (q202, q203):
+        for ch in range(4):
+            RXs.append(q.gts[ch].rx)
+            TXs.append(q.gts[ch].tx)
+
+    for q, ch in ( (q204,0), (q204,2), (q205,0), (q205,2), (q204,1), (q204,3), (q205,1), (q205,3) ):
+        RXs.append(q.gts[ch].rx)
+        TXs.append(q.gts[ch].tx)
+
+    create_links_common(RXs, TXs)
+
+
+#------------------------------------------
+if CREATE_LGROUP:
+    q205 = one(ibert_gtm.gt_groups.filter_by(name="Quad_205"))
+    q204 = one(ibert_gtm.gt_groups.filter_by(name="Quad_204"))
+    q203 = one(ibert_gtm.gt_groups.filter_by(name="Quad_203"))
+    q202 = one(ibert_gtm.gt_groups.filter_by(name="Quad_202"))
+
+    create_links_crossConnected()
+
+    all_lnkgrps = get_all_link_groups()
+    all_links   = get_all_links()
+    print(f"\n--> All Link Groups available - {all_lnkgrps}")
+    print(f"\n--> All Links available - {all_links}")
 
 
 #------------------------------------------------------------------------------------------

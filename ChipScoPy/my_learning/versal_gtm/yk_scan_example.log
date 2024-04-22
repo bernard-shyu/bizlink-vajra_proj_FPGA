@@ -1,0 +1,428 @@
+=================================================================================================================================================================================================================================
+commit  
+Date   Mon Apr 22 
+       [SCOPY] real BER works
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+(.VENV) bernard@BXUTP-FPGA-Linux:~/SDK_WIP/project/vajra_proj_FPGA/ChipScoPy/my_learning/versal_gtm$ python yk_scan_example.py 
+PROGRAMMING_FILE: /home/bernard/.VENV/lib/python3.10/site-packages/chipscopy/examples/designs/vpk120/production/chipscopy_ced/chipscopy_wrapper.pdi
+Servers URL: TCP:10.20.2.145:3042 TCP:10.20.2.145:3121 HW: vpk120  Do_Programming: False
+
+
+
+                       ChipScoPy Version Information                       
+┌──────────────────────────────┬──────────────────────────────────────────┐
+│                       Entity │ Version                                  │
+├──────────────────────────────┼──────────────────────────────────────────┤
+│                    ChipScoPy │ ┌───────────┬──────────────────────┐     │
+│                              │ │ Attribute │ Value                │     │
+│                              │ ├───────────┼──────────────────────┤     │
+│                              │ │     Build │ 2023.2.1710645976    │     │
+│                              │ │ Timestamp │ Mar 17 2024-11:26:16 │     │
+│                              │ └───────────┴──────────────────────┘     │
+│                              │                                          │
+│ hw_server @ 10.20.2.145:3121 │ ┌───────────┬──────────────────────────┐ │
+│                              │ │ Attribute │ Value                    │ │
+│                              │ ├───────────┼──────────────────────────┤ │
+│                              │ │    Status │ Connected                │ │
+│                              │ │     Build │ 1707461461               │ │
+│                              │ │   Version │ 2023.2.2                 │ │
+│                              │ │ Timestamp │ Thu Feb  8 23:51:01 2024 │ │
+│                              │ └───────────┴──────────────────────────┘ │
+│                              │                                          │
+│ cs_server @ 10.20.2.145:3042 │ ┌───────────────┬──────────────────────┐ │
+│                              │ │     Attribute │ Value                │ │
+│                              │ ├───────────────┼──────────────────────┤ │
+│                              │ │        Status │ Connected            │ │
+│                              │ │         Build │ 1696910516           │ │
+│                              │ │       Version │ 2023.2.0             │ │
+│                              │ │     Timestamp │ Oct 10 2023-12:01:56 │ │
+│                              │ │       Package │ 2023.2.1696910516    │ │
+│                              │ │ Artifact type │ pyinstaller          │ │
+│                              │ └───────────────┴──────────────────────┘ │
+└──────────────────────────────┴──────────────────────────────────────────┘
+
+
+skipping programming
+Discovering debug cores...
+--> Found ['IBERT Versal GTM (IBERT_0)', 'IBERT Versal GTYP (IBERT_1)']
+
+IBERT Versal GTM
+├── Quad_206
+│   ├── PLL_0
+│   ├── PLL_1
+│   ├── CH_0
+│   │   ├── TX
+│   │   └── RX
+│   ├── CH_1
+│   │   ├── TX
+│   │   └── RX
+│   ├── CH_2
+│   │   ├── TX
+│   │   └── RX
+│   └── CH_3
+│       ├── TX
+│       └── RX
+├── Quad_205
+│   ├── PLL_0
+│   ├── PLL_1
+│   ├── CH_0
+│   │   ├── TX
+│   │   └── RX
+│   ├── CH_1
+│   │   ├── TX
+│   │   └── RX
+│   ├── CH_2
+│   │   ├── TX
+│   │   └── RX
+│   └── CH_3
+│       ├── TX
+│       └── RX
+├── Quad_204
+│   ├── PLL_0
+│   ├── PLL_1
+│   ├── CH_0
+│   │   ├── TX
+│   │   └── RX
+│   ├── CH_1
+│   │   ├── TX
+│   │   └── RX
+│   ├── CH_2
+│   │   ├── TX
+│   │   └── RX
+│   └── CH_3
+│       ├── TX
+│       └── RX
+├── Quad_203
+│   ├── PLL_0
+│   ├── PLL_1
+│   ├── CH_0
+│   │   ├── TX
+│   │   └── RX
+│   ├── CH_1
+│   │   ├── TX
+│   │   └── RX
+│   ├── CH_2
+│   │   ├── TX
+│   │   └── RX
+│   └── CH_3
+│       ├── TX
+│       └── RX
+└── Quad_202
+    ├── PLL_0
+    ├── PLL_1
+    ├── CH_0
+    │   ├── TX
+    │   └── RX
+    ├── CH_1
+    │   ├── TX
+    │   └── RX
+    ├── CH_2
+    │   ├── TX
+    │   └── RX
+    └── CH_3
+        ├── TX
+        └── RX
+--> GT Groups available - [
+    'IBERT_0.Quad_206(GT_Group)',
+    'IBERT_0.Quad_205(GT_Group)',
+    'IBERT_0.Quad_204(GT_Group)',
+    'IBERT_0.Quad_203(GT_Group)',
+    'IBERT_0.Quad_202(GT_Group)'
+]
+Links_TXs: [IBERT_0.Quad_202.CH_0.TX(TX), IBERT_0.Quad_202.CH_1.TX(TX), IBERT_0.Quad_202.CH_2.TX(TX), IBERT_0.Quad_202.CH_3.TX(TX), IBERT_0.Quad_203.CH_0.TX(TX), IBERT_0.Quad_203.CH_1.TX(TX), IBERT_0.Quad_203.CH_2.TX(TX), IBERT_0.Quad_203.CH_3.TX(TX), IBERT_0.Quad_204.CH_0.TX(TX), IBERT_0.Quad_204.CH_2.TX(TX), IBERT_0.Quad_205.CH_0.TX(TX), IBERT_0.Quad_205.CH_2.TX(TX), IBERT_0.Quad_204.CH_1.TX(TX), IBERT_0.Quad_204.CH_3.TX(TX), IBERT_0.Quad_205.CH_1.TX(TX), IBERT_0.Quad_205.CH_3.TX(TX)]
+Links_RXs: [IBERT_0.Quad_202.CH_0.RX(RX), IBERT_0.Quad_202.CH_1.RX(RX), IBERT_0.Quad_202.CH_2.RX(RX), IBERT_0.Quad_202.CH_3.RX(RX), IBERT_0.Quad_203.CH_0.RX(RX), IBERT_0.Quad_203.CH_1.RX(RX), IBERT_0.Quad_203.CH_2.RX(RX), IBERT_0.Quad_203.CH_3.RX(RX), IBERT_0.Quad_204.CH_0.RX(RX), IBERT_0.Quad_204.CH_2.RX(RX), IBERT_0.Quad_205.CH_0.RX(RX), IBERT_0.Quad_205.CH_2.RX(RX), IBERT_0.Quad_204.CH_1.RX(RX), IBERT_0.Quad_204.CH_3.RX(RX), IBERT_0.Quad_205.CH_1.RX(RX), IBERT_0.Quad_205.CH_3.RX(RX)]
+
+----- Link_0 :: RX=IBERT_0.Quad_202.CH_0.RX(RX) TX=IBERT_0.Quad_202.CH_0.TX(TX) -------
+--> Valid values for TX pattern - ['User Design', 'PRBS Disabled', 'PRBS 7', 'PRBS 9', 'PRBS 13', 'PRBS 15', 'PRBS 23', 'PRBS 31', 'QPRBS 9', 'QPRBS 13', 'QPRBS 15', 'QPRBS 23', 'QPRBS 31', 'PRBSQ 7', 'PRBSQ 9', 'PRBSQ 13', 'PRBSQ 15', 'PRBSQ 23', 'PRBSQ 31', 'Configurable data pattern', 'Square wave (2 * UI)', 'Square wave (Int data width * UI)']
+--> Valid values for RX pattern - ['User Design', 'PRBS Disabled', 'PRBS 7', 'PRBS 9', 'PRBS 13', 'PRBS 15', 'PRBS 23', 'PRBS 31', 'QPRBS 9', 'QPRBS 13', 'QPRBS 15', 'QPRBS 23', 'QPRBS 31', 'PRBSQ 7', 'PRBSQ 9', 'PRBSQ 13', 'PRBSQ 15', 'PRBSQ 23', 'PRBSQ 31', 'Configurable data pattern', 'Square wave (2 * UI)', 'Square wave (Int data width * UI)']
+--> Valid values for RX loopback - ['User Design', 'None', 'Near-End PCS', 'Far-End PCS', 'Near-End PMA', 'Far-End PMA']
+
+link.RX:  IBERT_0.Quad_202.CH_0.RX(RX) / IBERT_0.Quad_202.CH_0(GT) 	link.TX:  IBERT_0.Quad_202.CH_0.TX(TX) / IBERT_0.Quad_202.CH_0(GT)
+
+
+--> Set both patterns to 'PRBS 31' & loopback to 'Near-End PMA' for Link_0
+--> RX and TX PLLs are locked for Link_0. Checking for link lock...
+--> Link_0 is linked as expected
+
+----- Link_1 :: RX=IBERT_0.Quad_202.CH_1.RX(RX) TX=IBERT_0.Quad_202.CH_1.TX(TX) -------
+
+--> Set both patterns to 'PRBS 31' & loopback to 'Near-End PMA' for Link_1
+--> RX and TX PLLs are locked for Link_1. Checking for link lock...
+--> Link_1 is linked as expected
+
+----- Link_2 :: RX=IBERT_0.Quad_202.CH_2.RX(RX) TX=IBERT_0.Quad_202.CH_2.TX(TX) -------
+
+--> Set both patterns to 'PRBS 31' & loopback to 'Near-End PMA' for Link_2
+--> RX and TX PLLs are locked for Link_2. Checking for link lock...
+--> Link_2 is linked as expected
+
+----- Link_3 :: RX=IBERT_0.Quad_202.CH_3.RX(RX) TX=IBERT_0.Quad_202.CH_3.TX(TX) -------
+
+--> Set both patterns to 'PRBS 31' & loopback to 'Near-End PMA' for Link_3
+--> RX and TX PLLs are locked for Link_3. Checking for link lock...
+--> Link_3 is linked as expected
+
+----- Link_4 :: RX=IBERT_0.Quad_203.CH_0.RX(RX) TX=IBERT_0.Quad_203.CH_0.TX(TX) -------
+
+--> Set both patterns to 'PRBS 31' & loopback to 'Near-End PMA' for Link_4
+--> RX and TX PLLs are locked for Link_4. Checking for link lock...
+--> Link_4 is linked as expected
+
+----- Link_5 :: RX=IBERT_0.Quad_203.CH_1.RX(RX) TX=IBERT_0.Quad_203.CH_1.TX(TX) -------
+
+--> Set both patterns to 'PRBS 31' & loopback to 'Near-End PMA' for Link_5
+--> RX and TX PLLs are locked for Link_5. Checking for link lock...
+--> Link_5 is linked as expected
+
+----- Link_6 :: RX=IBERT_0.Quad_203.CH_2.RX(RX) TX=IBERT_0.Quad_203.CH_2.TX(TX) -------
+
+--> Set both patterns to 'PRBS 31' & loopback to 'Near-End PMA' for Link_6
+--> RX and TX PLLs are locked for Link_6. Checking for link lock...
+--> Link_6 is linked as expected
+
+----- Link_7 :: RX=IBERT_0.Quad_203.CH_3.RX(RX) TX=IBERT_0.Quad_203.CH_3.TX(TX) -------
+
+--> Set both patterns to 'PRBS 31' & loopback to 'Near-End PMA' for Link_7
+--> RX and TX PLLs are locked for Link_7. Checking for link lock...
+--> Link_7 is linked as expected
+
+----- Link_8 :: RX=IBERT_0.Quad_204.CH_0.RX(RX) TX=IBERT_0.Quad_204.CH_0.TX(TX) -------
+
+--> Set both patterns to 'PRBS 31' & loopback to 'Near-End PMA' for Link_8
+--> RX and TX PLLs are locked for Link_8. Checking for link lock...
+--> Link_8 is linked as expected
+
+----- Link_9 :: RX=IBERT_0.Quad_204.CH_2.RX(RX) TX=IBERT_0.Quad_204.CH_2.TX(TX) -------
+
+--> Set both patterns to 'PRBS 31' & loopback to 'Near-End PMA' for Link_9
+--> RX and TX PLLs are locked for Link_9. Checking for link lock...
+--> Link_9 is linked as expected
+
+----- Link_10 :: RX=IBERT_0.Quad_205.CH_0.RX(RX) TX=IBERT_0.Quad_205.CH_0.TX(TX) -------
+
+--> Set both patterns to 'PRBS 31' & loopback to 'Near-End PMA' for Link_10
+--> RX and TX PLLs are locked for Link_10. Checking for link lock...
+--> Link_10 is linked as expected
+
+----- Link_11 :: RX=IBERT_0.Quad_205.CH_2.RX(RX) TX=IBERT_0.Quad_205.CH_2.TX(TX) -------
+
+--> Set both patterns to 'PRBS 31' & loopback to 'Near-End PMA' for Link_11
+--> RX and TX PLLs are locked for Link_11. Checking for link lock...
+--> Link_11 is linked as expected
+
+----- Link_12 :: RX=IBERT_0.Quad_204.CH_1.RX(RX) TX=IBERT_0.Quad_204.CH_1.TX(TX) -------
+
+--> Set both patterns to 'PRBS 31' & loopback to 'Near-End PMA' for Link_12
+--> RX and TX PLLs are locked for Link_12. Checking for link lock...
+--> Link_12 is linked as expected
+
+----- Link_13 :: RX=IBERT_0.Quad_204.CH_3.RX(RX) TX=IBERT_0.Quad_204.CH_3.TX(TX) -------
+
+--> Set both patterns to 'PRBS 31' & loopback to 'Near-End PMA' for Link_13
+--> RX and TX PLLs are locked for Link_13. Checking for link lock...
+--> Link_13 is linked as expected
+
+----- Link_14 :: RX=IBERT_0.Quad_205.CH_1.RX(RX) TX=IBERT_0.Quad_205.CH_1.TX(TX) -------
+
+--> Set both patterns to 'PRBS 31' & loopback to 'Near-End PMA' for Link_14
+--> RX and TX PLLs are locked for Link_14. Checking for link lock...
+--> Link_14 is linked as expected
+
+----- Link_15 :: RX=IBERT_0.Quad_205.CH_3.RX(RX) TX=IBERT_0.Quad_205.CH_3.TX(TX) -------
+
+--> Set both patterns to 'PRBS 31' & loopback to 'Near-End PMA' for Link_15
+--> RX and TX PLLs are locked for Link_15. Checking for link lock...
+--> Link_15 is linked as expected
+
+--> All Link Groups available - [
+    
+]
+
+--> All Links available - [
+    'Link_0',
+    'Link_1',
+    'Link_2',
+    'Link_3',
+    'Link_4',
+    'Link_5',
+    'Link_6',
+    'Link_7',
+    'Link_8',
+    'Link_9',
+    'Link_10',
+    'Link_11',
+    'Link_12',
+    'Link_13',
+    'Link_14',
+    'Link_15'
+]
+Warning: Ignoring XDG_SESSION_TYPE=wayland on Gnome. Use QT_QPA_PLATFORM=wayland to run on Wayland anyway.
+QSocketNotifier: Can only be used with threads started with QThread
+--> GT Group channels - [
+    'IBERT_0.Quad_202.CH_0(GT)',
+    'IBERT_0.Quad_202.CH_1(GT)',
+    'IBERT_0.Quad_202.CH_2(GT)',
+    'IBERT_0.Quad_202.CH_3(GT)'
+]
+GT:Quad_202 CH:0::  RX='IBERT_0.Quad_202.CH_0.RX(RX)'  RX-link='Link_0'  RX-pll='IBERT_0.Quad_202.PLL_0(PLL/LCPLL0)' RX-yk_scan='YKScan_1' 
+GT:Quad_202 CH:0::  TX='IBERT_0.Quad_202.CH_0.TX(TX)'  TX-link='Link_0'  TX-pll='IBERT_0.Quad_202.PLL_0(PLL/LCPLL0)' 
+GT:Quad_202 CH:0::  SELF=<__main__.MyYKScan object at 0x6ffc84fd0910>  LINK='Link_0' values=(5.53485e-10, 53.121 Gbps, 53.109 Gbps, 6.221630e+14, 344353) 
+SELF=<__main__.MyYKScan object at 0x6ffc84fd0910>  LINK='Link_0' values=(5.533862e-10, 5.533817e-10, 53.109 Gbps, 53.109 Gbps, 6.222565e+14, 344353) 
+SELF=<__main__.MyYKScan object at 0x6ffc84fd0910>  LINK='Link_0' values=(5.532959e-10, 5.532907e-10, 53.121 Gbps, 53.109 Gbps, 6.223576e+14, 344353) 
+SELF=<__main__.MyYKScan object at 0x6ffc84fd0910>  LINK='Link_0' values=(5.531988e-10, 5.531932e-10, 53.109 Gbps, 53.109 Gbps, 6.224654e+14, 344353) 
+SELF=<__main__.MyYKScan object at 0x6ffc84fd0910>  LINK='Link_0' values=(5.531072e-10, 5.531026e-10, 53.109 Gbps, 53.121 Gbps, 6.225712e+14, 344353) 
+SELF=<__main__.MyYKScan object at 0x6ffc84fd0910>  LINK='Link_0' values=(5.530094e-10, 5.530050e-10, 53.109 Gbps, 53.109 Gbps, 6.226754e+14, 344353) 
+SELF=<__main__.MyYKScan object at 0x6ffc84fd0910>  LINK='Link_0' values=(5.529148e-10, 5.529089e-10, 53.109 Gbps, 53.121 Gbps, 6.227879e+14, 344353) 
+SELF=<__main__.MyYKScan object at 0x6ffc84fd0910>  LINK='Link_0' values=(5.528233e-10, 5.528184e-10, 53.121 Gbps, 53.109 Gbps, 6.228920e+14, 344353) 
+SELF=<__main__.MyYKScan object at 0x6ffc84fd0910>  LINK='Link_0' values=(5.527301e-10, 5.527247e-10, 53.121 Gbps, 53.109 Gbps, 6.229952e+14, 344353) 
+SELF=<__main__.MyYKScan object at 0x6ffc84fd0910>  LINK='Link_0' values=(5.526332e-10, 5.526289e-10, 53.109 Gbps, 53.109 Gbps, 6.231031e+14, 344353) 
+Close Widget & YK-Scan
+SELF=<__main__.MyYKScan object at 0x6ffc84fd0910>  LINK='Link_0' values=(5.496308e-10, 5.496278e-10, 53.109 Gbps, 53.121 Gbps, 6.265102e+14, 344353) 
+
+
+=================================================================================================================================================================================================================================
+commit effe42cc652b5c0d43ad65628240e395957b525a
+Date   Fri Apr 19 
+       [SCOPY] further on MyYKScan class
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+(.VENV) bernard@BXUTP-FPGA-Linux:~/SDK_WIP/project/vajra_proj_FPGA/ChipScoPy/my_learning/versal_gtm$ python yk_scan_example.last.py 
+PROGRAMMING_FILE: /home/bernard/.VENV/lib/python3.10/site-packages/chipscopy/examples/designs/vpk120/production/chipscopy_ced/chipscopy_wrapper.pdi
+Servers URL: TCP:10.20.2.145:3042 TCP:10.20.2.145:3121 HW: vpk120  Do_Programming: False
+
+
+
+                       ChipScoPy Version Information                       
+┌──────────────────────────────┬──────────────────────────────────────────┐
+│                       Entity │ Version                                  │
+├──────────────────────────────┼──────────────────────────────────────────┤
+│                    ChipScoPy │ ┌───────────┬──────────────────────┐     │
+│                              │ │ Attribute │ Value                │     │
+│                              │ ├───────────┼──────────────────────┤     │
+│                              │ │     Build │ 2023.2.1710645976    │     │
+│                              │ │ Timestamp │ Mar 17 2024-11:26:16 │     │
+│                              │ └───────────┴──────────────────────┘     │
+│                              │                                          │
+│ hw_server @ 10.20.2.145:3121 │ ┌───────────┬──────────────────────────┐ │
+│                              │ │ Attribute │ Value                    │ │
+│                              │ ├───────────┼──────────────────────────┤ │
+│                              │ │    Status │ Connected                │ │
+│                              │ │     Build │ 1707461461               │ │
+│                              │ │   Version │ 2023.2.2                 │ │
+│                              │ │ Timestamp │ Thu Feb  8 23:51:01 2024 │ │
+│                              │ └───────────┴──────────────────────────┘ │
+│                              │                                          │
+│ cs_server @ 10.20.2.145:3042 │ ┌───────────────┬──────────────────────┐ │
+│                              │ │     Attribute │ Value                │ │
+│                              │ ├───────────────┼──────────────────────┤ │
+│                              │ │        Status │ Connected            │ │
+│                              │ │         Build │ 1696910516           │ │
+│                              │ │       Version │ 2023.2.0             │ │
+│                              │ │     Timestamp │ Oct 10 2023-12:01:56 │ │
+│                              │ │       Package │ 2023.2.1696910516    │ │
+│                              │ │ Artifact type │ pyinstaller          │ │
+│                              │ └───────────────┴──────────────────────┘ │
+└──────────────────────────────┴──────────────────────────────────────────┘
+
+
+skipping programming
+Discovering debug cores...
+--> Found ['IBERT Versal GTM (IBERT_0)', 'IBERT Versal GTYP (IBERT_1)']
+
+IBERT Versal GTM
+├── Quad_206
+│   ├── PLL_0
+│   ├── PLL_1
+│   ├── CH_0
+│   │   ├── TX
+│   │   └── RX
+│   ├── CH_1
+│   │   ├── TX
+│   │   └── RX
+│   ├── CH_2
+│   │   ├── TX
+│   │   └── RX
+│   └── CH_3
+│       ├── TX
+│       └── RX
+├── Quad_205
+│   ├── PLL_0
+│   ├── PLL_1
+│   ├── CH_0
+│   │   ├── TX
+│   │   └── RX
+│   ├── CH_1
+│   │   ├── TX
+│   │   └── RX
+│   ├── CH_2
+│   │   ├── TX
+│   │   └── RX
+│   └── CH_3
+│       ├── TX
+│       └── RX
+├── Quad_204
+│   ├── PLL_0
+│   ├── PLL_1
+│   ├── CH_0
+│   │   ├── TX
+│   │   └── RX
+│   ├── CH_1
+│   │   ├── TX
+│   │   └── RX
+│   ├── CH_2
+│   │   ├── TX
+│   │   └── RX
+│   └── CH_3
+│       ├── TX
+│       └── RX
+├── Quad_203
+│   ├── PLL_0
+│   ├── PLL_1
+│   ├── CH_0
+│   │   ├── TX
+│   │   └── RX
+│   ├── CH_1
+│   │   ├── TX
+│   │   └── RX
+│   ├── CH_2
+│   │   ├── TX
+│   │   └── RX
+│   └── CH_3
+│       ├── TX
+│       └── RX
+└── Quad_202
+    ├── PLL_0
+    ├── PLL_1
+    ├── CH_0
+    │   ├── TX
+    │   └── RX
+    ├── CH_1
+    │   ├── TX
+    │   └── RX
+    ├── CH_2
+    │   ├── TX
+    │   └── RX
+    └── CH_3
+        ├── TX
+        └── RX
+--> GT Groups available - [
+    'IBERT_0.Quad_206(GT_Group)',
+    'IBERT_0.Quad_205(GT_Group)',
+    'IBERT_0.Quad_204(GT_Group)',
+    'IBERT_0.Quad_203(GT_Group)',
+    'IBERT_0.Quad_202(GT_Group)'
+]
+Warning: Ignoring XDG_SESSION_TYPE=wayland on Gnome. Use QT_QPA_PLATFORM=wayland to run on Wayland anyway.
+QSocketNotifier: Can only be used with threads started with QThread
+--> GT Group channels - [
+    'IBERT_0.Quad_202.CH_0(GT)',
+    'IBERT_0.Quad_202.CH_1(GT)',
+    'IBERT_0.Quad_202.CH_2(GT)',
+    'IBERT_0.Quad_202.CH_3(GT)'
+]
+GT:Quad_202 CH:0::  RX='IBERT_0.Quad_202.CH_0.RX(RX)'  RX-link='None'  RX-pll='IBERT_0.Quad_202.PLL_0(PLL/LCPLL0)' RX-yk_scan='YKScan_1' 
+GT:Quad_202 CH:0::  TX='IBERT_0.Quad_202.CH_0.TX(TX)'  TX-link='None'  TX-pll='IBERT_0.Quad_202.PLL_0(PLL/LCPLL0)' 
+Close Widget & YK-Scan
+
+=================================================================================================================================================================================================================================
