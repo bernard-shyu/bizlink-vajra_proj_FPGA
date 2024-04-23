@@ -1,5 +1,388 @@
 =================================================================================================================================================================================================================================
-commit  
+commit ???
+Date   Mon Apr 23 
+       [SCOPY] ???
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+=================================================================================================================================================================================================================================
+commit ???
+Date   Mon Apr 23 
+       [SCOPY] MyYKFigure inherit Figure, sliding scatter
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+(.VENV) bernard@BXUTP-FPGA-Linux:~/SDK_WIP/project/vajra_proj_FPGA/ChipScoPy/my_learning/versal_gtm$ python yk_scan_example.py 
+PROGRAMMING_FILE: /home/bernard/.VENV/lib/python3.10/site-packages/chipscopy/examples/designs/vpk120/production/chipscopy_ced/chipscopy_wrapper.pdi
+Servers URL: TCP:10.20.2.145:3042 TCP:10.20.2.145:3121 HW: vpk120  Do_Programming: False
+
+
+
+                       ChipScoPy Version Information                       
+┌──────────────────────────────┬──────────────────────────────────────────┐
+│                       Entity │ Version                                  │
+├──────────────────────────────┼──────────────────────────────────────────┤
+│                    ChipScoPy │ ┌───────────┬──────────────────────┐     │
+│                              │ │ Attribute │ Value                │     │
+│                              │ ├───────────┼──────────────────────┤     │
+│                              │ │     Build │ 2023.2.1710645976    │     │
+│                              │ │ Timestamp │ Mar 17 2024-11:26:16 │     │
+│                              │ └───────────┴──────────────────────┘     │
+│                              │                                          │
+│ hw_server @ 10.20.2.145:3121 │ ┌───────────┬──────────────────────────┐ │
+│                              │ │ Attribute │ Value                    │ │
+│                              │ ├───────────┼──────────────────────────┤ │
+│                              │ │    Status │ Connected                │ │
+│                              │ │     Build │ 1707461461               │ │
+│                              │ │   Version │ 2023.2.2                 │ │
+│                              │ │ Timestamp │ Thu Feb  8 23:51:01 2024 │ │
+│                              │ └───────────┴──────────────────────────┘ │
+│                              │                                          │
+│ cs_server @ 10.20.2.145:3042 │ ┌───────────────┬──────────────────────┐ │
+│                              │ │     Attribute │ Value                │ │
+│                              │ ├───────────────┼──────────────────────┤ │
+│                              │ │        Status │ Connected            │ │
+│                              │ │         Build │ 1696910516           │ │
+│                              │ │       Version │ 2023.2.0             │ │
+│                              │ │     Timestamp │ Oct 10 2023-12:01:56 │ │
+│                              │ │       Package │ 2023.2.1696910516    │ │
+│                              │ │ Artifact type │ pyinstaller          │ │
+│                              │ └───────────────┴──────────────────────┘ │
+└──────────────────────────────┴──────────────────────────────────────────┘
+
+
+skipping programming
+Discovering debug cores...
+--> Found ['IBERT Versal GTM (IBERT_0)', 'IBERT Versal GTYP (IBERT_1)']
+
+IBERT Versal GTM
+├── Quad_206
+│   ├── PLL_0
+│   ├── PLL_1
+│   ├── CH_0
+│   │   ├── TX
+│   │   └── RX
+│   ├── CH_1
+│   │   ├── TX
+│   │   └── RX
+│   ├── CH_2
+│   │   ├── TX
+│   │   └── RX
+│   └── CH_3
+│       ├── TX
+│       └── RX
+├── Quad_205
+│   ├── PLL_0
+│   ├── PLL_1
+│   ├── CH_0
+│   │   ├── TX
+│   │   └── RX
+│   ├── CH_1
+│   │   ├── TX
+│   │   └── RX
+│   ├── CH_2
+│   │   ├── TX
+│   │   └── RX
+│   └── CH_3
+│       ├── TX
+│       └── RX
+├── Quad_204
+│   ├── PLL_0
+│   ├── PLL_1
+│   ├── CH_0
+│   │   ├── TX
+│   │   └── RX
+│   ├── CH_1
+│   │   ├── TX
+│   │   └── RX
+│   ├── CH_2
+│   │   ├── TX
+│   │   └── RX
+│   └── CH_3
+│       ├── TX
+│       └── RX
+├── Quad_203
+│   ├── PLL_0
+│   ├── PLL_1
+│   ├── CH_0
+│   │   ├── TX
+│   │   └── RX
+│   ├── CH_1
+│   │   ├── TX
+│   │   └── RX
+│   ├── CH_2
+│   │   ├── TX
+│   │   └── RX
+│   └── CH_3
+│       ├── TX
+│       └── RX
+└── Quad_202
+    ├── PLL_0
+    ├── PLL_1
+    ├── CH_0
+    │   ├── TX
+    │   └── RX
+    ├── CH_1
+    │   ├── TX
+    │   └── RX
+    ├── CH_2
+    │   ├── TX
+    │   └── RX
+    └── CH_3
+        ├── TX
+        └── RX
+--> GT Groups available - [
+    'IBERT_0.Quad_206(GT_Group)',
+    'IBERT_0.Quad_205(GT_Group)',
+    'IBERT_0.Quad_204(GT_Group)',
+    'IBERT_0.Quad_203(GT_Group)',
+    'IBERT_0.Quad_202(GT_Group)'
+]
+Links_TXs: [IBERT_0.Quad_202.CH_0.TX(TX), IBERT_0.Quad_202.CH_1.TX(TX), IBERT_0.Quad_202.CH_2.TX(TX), IBERT_0.Quad_202.CH_3.TX(TX), IBERT_0.Quad_203.CH_0.TX(TX), IBERT_0.Quad_203.CH_1.TX(TX), IBERT_0.Quad_203.CH_2.TX(TX), IBERT_0.Quad_203.CH_3.TX(TX), IBERT_0.Quad_204.CH_0.TX(TX), IBERT_0.Quad_204.CH_2.TX(TX), IBERT_0.Quad_205.CH_0.TX(TX), IBERT_0.Quad_205.CH_2.TX(TX), IBERT_0.Quad_204.CH_1.TX(TX), IBERT_0.Quad_204.CH_3.TX(TX), IBERT_0.Quad_205.CH_1.TX(TX), IBERT_0.Quad_205.CH_3.TX(TX)]
+Links_RXs: [IBERT_0.Quad_202.CH_0.RX(RX), IBERT_0.Quad_202.CH_1.RX(RX), IBERT_0.Quad_202.CH_2.RX(RX), IBERT_0.Quad_202.CH_3.RX(RX), IBERT_0.Quad_203.CH_0.RX(RX), IBERT_0.Quad_203.CH_1.RX(RX), IBERT_0.Quad_203.CH_2.RX(RX), IBERT_0.Quad_203.CH_3.RX(RX), IBERT_0.Quad_204.CH_0.RX(RX), IBERT_0.Quad_204.CH_2.RX(RX), IBERT_0.Quad_205.CH_0.RX(RX), IBERT_0.Quad_205.CH_2.RX(RX), IBERT_0.Quad_204.CH_1.RX(RX), IBERT_0.Quad_204.CH_3.RX(RX), IBERT_0.Quad_205.CH_1.RX(RX), IBERT_0.Quad_205.CH_3.RX(RX)]
+
+----- Link_0 :: RX=IBERT_0.Quad_202.CH_0.RX(RX) TX=IBERT_0.Quad_202.CH_0.TX(TX) -------
+--> Valid values for TX pattern - ['User Design', 'PRBS Disabled', 'PRBS 7', 'PRBS 9', 'PRBS 13', 'PRBS 15', 'PRBS 23', 'PRBS 31', 'QPRBS 9', 'QPRBS 13', 'QPRBS 15', 'QPRBS 23', 'QPRBS 31', 'PRBSQ 7', 'PRBSQ 9', 'PRBSQ 13', 'PRBSQ 15', 'PRBSQ 23', 'PRBSQ 31', 'Configurable data pattern', 'Square wave (2 * UI)', 'Square wave (Int data width * UI)']
+--> Valid values for RX pattern - ['User Design', 'PRBS Disabled', 'PRBS 7', 'PRBS 9', 'PRBS 13', 'PRBS 15', 'PRBS 23', 'PRBS 31', 'QPRBS 9', 'QPRBS 13', 'QPRBS 15', 'QPRBS 23', 'QPRBS 31', 'PRBSQ 7', 'PRBSQ 9', 'PRBSQ 13', 'PRBSQ 15', 'PRBSQ 23', 'PRBSQ 31', 'Configurable data pattern', 'Square wave (2 * UI)', 'Square wave (Int data width * UI)']
+--> Valid values for RX loopback - ['User Design', 'None', 'Near-End PCS', 'Far-End PCS', 'Near-End PMA', 'Far-End PMA']
+
+link.RX:  IBERT_0.Quad_202.CH_0.RX(RX) / IBERT_0.Quad_202.CH_0(GT) 	link.TX:  IBERT_0.Quad_202.CH_0.TX(TX) / IBERT_0.Quad_202.CH_0(GT)
+
+
+--> Set both patterns to 'PRBS 31' & loopback to 'Near-End PMA' for Link_0
+--> RX and TX PLLs are locked for Link_0. Checking for link lock...
+--> Link_0 Link Status: '53.109 Gbps'
+
+----- Link_1 :: RX=IBERT_0.Quad_202.CH_1.RX(RX) TX=IBERT_0.Quad_202.CH_1.TX(TX) -------
+
+--> Set both patterns to 'PRBS 31' & loopback to 'Near-End PMA' for Link_1
+--> RX and TX PLLs are locked for Link_1. Checking for link lock...
+--> Link_1 Link Status: '53.121 Gbps'
+
+----- Link_2 :: RX=IBERT_0.Quad_202.CH_2.RX(RX) TX=IBERT_0.Quad_202.CH_2.TX(TX) -------
+
+--> Set both patterns to 'PRBS 31' & loopback to 'Near-End PMA' for Link_2
+--> RX and TX PLLs are locked for Link_2. Checking for link lock...
+--> Link_2 Link Status: '53.121 Gbps'
+
+----- Link_3 :: RX=IBERT_0.Quad_202.CH_3.RX(RX) TX=IBERT_0.Quad_202.CH_3.TX(TX) -------
+
+--> Set both patterns to 'PRBS 31' & loopback to 'Near-End PMA' for Link_3
+--> RX and TX PLLs are locked for Link_3. Checking for link lock...
+--> Link_3 Link Status: '53.109 Gbps'
+
+----- Link_4 :: RX=IBERT_0.Quad_203.CH_0.RX(RX) TX=IBERT_0.Quad_203.CH_0.TX(TX) -------
+
+--> Set both patterns to 'PRBS 31' & loopback to 'Near-End PMA' for Link_4
+--> RX and TX PLLs are locked for Link_4. Checking for link lock...
+--> Link_4 Link Status: '53.121 Gbps'
+
+----- Link_5 :: RX=IBERT_0.Quad_203.CH_1.RX(RX) TX=IBERT_0.Quad_203.CH_1.TX(TX) -------
+
+--> Set both patterns to 'PRBS 31' & loopback to 'Near-End PMA' for Link_5
+--> RX and TX PLLs are locked for Link_5. Checking for link lock...
+--> Link_5 Link Status: '53.109 Gbps'
+
+----- Link_6 :: RX=IBERT_0.Quad_203.CH_2.RX(RX) TX=IBERT_0.Quad_203.CH_2.TX(TX) -------
+
+--> Set both patterns to 'PRBS 31' & loopback to 'Near-End PMA' for Link_6
+--> RX and TX PLLs are locked for Link_6. Checking for link lock...
+--> Link_6 Link Status: '53.121 Gbps'
+
+----- Link_7 :: RX=IBERT_0.Quad_203.CH_3.RX(RX) TX=IBERT_0.Quad_203.CH_3.TX(TX) -------
+
+--> Set both patterns to 'PRBS 31' & loopback to 'Near-End PMA' for Link_7
+--> RX and TX PLLs are locked for Link_7. Checking for link lock...
+--> Link_7 Link Status: '53.109 Gbps'
+
+----- Link_8 :: RX=IBERT_0.Quad_204.CH_0.RX(RX) TX=IBERT_0.Quad_204.CH_0.TX(TX) -------
+
+--> Set both patterns to 'PRBS 31' & loopback to 'Near-End PMA' for Link_8
+--> RX and TX PLLs are locked for Link_8. Checking for link lock...
+--> Link_8 Link Status: '53.121 Gbps'
+
+----- Link_9 :: RX=IBERT_0.Quad_204.CH_2.RX(RX) TX=IBERT_0.Quad_204.CH_2.TX(TX) -------
+
+--> Set both patterns to 'PRBS 31' & loopback to 'Near-End PMA' for Link_9
+--> RX and TX PLLs are locked for Link_9. Checking for link lock...
+--> Link_9 Link Status: '53.109 Gbps'
+
+----- Link_10 :: RX=IBERT_0.Quad_205.CH_0.RX(RX) TX=IBERT_0.Quad_205.CH_0.TX(TX) -------
+
+--> Set both patterns to 'PRBS 31' & loopback to 'Near-End PMA' for Link_10
+--> RX and TX PLLs are locked for Link_10. Checking for link lock...
+--> Link_10 Link Status: '53.121 Gbps'
+
+----- Link_11 :: RX=IBERT_0.Quad_205.CH_2.RX(RX) TX=IBERT_0.Quad_205.CH_2.TX(TX) -------
+
+--> Set both patterns to 'PRBS 31' & loopback to 'Near-End PMA' for Link_11
+--> RX and TX PLLs are locked for Link_11. Checking for link lock...
+--> Link_11 Link Status: '53.121 Gbps'
+
+----- Link_12 :: RX=IBERT_0.Quad_204.CH_1.RX(RX) TX=IBERT_0.Quad_204.CH_1.TX(TX) -------
+
+--> Set both patterns to 'PRBS 31' & loopback to 'Near-End PMA' for Link_12
+--> RX and TX PLLs are locked for Link_12. Checking for link lock...
+--> Link_12 Link Status: '53.109 Gbps'
+
+----- Link_13 :: RX=IBERT_0.Quad_204.CH_3.RX(RX) TX=IBERT_0.Quad_204.CH_3.TX(TX) -------
+
+--> Set both patterns to 'PRBS 31' & loopback to 'Near-End PMA' for Link_13
+--> RX and TX PLLs are locked for Link_13. Checking for link lock...
+--> Link_13 Link Status: '53.109 Gbps'
+
+----- Link_14 :: RX=IBERT_0.Quad_205.CH_1.RX(RX) TX=IBERT_0.Quad_205.CH_1.TX(TX) -------
+
+--> Set both patterns to 'PRBS 31' & loopback to 'Near-End PMA' for Link_14
+--> RX and TX PLLs are locked for Link_14. Checking for link lock...
+--> Link_14 Link Status: '53.109 Gbps'
+
+----- Link_15 :: RX=IBERT_0.Quad_205.CH_3.RX(RX) TX=IBERT_0.Quad_205.CH_3.TX(TX) -------
+
+--> Set both patterns to 'PRBS 31' & loopback to 'Near-End PMA' for Link_15
+--> RX and TX PLLs are locked for Link_15. Checking for link lock...
+--> Link_15 Link Status: '53.109 Gbps'
+
+--> All Link Groups available - [
+    
+]
+
+--> All Links available - [
+    'Link_0',
+    'Link_1',
+    'Link_2',
+    'Link_3',
+    'Link_4',
+    'Link_5',
+    'Link_6',
+    'Link_7',
+    'Link_8',
+    'Link_9',
+    'Link_10',
+    'Link_11',
+    'Link_12',
+    'Link_13',
+    'Link_14',
+    'Link_15'
+]
+Warning: Ignoring XDG_SESSION_TYPE=wayland on Gnome. Use QT_QPA_PLATFORM=wayland to run on Wayland anyway.
+QSocketNotifier: Can only be used with threads started with QThread
+--> GT Group channels - [
+    'IBERT_0.Quad_202.CH_0(GT)',
+    'IBERT_0.Quad_202.CH_1(GT)',
+    'IBERT_0.Quad_202.CH_2(GT)',
+    'IBERT_0.Quad_202.CH_3(GT)'
+]
+GT:Quad_202 CH:0::  RX='IBERT_0.Quad_202.CH_0.RX(RX)'  RX-link='Link_0'  RX-pll='IBERT_0.Quad_202.PLL_0(PLL/LCPLL0)' RX-yk_scan='YKScan_1' 
+GT:Quad_202 CH:0::  TX='IBERT_0.Quad_202.CH_0.TX(TX)'  TX-link='Link_0'  TX-pll='IBERT_0.Quad_202.PLL_0(PLL/LCPLL0)' 
+GT:Quad_202 CH:0::  SELF=<__main__.MyYKScan object at 0x74a1c6de5c90>  LINK='Link_0' values=(3.373945e-08, 53.109 Gbps, 53.109 Gbps, 4.483520e+13, 1512359) 
+BXU: 1, (2000,), (2000,)
+BXU: 2, (4000,), (4000,)
+BXU: 3, (6000,), (6000,)
+BXU: 4, (8000,), (8000,)
+BXU: 5, (10000,), (10000,)
+BXU: 6, (12000,), (12000,)
+BXU: 7, (14000,), (14000,)
+SELF=<__main__.MyYKScan object at 0x74a1c6de5c90>  LINK='Link_0' values=(3.365511e-08, 3.365188e-08, 53.109 Gbps, 53.109 Gbps, 4.492859e+13, 1512359) 
+BXU: 8, (16000,), (16000,)
+BXU: 9, (18000,), (18000,)
+BXU: 10, (20000,), (20000,)
+BXU: 11, (22000,), (22000,)
+BXU: 12, (24000,), (24000,)
+BXU: 13, (26000,), (26000,)
+BXU: 14, (28000,), (28000,)
+SELF=<__main__.MyYKScan object at 0x74a1c6de5c90>  LINK='Link_0' values=(3.357605e-08, 3.357324e-08, 53.109 Gbps, 53.121 Gbps, 4.503402e+13, 1512359) 
+BXU: 15, (30000,), (30000,)
+BXU: 16, (32000,), (32000,)
+BXU: 17, (34000,), (34000,)
+BXU: 18, (36000,), (36000,)
+BXU: 19, (38000,), (38000,)
+BXU: 20, (40000,), (40000,)
+BXU: 21, (42000,), (42000,)
+SELF=<__main__.MyYKScan object at 0x74a1c6de5c90>  LINK='Link_0' values=(3.349884e-08, 3.349491e-08, 53.109 Gbps, 53.109 Gbps, 4.513952e+13, 1512359) 
+BXU: 22, (44000,), (44000,)
+BXU: 23, (46000,), (46000,)
+BXU: 24, (48000,), (48000,)
+BXU: 25, (50000,), (50000,)
+BXU: 26, (52000,), (52000,)
+BXU: 27, (54000,), (54000,)
+BXU: 28, (56000,), (56000,)
+BXU: 29, (58000,), (58000,)
+SELF=<__main__.MyYKScan object at 0x74a1c6de5c90>  LINK='Link_0' values=(3.341855e-08, 3.341428e-08, 53.121 Gbps, 53.109 Gbps, 4.524708e+13, 1512359) 
+BXU: 30, (60000,), (60000,)
+BXU: 31, (62000,), (62000,)
+BXU: 32, (64000,), (64000,)
+BXU: 33, (66000,), (66000,)
+BXU: 34, (68000,), (68000,)
+BXU: 35, (70000,), (70000,)
+SELF=<__main__.MyYKScan object at 0x74a1c6de5c90>  LINK='Link_0' values=(3.334123e-08, 3.333695e-08, 53.109 Gbps, 53.109 Gbps, 4.535154e+13, 1512359) 
+BXU: 36, (72000,), (72000,)
+BXU: 37, (74000,), (74000,)
+BXU: 38, (76000,), (76000,)
+BXU: 39, (78000,), (78000,)
+BXU: 40, (80000,), (80000,)
+BXU: 41, (82000,), (82000,)
+BXU: 42, (84000,), (84000,)
+SELF=<__main__.MyYKScan object at 0x74a1c6de5c90>  LINK='Link_0' values=(3.326287e-08, 3.326025e-08, 53.121 Gbps, 53.109 Gbps, 4.546087e+13, 1512359) 
+BXU: 43, (86000,), (86000,)
+BXU: 44, (88000,), (88000,)
+BXU: 45, (90000,), (90000,)
+BXU: 46, (92000,), (92000,)
+BXU: 47, (94000,), (94000,)
+BXU: 48, (96000,), (96000,)
+BXU: 49, (98000,), (98000,)
+BXU: 50, (100000,), (100000,)
+SELF=<__main__.MyYKScan object at 0x74a1c6de5c90>  LINK='Link_0' values=(3.31871e-08, 3.318309e-08, 53.121 Gbps, 53.121 Gbps, 4.556365e+13, 1512359) 
+BXU: 51, (102000,), (102000,)
+BXU: 52, (104000,), (104000,)
+BXU: 53, (106000,), (106000,)
+BXU: 54, (108000,), (108000,)
+BXU: 55, (110000,), (110000,)
+BXU: 56, (112000,), (112000,)
+SELF=<__main__.MyYKScan object at 0x74a1c6de5c90>  LINK='Link_0' values=(3.310795e-08, 3.310443e-08, 53.109 Gbps, 53.109 Gbps, 4.567074e+13, 1512359) 
+BXU: 57, (114000,), (114000,)
+BXU: 58, (116000,), (116000,)
+BXU: 59, (118000,), (118000,)
+BXU: 60, (120000,), (120000,)
+BXU: 61, (122000,), (122000,)
+BXU: 62, (124000,), (124000,)
+SELF=<__main__.MyYKScan object at 0x74a1c6de5c90>  LINK='Link_0' values=(3.303176e-08, 3.302818e-08, 53.121 Gbps, 53.109 Gbps, 4.577712e+13, 1512359) 
+BXU: 63, (126000,), (126000,)
+BXU: 64, (128000,), (128000,)
+BXU: 65, (130000,), (130000,)
+BXU: 66, (132000,), (132000,)
+BXU: 67, (134000,), (134000,)
+BXU: 68, (136000,), (136000,)
+BXU: 69, (138000,), (138000,)
+SELF=<__main__.MyYKScan object at 0x74a1c6de5c90>  LINK='Link_0' values=(3.29573e-08, 3.295333e-08, 53.121 Gbps, 53.109 Gbps, 4.588218e+13, 1512359) 
+BXU: 70, (140000,), (140000,)
+BXU: 71, (142000,), (142000,)
+BXU: 72, (144000,), (144000,)
+BXU: 73, (146000,), (146000,)
+BXU: 74, (148000,), (148000,)
+BXU: 75, (150000,), (150000,)
+BXU: 76, (152000,), (152000,)
+BXU: 77, (154000,), (154000,)
+SELF=<__main__.MyYKScan object at 0x74a1c6de5c90>  LINK='Link_0' values=(3.287707e-08, 3.287408e-08, 53.121 Gbps, 53.109 Gbps, 4.599071e+13, 1512359) 
+BXU: 78, (156000,), (156000,)
+BXU: 79, (158000,), (158000,)
+BXU: 80, (160000,), (160000,)
+BXU: 81, (162000,), (162000,)
+BXU: 82, (164000,), (164000,)
+BXU: 83, (166000,), (166000,)
+BXU: 84, (168000,), (168000,)
+BXU: 85, (170000,), (170000,)
+SELF=<__main__.MyYKScan object at 0x74a1c6de5c90>  LINK='Link_0' values=(3.280275e-08, 3.279996e-08, 53.121 Gbps, 53.109 Gbps, 4.609582e+13, 1512359) 
+BXU: 86, (172000,), (172000,)
+BXU: 87, (174000,), (174000,)
+BXU: 88, (176000,), (176000,)
+Close Widget & YK-Scan
+BXU: 89, (178000,), (178000,)
+
+
+
+=================================================================================================================================================================================================================================
+commit b05b6621a8095aa6aa83814e83fcb0f14f2028e6
 Date   Mon Apr 22 
        [SCOPY] real BER works
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -281,6 +664,7 @@ Close Widget & YK-Scan
 SELF=<__main__.MyYKScan object at 0x6ffc84fd0910>  LINK='Link_0' values=(5.496308e-10, 5.496278e-10, 53.109 Gbps, 53.121 Gbps, 6.265102e+14, 344353) 
 
 
+
 =================================================================================================================================================================================================================================
 commit effe42cc652b5c0d43ad65628240e395957b525a
 Date   Fri Apr 19 
@@ -424,5 +808,7 @@ QSocketNotifier: Can only be used with threads started with QThread
 GT:Quad_202 CH:0::  RX='IBERT_0.Quad_202.CH_0.RX(RX)'  RX-link='None'  RX-pll='IBERT_0.Quad_202.PLL_0(PLL/LCPLL0)' RX-yk_scan='YKScan_1' 
 GT:Quad_202 CH:0::  TX='IBERT_0.Quad_202.CH_0.TX(TX)'  TX-link='None'  TX-pll='IBERT_0.Quad_202.PLL_0(PLL/LCPLL0)' 
 Close Widget & YK-Scan
+
+
 
 =================================================================================================================================================================================================================================

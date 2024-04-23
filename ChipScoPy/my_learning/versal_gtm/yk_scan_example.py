@@ -36,6 +36,7 @@
 export ip="10.20.2.146";     export CS_SERVER_URL="TCP:$ip:3042" HW_SERVER_URL="TCP:$ip:3121"
 export HW_PLATFORM="vpk120"; export PROG_DEVICE=False; export CREATE_LGROUP=False
 export RESOLUTION_X=900;     export RESOLUTION_Y=800; 
+export SHOW_FIG_TITLE=True;  export MAX_SLICES=100;
 export QUAD_NAME="Quad_202"; export QUAD_CHAN=2;
 """
 
@@ -94,6 +95,9 @@ HW_URL = os.getenv("HW_SERVER_URL", "TCP:localhost:3121")
 HW_PLATFORM = os.getenv("HW_PLATFORM", "vpk120")
 PROG_DEVICE = os.getenv("PROG_DEVICE", 'True').lower() in ('true', '1', 't')
 CREATE_LGROUP = os.getenv("CREATE_LGROUP", 'True').lower() in ('true', '1', 't')
+
+MAX_SLICES   = int(os.getenv("MAX_SLICES", "200"))
+SHOW_FIG_TITLE = os.getenv("SHOW_FIG_TITLE", 'False').lower() in ('true', '1', 't')
 
 # The get_design_files() function tries to find the PDI and LTX files. In non-standard
 # configurations, you can put the path for PROGRAMMING_FILE and PROBES_FILE below.
@@ -167,7 +171,10 @@ print(f"--> GT Groups available - {ibert_gtm.gt_groups}")
 #------------------------------------------------------------------------------------------
 class MyYKScan():
     def __init__(self, gt_group, gt_chan):
-        self.fig = MyYKFigure(gt_group.name, True)
+        self.YKName = f"YK-{gt_group.name}[{gt_chan}]"
+        self.fig = plt.figure(FigureClass=MyYKFigure, layout='constrained', num=self.YKName, figsize=[12,10])
+        self.fig.init_YK_axes(self.YKName)
+
         self.RX  = gt_group.gts[gt_chan].rx
         self.TX  = gt_group.gts[gt_chan].tx
         self.PLL = gt_group.gts[gt_chan].pll
@@ -219,69 +226,95 @@ class MyYKScan():
         self.fig.update_yk_ber(self.ber)
 
 #------------------------------------------
-class MyYKFigure():
-
+class MyYKFigure(matplotlib.figure.Figure):
     # ## 8 - Run YK Scan
     #
     # Initialize the plots and start the YK Scan to begin updating the plots. 
     # YK Scan plot should contain three subplots, these plots should look something like:
     # ![yk_scan_example.png](./yk_scan_example.png)
     # Note: Depending on the hardware setup and external loopback connection, the plot might look different.
-    def __init__(self, name, show_title):
-        #This sets up the subplots necessary for the figure
-        self.figure = plt.figure(layout='constrained', num="YK" + name, figsize=[12,10])
+    def __init__(self, *args, **kwargs):
+        # Custom initialization logic (if needed)
+        super().__init__(*args, **kwargs)
 
+    def init_YK_axes(self, fig_name):
+        self.axis_X_Count = 0
+        self.axis_X_OFFSET = 0
+        self.YKSCAN_SLICER_SIZE = 2000
+        X_max = MAX_SLICES * self.YKSCAN_SLICER_SIZE 
+
+        # Initialize circular buffer
+        self.YKScan_slicer_buf = np.zeros((0, self.YKSCAN_SLICER_SIZE))  # Assuming 2D data (x, y)
+        self.scatter_X_data  = np.linspace( 0, X_max - 1, X_max )
+
+        # Each figure corresponds to a QUAD channel
+        self.suptitle(fig_name)
+
+        # axis of EYE diagram
         self.ax_EYE = plt.subplot2grid((3,2), (0,0), rowspan=2)
         self.ax_EYE.set_xlabel("ES Sample")
         self.ax_EYE.set_ylabel("Amplitude (%)")
-        self.ax_EYE.set_xlim(0,2000)
+        self.ax_EYE.set_xlim(0, MAX_SLICES * self.YKSCAN_SLICER_SIZE)
         self.ax_EYE.set_ylim(0,100)
         self.ax_EYE.set_yticks(range(0, 100, 20))
-        if show_title: self.ax_EYE.set_title("Slicer eye")
+        if SHOW_FIG_TITLE: self.ax_EYE.set_title("Slicer eye")
 
+        # Set custom x-axis labels (divide by 2000)
+        scatter_X_ticks  = self.scatter_X_data[0::int(X_max/10)]
+        scatter_X_labels = [f"{x/self.YKSCAN_SLICER_SIZE:.0f}" for x in scatter_X_ticks]
+        self.ax_EYE.set_xticks(scatter_X_ticks, scatter_X_labels)
+        self.scatter_plot_EYE = self.ax_EYE.scatter([], [], s=1, color='blue')
+
+        # axis of Histogram diagram
         self.ax_HIST = plt.subplot2grid((3,2), (0,1), rowspan=2)
         self.ax_HIST.set_xlabel("Count")
         self.ax_HIST.set_ylabel("Amplitude (%)")
-        self.ax_HIST.set_xlim(0,1000)
+        self.ax_HIST.set_xlim(0,500)
         self.ax_HIST.set_ylim(0,100)
         self.ax_HIST.set_yticks(range(0, 100, 20))
-        if show_title: self.ax_HIST.set_title("Histogram")
+        if SHOW_FIG_TITLE: self.ax_HIST.set_title("Histogram")
 
+        # axis of SNR diagram
         self.ax_SNR = plt.subplot(3,2,5)
         self.ax_SNR.set_xlabel("SNR Sample")
         self.ax_SNR.set_ylabel("SNR (dB)")
         self.ax_SNR.set_xlim(0,10)
         self.ax_SNR.set_ylim(-10,50)
-        if show_title: self.ax_SNR.set_title("Signal-to-Noise Ratio")
+        if SHOW_FIG_TITLE: self.ax_SNR.set_title("Signal-to-Noise Ratio")
 
+        # axis of BER diagram
         self.ax_BER = plt.subplot(3,2,6)
         self.ax_BER.set_xlabel("BER Sample")
         self.ax_BER.set_ylabel("log10")
         self.ax_BER.set_xlim(0,10)
         self.ax_BER.set_ylim(-1,-20)
-        if show_title: self.ax_BER.set_title("Bit-Error-Rate")
-        self.axis_X_Count = 0
+        if SHOW_FIG_TITLE: self.ax_BER.set_title("Bit-Error-Rate")
 
     # ## 6 - Define YK Scan Update Method
     # This method will be called each time the yk scan updates, allowing it to update its graphs in real time. 
     def update_yk_scan(self, obj):
 
-        self.axis_X_Count = len(obj.scan_data) - 1
-        if self.ax_EYE.lines:
-            for line in self.ax_EYE.lines:
-                line.set_xdata(range(len(obj.scan_data[-1].slicer)))
-                line.set_ydata(list(obj.scan_data[-1].slicer))
-        else:
-            #self.ax_EYE.cla()
-            self.ax_EYE.scatter(range(len(obj.scan_data[-1].slicer)), list(obj.scan_data[-1].slicer), s=1, color='blue')
+        self.axis_X_Count +=1      #  ==> len(obj.scan_data) - 1
+        assert self.YKSCAN_SLICER_SIZE == len(obj.scan_data[-1].slicer)
 
-        self.ax_EYE.set_xlabel("ES Sample:  ({}, {}) ({:.2f}, {:.2f})".format(self.axis_X_Count, len(obj.scan_data[-1].slicer),
-          obj.scan_data[-1].slicer[-1], obj.scan_data[-1].slicer[-2]))
+        # Update the circular buffer with new data.
+        self.YKScan_slicer_buf = np.append(self.YKScan_slicer_buf, [list(obj.scan_data[-1].slicer)], axis=0)          # append new data
+        if self.YKScan_slicer_buf.shape[0] > MAX_SLICES:
+            self.YKScan_slicer_buf = np.delete(self.YKScan_slicer_buf, 0, axis=0)                                     # remove oldest slice data
+            obj.scan_data.pop(0)
+        else:
+            self.axis_X_OFFSET += self.YKSCAN_SLICER_SIZE
+
+        # Update the scatter plot with data from the buffer.
+        print(f"BXU: {self.axis_X_Count}, {self.scatter_X_data[0:self.axis_X_OFFSET].shape}, {self.YKScan_slicer_buf.flatten().shape}")
+        self.scatter_plot_EYE.set_offsets(np.column_stack((self.scatter_X_data[0:self.axis_X_OFFSET], self.YKScan_slicer_buf.flatten())))  # Set new data points
+
+        self.ax_EYE.set_xlabel("ES Sample ({}): ({:.1f}, {:.1f}, {:.1f})".format(self.axis_X_Count, obj.scan_data[-1].slicer[-1], obj.scan_data[-1].slicer[-2], obj.scan_data[-1].slicer[-3]))
 
         if self.ax_HIST.lines:
             for line2 in self.ax_HIST.lines:
-                self.ax_HIST.set_xlim(0, self.ax_HIST.get_xlim()[1] + len(obj.scan_data[-1].slicer))
-                line2.set_xdata(list(line2.get_xdata()) + list(range(len(line2.get_xdata()), len(line2.get_xdata()) + len(obj.scan_data[-1].slicer))))
+                self.ax_HIST.set_xlim(0, self.ax_HIST.get_xlim()[1] + self.YKSCAN_SLICER_SIZE)
+                line2.set_xdata(list(line2.get_xdata()) + list(range(len(line2.get_xdata()), len(line2.get_xdata()) + self.YKSCAN_SLICER_SIZE)))
                 line2.set_ydata(list(line2.get_ydata()) + list(obj.scan_data[-1].slicer))
         else:
             #self.ax_HIST.cla()
@@ -290,9 +323,9 @@ class MyYKFigure():
         if self.ax_SNR.lines:
             for line3 in self.ax_SNR.lines:
                 if self.axis_X_Count > self.ax_SNR.get_xlim()[1]:
-                    self.ax_SNR.set_xlim(0, self.ax_SNR.get_xlim()[1]+10)
-                line3.set_xdata(list(line3.get_xdata()) + [self.axis_X_Count])
+                    self.ax_SNR.set_xlim(0, self.axis_X_Count+10)
                 val_snr =  obj.scan_data[-1].snr
+                line3.set_xdata(list(line3.get_xdata()) + [self.axis_X_Count])
                 line3.set_ydata(list(line3.get_ydata()) + [val_snr])
                 self.ax_SNR.set_xlabel(f"SNR Sample: {val_snr:.3f}")
         else:
@@ -303,7 +336,7 @@ class MyYKFigure():
         if self.ax_BER.lines:
             for line4 in self.ax_BER.lines:
                 if self.axis_X_Count  > self.ax_BER.get_xlim()[1]:
-                    self.ax_BER.set_xlim(0, self.ax_BER.get_xlim()[1]+10)
+                    self.ax_BER.set_xlim(0, self.axis_X_Count+10)
                 line4.set_xdata(list(line4.get_xdata()) + [self.axis_X_Count])
                 line4.set_ydata(list(line4.get_ydata()) + [math.log10(ber)])
                 self.ax_BER.set_xlabel(f"BER Sample: {ber:.3E}")
@@ -338,7 +371,7 @@ class MyWidget(QtWidgets.QMainWindow):
 
     def create_YKScan_figure(self, gt_group, gt_chan):
         self.yk_obj = MyYKScan(gt_group, gt_chan)
-        self.ui2(self.yk_obj.fig.figure)
+        self.ui2(self.yk_obj.fig)
         self.yk_obj.YK.start()
 
     def ui(self, fig):
@@ -407,8 +440,8 @@ def create_links_common(RXs, TXs):
 
         assert link.rx.pll.locked and link.tx.pll.locked
         print(f"--> RX and TX PLLs are locked for {link}. Checking for link lock...")
-        assert link.status != "No link"
-        print(f"--> {link} is linked as expected")
+        #assert link.status != "No link"
+        print(f"--> {link} Link Status: '{link.status}'")
 
         #print(f"--> {link} properties:  BER={link.ber}  Count={link.bit_count}")
 
