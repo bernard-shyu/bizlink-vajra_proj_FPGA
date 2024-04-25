@@ -10,6 +10,164 @@ Date   ???
 =================================================================================================================================================================================================================================
 commit ???
 Date   Thu Apr 25 
+       [SCOPY] debugging print with level control
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+(.VENV) bernard@BXUTP-FPGA-Linux:~/SDK_WIP/project/vajra_proj_FPGA/ChipScoPy$ ./HPC_Cable_BERT_YK_Scan.py 
+PROGRAMMING_FILE: ./VPK120_iBERT_2xQDD_56G.pdi
+Servers URL: TCP:10.20.2.145:3042 TCP:10.20.2.145:3121 HW: vpk120  Do_Programming: True
+
+
+
+                       ChipScoPy Version Information                       
+┌──────────────────────────────┬──────────────────────────────────────────┐
+│                       Entity │ Version                                  │
+├──────────────────────────────┼──────────────────────────────────────────┤
+│                    ChipScoPy │ ┌───────────┬──────────────────────┐     │
+│                              │ │ Attribute │ Value                │     │
+│                              │ ├───────────┼──────────────────────┤     │
+│                              │ │     Build │ 2023.2.1710645976    │     │
+│                              │ │ Timestamp │ Mar 17 2024-11:26:16 │     │
+│                              │ └───────────┴──────────────────────┘     │
+│                              │                                          │
+│ hw_server @ 10.20.2.145:3121 │ ┌───────────┬──────────────────────────┐ │
+│                              │ │ Attribute │ Value                    │ │
+│                              │ ├───────────┼──────────────────────────┤ │
+│                              │ │    Status │ Connected                │ │
+│                              │ │     Build │ 1707461461               │ │
+│                              │ │   Version │ 2023.2.2                 │ │
+│                              │ │ Timestamp │ Thu Feb  8 23:51:01 2024 │ │
+│                              │ └───────────┴──────────────────────────┘ │
+│                              │                                          │
+│ cs_server @ 10.20.2.145:3042 │ ┌───────────────┬──────────────────────┐ │
+│                              │ │     Attribute │ Value                │ │
+│                              │ ├───────────────┼──────────────────────┤ │
+│                              │ │        Status │ Connected            │ │
+│                              │ │         Build │ 1696910516           │ │
+│                              │ │       Version │ 2023.2.0             │ │
+│                              │ │     Timestamp │ Oct 10 2023-12:01:56 │ │
+│                              │ │       Package │ 2023.2.1696910516    │ │
+│                              │ │ Artifact type │ pyinstaller          │ │
+│                              │ └───────────────┴──────────────────────┘ │
+└──────────────────────────────┴──────────────────────────────────────────┘
+
+
+
+--> INFO: Programming device with: /mnt/extDisk/fpga_share/fpgaspace/VIVADO_projects/BZProj_iBERT_Testing/VPK120_iBERT_2xQDD_56G/VPK120_iBERT_2xQDD_56G.runs/impl_1/versal_ibert_wrapper.pdi
+    
+Device program progress ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% Done
+Discovering debug cores...
+--> Found ['IBERT Versal GTM (IBERT_0)', 'IBERT Versal GTYP (IBERT_1)']
+
+--> GT Groups available - [
+    'IBERT_0.Quad_206(GT_Group)',
+    'IBERT_0.Quad_205(GT_Group)',
+    'IBERT_0.Quad_204(GT_Group)',
+    'IBERT_0.Quad_203(GT_Group)',
+    'IBERT_0.Quad_202(GT_Group)'
+]
+Links_TXs: [IBERT_0.Quad_202.CH_0.TX(TX), IBERT_0.Quad_202.CH_1.TX(TX), IBERT_0.Quad_202.CH_2.TX(TX), IBERT_0.Quad_202.CH_3.TX(TX), IBERT_0.Quad_203.CH_0.TX(TX), IBERT_0.Quad_203.CH_1.TX(TX), IBERT_0.Quad_203.CH_2.TX(TX), IBERT_0.Quad_203.CH_3.TX(TX), IBERT_0.Quad_204.CH_0.TX(TX), IBERT_0.Quad_204.CH_2.TX(TX), IBERT_0.Quad_205.CH_0.TX(TX), IBERT_0.Quad_205.CH_2.TX(TX), IBERT_0.Quad_204.CH_1.TX(TX), IBERT_0.Quad_204.CH_3.TX(TX), IBERT_0.Quad_205.CH_1.TX(TX), IBERT_0.Quad_205.CH_3.TX(TX)]
+Links_RXs: [IBERT_0.Quad_202.CH_0.RX(RX), IBERT_0.Quad_202.CH_1.RX(RX), IBERT_0.Quad_202.CH_2.RX(RX), IBERT_0.Quad_202.CH_3.RX(RX), IBERT_0.Quad_203.CH_0.RX(RX), IBERT_0.Quad_203.CH_1.RX(RX), IBERT_0.Quad_203.CH_2.RX(RX), IBERT_0.Quad_203.CH_3.RX(RX), IBERT_0.Quad_204.CH_0.RX(RX), IBERT_0.Quad_204.CH_2.RX(RX), IBERT_0.Quad_205.CH_0.RX(RX), IBERT_0.Quad_205.CH_2.RX(RX), IBERT_0.Quad_204.CH_1.RX(RX), IBERT_0.Quad_204.CH_3.RX(RX), IBERT_0.Quad_205.CH_1.RX(RX), IBERT_0.Quad_205.CH_3.RX(RX)]
+
+----- Link_0 :: RX=IBERT_0.Quad_202.CH_0.RX(RX) TX=IBERT_0.Quad_202.CH_0.TX(TX)  GT=Quad_202 CH=0 -------
+
+----- Link_1 :: RX=IBERT_0.Quad_202.CH_1.RX(RX) TX=IBERT_0.Quad_202.CH_1.TX(TX)  GT=Quad_202 CH=1 -------
+
+----- Link_2 :: RX=IBERT_0.Quad_202.CH_2.RX(RX) TX=IBERT_0.Quad_202.CH_2.TX(TX)  GT=Quad_202 CH=2 -------
+
+----- Link_3 :: RX=IBERT_0.Quad_202.CH_3.RX(RX) TX=IBERT_0.Quad_202.CH_3.TX(TX)  GT=Quad_202 CH=3 -------
+
+----- Link_4 :: RX=IBERT_0.Quad_203.CH_0.RX(RX) TX=IBERT_0.Quad_203.CH_0.TX(TX)  GT=Quad_203 CH=0 -------
+
+----- Link_5 :: RX=IBERT_0.Quad_203.CH_1.RX(RX) TX=IBERT_0.Quad_203.CH_1.TX(TX)  GT=Quad_203 CH=1 -------
+
+----- Link_6 :: RX=IBERT_0.Quad_203.CH_2.RX(RX) TX=IBERT_0.Quad_203.CH_2.TX(TX)  GT=Quad_203 CH=2 -------
+
+----- Link_7 :: RX=IBERT_0.Quad_203.CH_3.RX(RX) TX=IBERT_0.Quad_203.CH_3.TX(TX)  GT=Quad_203 CH=3 -------
+
+----- Link_8 :: RX=IBERT_0.Quad_204.CH_0.RX(RX) TX=IBERT_0.Quad_204.CH_0.TX(TX)  GT=Quad_204 CH=0 -------
+
+----- Link_9 :: RX=IBERT_0.Quad_204.CH_2.RX(RX) TX=IBERT_0.Quad_204.CH_2.TX(TX)  GT=Quad_204 CH=2 -------
+
+----- Link_10 :: RX=IBERT_0.Quad_205.CH_0.RX(RX) TX=IBERT_0.Quad_205.CH_0.TX(TX)  GT=Quad_205 CH=0 -------
+
+----- Link_11 :: RX=IBERT_0.Quad_205.CH_2.RX(RX) TX=IBERT_0.Quad_205.CH_2.TX(TX)  GT=Quad_205 CH=2 -------
+
+----- Link_12 :: RX=IBERT_0.Quad_204.CH_1.RX(RX) TX=IBERT_0.Quad_204.CH_1.TX(TX)  GT=Quad_204 CH=1 -------
+
+----- Link_13 :: RX=IBERT_0.Quad_204.CH_3.RX(RX) TX=IBERT_0.Quad_204.CH_3.TX(TX)  GT=Quad_204 CH=3 -------
+
+----- Link_14 :: RX=IBERT_0.Quad_205.CH_1.RX(RX) TX=IBERT_0.Quad_205.CH_1.TX(TX)  GT=Quad_205 CH=1 -------
+
+----- Link_15 :: RX=IBERT_0.Quad_205.CH_3.RX(RX) TX=IBERT_0.Quad_205.CH_3.TX(TX)  GT=Quad_205 CH=3 -------
+Warning: Ignoring XDG_SESSION_TYPE=wayland on Gnome. Use QT_QPA_PLATFORM=wayland to run on Wayland anyway.
+QSocketNotifier: Can only be used with threads started with QThread
+GT:Quad_202 CH:0::  RX='IBERT_0.Quad_202.CH_0.RX(RX)'  RX-link='Link_0'  RX-pll='IBERT_0.Quad_202.PLL_0(PLL/LCPLL0)' RX-yk_scan='YKScan_1' 
+GT:Quad_202 CH:0::  TX='IBERT_0.Quad_202.CH_0.TX(TX)'  TX-link='Link_0'  TX-pll='IBERT_0.Quad_202.PLL_0(PLL/LCPLL0)' 
+GT:Quad_202 CH:0::  SELF=<__main__.MyYKScan object at 0x7726ba8a4af0>  LINK='Link_0' values=(2.367686e-09, 53.121 Gbps, 53.121 Gbps, 8.346507e+11, 1953) 
+GT:Quad_202 CH:1::  RX='IBERT_0.Quad_202.CH_1.RX(RX)'  RX-link='Link_1'  RX-pll='IBERT_0.Quad_202.PLL_0(PLL/LCPLL0)' RX-yk_scan='YKScan_2' 
+GT:Quad_202 CH:1::  TX='IBERT_0.Quad_202.CH_1.TX(TX)'  TX-link='Link_1'  TX-pll='IBERT_0.Quad_202.PLL_0(PLL/LCPLL0)' 
+GT:Quad_202 CH:1::  SELF=<__main__.MyYKScan object at 0x772695b94d00>  LINK='Link_1' values=(2.383237e-09, 53.109 Gbps, 53.109 Gbps, 8.604283e+11, 2025) 
+GT:Quad_202 CH:2::  RX='IBERT_0.Quad_202.CH_2.RX(RX)'  RX-link='Link_2'  RX-pll='IBERT_0.Quad_202.PLL_0(PLL/LCPLL0)' RX-yk_scan='YKScan_3' 
+GT:Quad_202 CH:2::  TX='IBERT_0.Quad_202.CH_2.TX(TX)'  TX-link='Link_2'  TX-pll='IBERT_0.Quad_202.PLL_0(PLL/LCPLL0)' 
+GT:Quad_202 CH:2::  SELF=<__main__.MyYKScan object at 0x7726953f3c70>  LINK='Link_2' values=(1.140968e-12, 53.121 Gbps, 53.109 Gbps, 8.876422e+11, 0) 
+GT:Quad_202 CH:3::  RX='IBERT_0.Quad_202.CH_3.RX(RX)'  RX-link='Link_3'  RX-pll='IBERT_0.Quad_202.PLL_0(PLL/LCPLL0)' RX-yk_scan='YKScan_4' 
+GT:Quad_202 CH:3::  TX='IBERT_0.Quad_202.CH_3.TX(TX)'  TX-link='Link_3'  TX-pll='IBERT_0.Quad_202.PLL_0(PLL/LCPLL0)' 
+GT:Quad_202 CH:3::  SELF=<__main__.MyYKScan object at 0x772694b2f100>  LINK='Link_3' values=(1.823839e-09, 53.121 Gbps, 53.121 Gbps, 9.102283e+11, 1643) 
+GT:Quad_203 CH:0::  RX='IBERT_0.Quad_203.CH_0.RX(RX)'  RX-link='Link_4'  RX-pll='IBERT_0.Quad_203.PLL_0(PLL/LCPLL0)' RX-yk_scan='YKScan_5' 
+GT:Quad_203 CH:0::  TX='IBERT_0.Quad_203.CH_0.TX(TX)'  TX-link='Link_4'  TX-pll='IBERT_0.Quad_203.PLL_0(PLL/LCPLL0)' 
+GT:Quad_203 CH:0::  SELF=<__main__.MyYKScan object at 0x772683fbcbb0>  LINK='Link_4' values=(1.752874e-09, 53.109 Gbps, 53.109 Gbps, 9.333087e+11, 1618) 
+GT:Quad_203 CH:1::  RX='IBERT_0.Quad_203.CH_1.RX(RX)'  RX-link='Link_5'  RX-pll='IBERT_0.Quad_203.PLL_0(PLL/LCPLL0)' RX-yk_scan='YKScan_6' 
+GT:Quad_203 CH:1::  TX='IBERT_0.Quad_203.CH_1.TX(TX)'  TX-link='Link_5'  TX-pll='IBERT_0.Quad_203.PLL_0(PLL/LCPLL0)' 
+GT:Quad_203 CH:1::  SELF=<__main__.MyYKScan object at 0x7726837efee0>  LINK='Link_5' values=(1.590762e-09, 53.121 Gbps, 53.109 Gbps, 9.614204e+11, 1510) 
+GT:Quad_203 CH:2::  RX='IBERT_0.Quad_203.CH_2.RX(RX)'  RX-link='Link_6'  RX-pll='IBERT_0.Quad_203.PLL_0(PLL/LCPLL0)' RX-yk_scan='YKScan_7' 
+GT:Quad_203 CH:2::  TX='IBERT_0.Quad_203.CH_2.TX(TX)'  TX-link='Link_6'  TX-pll='IBERT_0.Quad_203.PLL_0(PLL/LCPLL0)' 
+GT:Quad_203 CH:2::  SELF=<__main__.MyYKScan object at 0x7726802e5c30>  LINK='Link_6' values=(1.024673e-12, 53.109 Gbps, 53.109 Gbps, 9.894517e+11, 0) 
+GT:Quad_203 CH:3::  RX='IBERT_0.Quad_203.CH_3.RX(RX)'  RX-link='Link_7'  RX-pll='IBERT_0.Quad_203.PLL_0(PLL/LCPLL0)' RX-yk_scan='YKScan_8' 
+GT:Quad_203 CH:3::  TX='IBERT_0.Quad_203.CH_3.TX(TX)'  TX-link='Link_7'  TX-pll='IBERT_0.Quad_203.PLL_0(PLL/LCPLL0)' 
+GT:Quad_203 CH:3::  SELF=<__main__.MyYKScan object at 0x77267f433b80>  LINK='Link_7' values=(1.536972e-09, 53.121 Gbps, 53.109 Gbps, 1.017528e+12, 1543) 
+GT:Quad_204 CH:0::  RX='IBERT_0.Quad_204.CH_0.RX(RX)'  RX-link='Link_8'  RX-pll='IBERT_0.Quad_204.PLL_0(PLL/LCPLL0)' RX-yk_scan='YKScan_9' 
+GT:Quad_204 CH:0::  TX='IBERT_0.Quad_204.CH_0.TX(TX)'  TX-link='Link_8'  TX-pll='IBERT_0.Quad_204.PLL_0(PLL/LCPLL0)' 
+GT:Quad_204 CH:0::  SELF=<__main__.MyYKScan object at 0x77267f497970>  LINK='Link_8' values=(2.702476e-07, 53.109 Gbps, 53.109 Gbps, 1.045682e+12, 279598) 
+GT:Quad_204 CH:2::  RX='IBERT_0.Quad_204.CH_2.RX(RX)'  RX-link='Link_9'  RX-pll='IBERT_0.Quad_204.PLL_0(PLL/LCPLL0)' RX-yk_scan='YKScan_10' 
+GT:Quad_204 CH:2::  TX='IBERT_0.Quad_204.CH_2.TX(TX)'  TX-link='Link_9'  TX-pll='IBERT_0.Quad_204.PLL_0(PLL/LCPLL0)' 
+GT:Quad_204 CH:2::  SELF=<__main__.MyYKScan object at 0x77267f0e0d00>  LINK='Link_9' values=(1.039575e-05, 53.121 Gbps, 53.109 Gbps, 1.073809e+12, 11021357) 
+GT:Quad_205 CH:0::  RX='IBERT_0.Quad_205.CH_0.RX(RX)'  RX-link='Link_10'  RX-pll='IBERT_0.Quad_205.PLL_0(PLL/LCPLL0)' RX-yk_scan='YKScan_11' 
+GT:Quad_205 CH:0::  TX='IBERT_0.Quad_205.CH_0.TX(TX)'  TX-link='Link_10'  TX-pll='IBERT_0.Quad_205.PLL_0(PLL/LCPLL0)' 
+GT:Quad_205 CH:0::  SELF=<__main__.MyYKScan object at 0x77267e38c850>  LINK='Link_10' values=(1.343412e-08, 53.109 Gbps, 53.109 Gbps, 1.101801e+12, 14620) 
+GT:Quad_205 CH:2::  RX='IBERT_0.Quad_205.CH_2.RX(RX)'  RX-link='Link_11'  RX-pll='IBERT_0.Quad_205.PLL_0(PLL/LCPLL0)' RX-yk_scan='YKScan_12' 
+GT:Quad_205 CH:2::  TX='IBERT_0.Quad_205.CH_2.TX(TX)'  TX-link='Link_11'  TX-pll='IBERT_0.Quad_205.PLL_0(PLL/LCPLL0)' 
+GT:Quad_205 CH:2::  SELF=<__main__.MyYKScan object at 0x77267dde79d0>  LINK='Link_11' values=(3.781712e-09, 53.121 Gbps, 53.121 Gbps, 1.130125e+12, 4227) 
+GT:Quad_204 CH:1::  RX='IBERT_0.Quad_204.CH_1.RX(RX)'  RX-link='Link_12'  RX-pll='IBERT_0.Quad_204.PLL_0(PLL/LCPLL0)' RX-yk_scan='YKScan_13' 
+GT:Quad_204 CH:1::  TX='IBERT_0.Quad_204.CH_1.TX(TX)'  TX-link='Link_12'  TX-pll='IBERT_0.Quad_204.PLL_0(PLL/LCPLL0)' 
+GT:Quad_204 CH:1::  SELF=<__main__.MyYKScan object at 0x77267d803490>  LINK='Link_12' values=(2.54677e-08, 53.109 Gbps, 53.109 Gbps, 1.158118e+12, 29187) 
+GT:Quad_204 CH:3::  RX='IBERT_0.Quad_204.CH_3.RX(RX)'  RX-link='Link_13'  RX-pll='IBERT_0.Quad_204.PLL_0(PLL/LCPLL0)' RX-yk_scan='YKScan_14' 
+GT:Quad_204 CH:3::  TX='IBERT_0.Quad_204.CH_3.TX(TX)'  TX-link='Link_13'  TX-pll='IBERT_0.Quad_204.PLL_0(PLL/LCPLL0)' 
+GT:Quad_204 CH:3::  SELF=<__main__.MyYKScan object at 0x77267d71cf40>  LINK='Link_13' values=(1.103759e-08, 53.109 Gbps, 53.121 Gbps, 1.184992e+12, 12938) 
+GT:Quad_205 CH:1::  RX='IBERT_0.Quad_205.CH_1.RX(RX)'  RX-link='Link_14'  RX-pll='IBERT_0.Quad_205.PLL_0(PLL/LCPLL0)' RX-yk_scan='YKScan_15' 
+GT:Quad_205 CH:1::  TX='IBERT_0.Quad_205.CH_1.TX(TX)'  TX-link='Link_14'  TX-pll='IBERT_0.Quad_205.PLL_0(PLL/LCPLL0)' 
+GT:Quad_205 CH:1::  SELF=<__main__.MyYKScan object at 0x77267cb0e8f0>  LINK='Link_14' values=(1.315875e-08, 53.109 Gbps, 53.121 Gbps, 1.208017e+12, 15770) 
+GT:Quad_205 CH:3::  RX='IBERT_0.Quad_205.CH_3.RX(RX)'  RX-link='Link_15'  RX-pll='IBERT_0.Quad_205.PLL_0(PLL/LCPLL0)' RX-yk_scan='YKScan_16' 
+GT:Quad_205 CH:3::  TX='IBERT_0.Quad_205.CH_3.TX(TX)'  TX-link='Link_15'  TX-pll='IBERT_0.Quad_205.PLL_0(PLL/LCPLL0)' 
+GT:Quad_205 CH:3::  SELF=<__main__.MyYKScan object at 0x77267c8c8a30>  LINK='Link_15' values=(9.460246e-09, 53.121 Gbps, 53.109 Gbps, 1.234895e+12, 11588) 
+
+--> WARNING: Unhandled exception during YK scan update callback!
+    Exception - 
+
+--> WARNING: Unhandled exception during YK scan update callback!
+    Exception - 
+
+--> WARNING: Unhandled exception during YK scan update callback!
+    Exception - 
+
+--> WARNING: Unhandled exception during YK scan update callback!
+    Exception - 
+Killed
+
+
+
+=================================================================================================================================================================================================================================
+commit cd689d984d9843ec017fbdc73a7ceaf615ef5574
+Date   Thu Apr 25 
        [SCOPY] 16x iBERT-Links & matplotlib/PyQT works
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 

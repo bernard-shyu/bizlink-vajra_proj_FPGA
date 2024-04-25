@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+#------------------------------------------------------------------------------------------
 # ### License
 #------------------------------------------------------------------------------------------
 # Copyright (C) 2022, Xilinx, Inc.
@@ -39,6 +41,7 @@ export PLOT_1_RESOL_X=900;   export PLOT_1_RESOL_Y=800;  export PLOT_F_RESOL_X=3
 export PROG_DEVICE=True;     export PDI_FILE="./VPK120_iBERT_2xQDD_56G.pdi"
 export SHOW_FIG_TITLE=True;  export MAX_SLICES=100;
 export QUAD_NAME="Quad_202"; export QUAD_CHAN=2;
+export APP_DBG_LEVEL=5;
 """
 
 #------------------------------------------------------------------------------------------
@@ -72,6 +75,22 @@ import matplotlib
 matplotlib.use("Qt5Agg")      # 表示使用 Qt5
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas, NavigationToolbar2QT as NavigationToolbar
+
+#------------------------------------------------------------------------------------------
+# Print levels (default: info)
+#--------------------------------
+DBG_LEVEL_WIP    = -1   # working in progress, LEVEL to be defined later
+DBG_LEVEL_ERR    = 0
+DBG_LEVEL_WARN   = 1
+DBG_LEVEL_NOTICE = 2
+DBG_LEVEL_INFO   = 3
+DBG_LEVEL_DEBUG  = 4
+DBG_LEVEL_TRACE  = 5
+APP_DBG_LEVEL    = int(os.getenv("APP_DBG_LEVEL", "3"))
+#--------------------------------
+def BPrint(*args, level=DBG_LEVEL_INFO):
+    if level <= APP_DBG_LEVEL:
+        print(*args)
 
 #------------------------------------------------------------------------------------------
 # ## 2 - Create a session and connect to the hw_server and cs_server
@@ -110,11 +129,12 @@ design_files = get_design_files(f"{HW_PLATFORM}/production/chipscopy_ced")
 PDI_FILE = design_files.programming_file
 PDI_FILE = os.getenv("PDI_FILE", "./VPK120_iBERT_2xQDD_56G.pdi")
 
-print(f"PROGRAMMING_FILE: {PDI_FILE}")
-print(f"Servers URL: {CS_URL} {HW_URL} HW: {HW_PLATFORM}  Do_Programming: {PROG_DEVICE}\n")
+BPrint(f"PROGRAMMING_FILE: {PDI_FILE}", level=DBG_LEVEL_NOTICE)
+BPrint(f"Servers URL: {CS_URL} {HW_URL} HW: {HW_PLATFORM}  Do_Programming: {PROG_DEVICE}\n", level=DBG_LEVEL_NOTICE)
 
 session = create_session(cs_server_url=CS_URL, hw_server_url=HW_URL)
-report_versions(session)
+if DBG_LEVEL_INFO <= APP_DBG_LEVEL:
+    report_versions(session)
 
 # %% [markdown]
 # ## 3 - Program the device with the example design
@@ -127,7 +147,7 @@ device = session.devices.filter_by(family="versal").get()
 if PROG_DEVICE:
     device.program(PDI_FILE)
 else:
-    print("skipping programming")
+    BPrint("skipping programming", level=DBG_LEVEL_NOTICE)
 
 # %% [markdown]
 # ## 4 - Discover and setup the IBERT core
@@ -147,11 +167,11 @@ else:
 
 # Use the first available device and set up its debug cores
 
-print(f"Discovering debug cores...")
+BPrint(f"Discovering debug cores...", level=DBG_LEVEL_NOTICE)
 device.discover_and_setup_cores(ibert_scan=True)
 
 if len(device.ibert_cores) == 0:
-    print("No IBERT core found! Exiting...")
+    BPrint("No IBERT core found! Exiting...", level=DBG_LEVEL_ERR)
     exit()
 
 # %% [markdown]
@@ -160,18 +180,19 @@ if len(device.ibert_cores) == 0:
 
 # %%
 # Use the first available IBERT core from the device
-print(f"--> Found {[f'{ibert.name} ({ibert.handle})' for ibert in device.ibert_cores]}\n")
+BPrint(f"--> Found {[f'{ibert.name} ({ibert.handle})' for ibert in device.ibert_cores]}\n", level=DBG_LEVEL_NOTICE)
 
 ibert_gtm = one(device.ibert_cores.filter_by(name="IBERT Versal GTM"))
 
 if len(ibert_gtm.gt_groups) == 0:
-    print("No GT Groups available for use! Exiting...")
+    BPrint("No GT Groups available for use! Exiting...", level=DBG_LEVEL_WARN)
     exit()
 
 # We also ensure that all the quads instantiated by the ChipScoPy CED design are found by the APIs
-report_hierarchy(ibert_gtm)
-print(f"--> GT Groups available - {ibert_gtm.gt_groups}")
-#rint(f"==> GT Groups available - {[gt_group_obj.name for gt_group_obj in ibert_gtm.gt_groups]}")
+if DBG_LEVEL_DEBUG <= APP_DBG_LEVEL:
+    report_hierarchy(ibert_gtm)
+BPrint(f"--> GT Groups available - {ibert_gtm.gt_groups}", level=DBG_LEVEL_NOTICE)
+BPrint(f"==> GT Groups available - {[gt_group_obj.name for gt_group_obj in ibert_gtm.gt_groups]}", level=DBG_LEVEL_DEBUG)
 
 
 #------------------------------------------------------------------------------------------
@@ -200,9 +221,9 @@ class MyYKScan():
         self.ber   = self.link.ber
 
         #------------------------------------------------------------------------------
-        print(f"GT:{gt_group.name} CH:{gt_chan}::  RX='{self.RX}'  RX-link='{self.RX.link}'  RX-pll='{self.RX.pll}' RX-yk_scan='{self.RX.yk_scan}' ")
-        print(f"GT:{gt_group.name} CH:{gt_chan}::  TX='{self.TX}'  TX-link='{self.TX.link}'  TX-pll='{self.TX.pll}' ")
-        print(f"GT:{gt_group.name} CH:{gt_chan}::  SELF={self}  LINK='{self.link}' values=({self.link.ber}, {self.link.status}, {self.link.line_rate}, {self.link.bit_count}, {self.link.error_count}) ")
+        BPrint(f"GT:{gt_group.name} CH:{gt_chan}::  RX='{self.RX}'  RX-link='{self.RX.link}'  RX-pll='{self.RX.pll}' RX-yk_scan='{self.RX.yk_scan}' ", level=DBG_LEVEL_INFO)
+        BPrint(f"GT:{gt_group.name} CH:{gt_chan}::  TX='{self.TX}'  TX-link='{self.TX.link}'  TX-pll='{self.TX.pll}' ", level=DBG_LEVEL_INFO)
+        BPrint(f"GT:{gt_group.name} CH:{gt_chan}::  SELF={self}  LINK='{self.link}' values=({self.link.ber}, {self.link.status}, {self.link.line_rate}, {self.link.bit_count}, {self.link.error_count}) ", level=DBG_LEVEL_INFO)
         #       GT:Quad_202 CH:0::  RX='IBERT_0.Quad_202.CH_0.RX(RX)'  RX-link='None'  RX-pll='IBERT_0.Quad_202.PLL_0(PLL/LCPLL0)' RX-yk_scan='YKScan_1' 
         #       GT:Quad_202 CH:0::  TX='IBERT_0.Quad_202.CH_0.TX(TX)'  TX-link='None'  TX-pll='IBERT_0.Quad_202.PLL_0(PLL/LCPLL0)' 
         #------------------------------------------------------------------------------
@@ -215,7 +236,7 @@ class MyYKScan():
         self.ber         = self.link.ber                                                                                      # main BER read method: works
         #self.ber1       = self.link.rx.property_for_alias(RX_BER)                                                            # another BER method 1: not working
         #self.ber2       = list(self.link.rx.property.refresh(self.link.rx.property_for_alias[RX_BER]).values())[0]           # another BER method 2: works, almost the same value as <self.link.ber>
-        print(f"SELF={self}  LINK='{self.link}' values=({self.ber}, {self.status}, {self.line_rate}, {self.bit_count}, {self.error_count}) ")
+        BPrint(f"SELF={self}  LINK='{self.link}' values=({self.ber}, {self.status}, {self.line_rate}, {self.bit_count}, {self.error_count}) ", level=DBG_LEVEL_TRACE)
 
     # ## 6 - Define YK Scan Update Method
     def yk_scan_updates(self, obj):
@@ -329,9 +350,9 @@ class MyYKFigure(matplotlib.figure.Figure):
         # Update the scatter plot with data from the buffer.
         self.scatter_plot_EYE.set_offsets(np.column_stack((self.scatter_X_data[0:self.axis_X_OFFSET], self.YKScan_slicer_buf.flatten())))  # Set new data points
 
-        print("{}: samples#{:5d}  SHAPE: {} / {}   \t\tDATA: ({:.1f}, {:.1f}, {:.1f}, {:.1f})".format( self.fig_name,
+        BPrint("{}: samples#{:5d}  SHAPE: {} / {}   \t\tDATA: ({:.1f}, {:.1f}, {:.1f}, {:.1f})".format( self.fig_name,
            self.axis_X_Count, self.scatter_X_data[0:self.axis_X_OFFSET].shape, self.YKScan_slicer_buf.shape,
-           obj.scan_data[-1].slicer[-1], obj.scan_data[-1].slicer[-2], obj.scan_data[-1].slicer[-3], obj.scan_data[-1].slicer[-4]))
+           obj.scan_data[-1].slicer[-1], obj.scan_data[-1].slicer[-2], obj.scan_data[-1].slicer[-3], obj.scan_data[-1].slicer[-4]), level=DBG_LEVEL_TRACE)
         #self.ax_EYE.set_xlabel("ES Sample ({}): ({:.1f}, {:.1f}, {:.1f})".format(self.axis_X_Count, obj.scan_data[-1].slicer[-1], obj.scan_data[-1].slicer[-2], obj.scan_data[-1].slicer[-3]))
 
         if self.ax_HIST.lines:
@@ -344,16 +365,16 @@ class MyYKFigure(matplotlib.figure.Figure):
             #color: blue / green / teal / brown / charcoal / black / gray / silver / cyan / violet
             self.ax_HIST.hist(list(obj.scan_data[-1].slicer), 50, orientation = 'horizontal', color='cyan', stacked=True, range=(0,100))
 
+        val_snr =  obj.scan_data[-1].snr
         if self.ax_SNR.lines:
             for line3 in self.ax_SNR.lines:
                 if self.axis_X_Count > self.ax_SNR.get_xlim()[1]:
                     self.ax_SNR.set_xlim(0, self.axis_X_Count+10)
-                val_snr =  obj.scan_data[-1].snr
                 line3.set_xdata(list(line3.get_xdata()) + [self.axis_X_Count])
                 line3.set_ydata(list(line3.get_ydata()) + [val_snr])
                 #self.ax_SNR.set_xlabel(f"SNR Sample: {val_snr:.3f}")
         else:
-            self.ax_SNR.plot(self.axis_X_Count, obj.scan_data[-1].snr)
+            self.ax_SNR.plot(self.axis_X_Count, val_snr)
 
     def update_yk_ber(self, ber):
 
@@ -421,10 +442,12 @@ class MyWidget(QtWidgets.QMainWindow):
         self.layout_main.addWidget(self.tableWidget)
 
     def closeEvent(self, event):
-        print("Close Widget & YK-Scan")
+        BPrint("OnClose: to do YK.stop()", level=DBG_LEVEL_NOTICE)
         for c in self.canvases:
             c.ykobj.YK.stop() # Stops the YK scan from running.
+        BPrint("Closed YK-Scan", level=DBG_LEVEL_NOTICE)
         event.accept()  # Close the widget
+        BPrint("Closed Widget", level=DBG_LEVEL_NOTICE)
 
     def show_figures(self): 
         for c in self.canvases:
@@ -488,8 +511,8 @@ class MyWidget(QtWidgets.QMainWindow):
 def create_links_common(RXs, TXs):
     global myLinks
 
-    print(f"Links_TXs: {TXs}")
-    print(f"Links_RXs: {RXs}")
+    BPrint(f"Links_TXs: {TXs}", level=DBG_LEVEL_INFO)
+    BPrint(f"Links_RXs: {RXs}", level=DBG_LEVEL_INFO)
     myLinks = create_links(txs=TXs, rxs=RXs)
 
     dbg_print = True
@@ -497,7 +520,7 @@ def create_links_common(RXs, TXs):
         link.gt_name = re.findall(".*(Quad_[0-9]*).*", str(link.rx))[0]
         link.channel = int(re.findall(".*CH_([0-9]*).*", str(link.rx))[0])
         link.gt_grp  = ibert_gtm.gt_groups.filter_by(name=link.gt_name)[0]
-        print(f"\n----- {link.name} :: RX={link.rx} TX={link.tx}  GT={link.gt_name} CH={link.channel} -------")
+        BPrint(f"\n----- {link.name} :: RX={link.rx} TX={link.tx}  GT={link.gt_name} CH={link.channel} -------", level=DBG_LEVEL_INFO)
         _, tx_pattern_report = link.tx.property.report(link.tx.property_for_alias[PATTERN]).popitem()
         _, rx_pattern_report = link.rx.property.report(link.rx.property_for_alias[PATTERN]).popitem()
         _, rx_loopback_report = link.tx.property.report(
@@ -505,12 +528,13 @@ def create_links_common(RXs, TXs):
         ).popitem()
 
         if dbg_print:
-            print(f"--> Valid values for TX pattern - {tx_pattern_report['Valid values']}")
-            print(f"--> Valid values for RX pattern - {rx_pattern_report['Valid values']}")
-            print(f"--> Valid values for RX loopback - {rx_loopback_report['Valid values']}\n")
-            print(f"==> link.RX: {link.rx} / {link.rx.parent} RX_NAME={link.rx.name} GT_NAME={link.rx.parent.name} GT_alias={link.rx.parent.aliases} ")
-            print(f"==> link.TX: {link.tx} / {link.tx.parent} TX_NAME={link.tx.name} GT_NAME={link.tx.parent.name} GT_alias={link.tx.parent.aliases} ")
-            link.generate_report()
+            BPrint(f"--> Valid values for TX pattern - {tx_pattern_report['Valid values']}", level=DBG_LEVEL_DEBUG)
+            BPrint(f"--> Valid values for RX pattern - {rx_pattern_report['Valid values']}", level=DBG_LEVEL_DEBUG)
+            BPrint(f"--> Valid values for RX loopback - {rx_loopback_report['Valid values']}\n", level=DBG_LEVEL_DEBUG)
+            BPrint(f"==> link.RX: {link.rx} / {link.rx.parent} RX_NAME={link.rx.name} GT_NAME={link.rx.parent.name} GT_alias={link.rx.parent.aliases} ", level=DBG_LEVEL_DEBUG)
+            BPrint(f"==> link.TX: {link.tx} / {link.tx.parent} TX_NAME={link.tx.name} GT_NAME={link.tx.parent.name} GT_alias={link.tx.parent.aliases} ", level=DBG_LEVEL_DEBUG)
+            if DBG_LEVEL_TRACE <= APP_DBG_LEVEL:
+                link.generate_report()
             dbg_print = False
 
         props = {link.tx.property_for_alias[PATTERN]: "PRBS 31"}
@@ -523,14 +547,14 @@ def create_links_common(RXs, TXs):
         }
         link.rx.property.set(**props)
         link.rx.property.commit(list(props.keys()))
-        print(f"\n--> Set both patterns to 'PRBS 31' & loopback to 'Near-End PMA' for {link}")
+        BPrint(f"\n--> Set both patterns to 'PRBS 31' & loopback to 'Near-End PMA' for {link}", level=DBG_LEVEL_DEBUG)
 
         assert link.rx.pll.locked and link.tx.pll.locked
-        print(f"--> RX and TX PLLs are locked for {link}. Checking for link lock...")
+        BPrint(f"--> RX and TX PLLs are locked for {link}. Checking for link lock...", level=DBG_LEVEL_DEBUG)
         #assert link.status != "No link"
-        print(f"--> {link} Link Status: '{link.status}'")
+        BPrint(f"--> {link} Link Status: '{link.status}'", level=DBG_LEVEL_DEBUG)
 
-        #print(f"--> {link} properties:  BER={link.ber}  Count={link.bit_count}")
+        #BPrint(f"--> {link} properties:  BER={link.ber}  Count={link.bit_count}", level=DBG_LEVEL_DEBUG)
 
 #------------------------------------------
 """
@@ -581,8 +605,8 @@ if CREATE_LGROUP:
 
     all_lnkgrps = get_all_link_groups()
     all_links   = get_all_links()
-    print(f"\n--> All Link Groups available - {all_lnkgrps}")
-    print(f"\n--> All Links available - {all_links}")
+    BPrint(f"\n--> All Link Groups available - {all_lnkgrps}", level=DBG_LEVEL_DEBUG)
+    BPrint(f"\n--> All Links available - {all_links}", level=DBG_LEVEL_DEBUG)
 
 
 #------------------------------------------------------------------------------------------
@@ -597,7 +621,7 @@ if __name__ == '__main__':
             MainForm.create_YKScan_figure(link.gt_grp, link.channel)
     else:
         gt_group = ibert_gtm.gt_groups.filter_by(name=QUAD_NAME)[0]
-        print(f"--> GT Group channels - {gt_group.gts}")
+        BPrint(f"--> GT Group channels - {gt_group.gts}", level=DBG_LEVEL_INFO)
         MainForm.create_YKScan_figure(gt_group, QUAD_CHAN)
 
     MainForm.show_figures()
