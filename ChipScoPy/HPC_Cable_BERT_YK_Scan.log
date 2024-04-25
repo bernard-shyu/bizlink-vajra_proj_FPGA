@@ -1,14 +1,877 @@
 =================================================================================================================================================================================================================================
 commit ???
-Date   Mon Apr 23 
+Date   ??? 
        [SCOPY] ???
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
 
+
 =================================================================================================================================================================================================================================
 commit ???
-Date   Mon Apr 23 
+Date   Thu Apr 25 
+       [SCOPY] 16x iBERT-Links & matplotlib/PyQT works
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+(.VENV) bernard@BXUTP-FPGA-Linux:~/SDK_WIP/project/vajra_proj_FPGA/ChipScoPy$ export PROG_DEVICE=True;     export PDI_FILE="./VPK120_iBERT_2xQDD_56G.pdi"
+
+(.VENV) bernard@BXUTP-FPGA-Linux:~/SDK_WIP/project/vajra_proj_FPGA/ChipScoPy$ python HPC_Cable_BERT_YK_Scan.py 
+PROGRAMMING_FILE: ./VPK120_iBERT_2xQDD_56G.pdi
+Servers URL: TCP:10.20.2.145:3042 TCP:10.20.2.145:3121 HW: vpk120  Do_Programming: True
+
+
+
+                       ChipScoPy Version Information                       
+┌──────────────────────────────┬──────────────────────────────────────────┐
+│                       Entity │ Version                                  │
+├──────────────────────────────┼──────────────────────────────────────────┤
+│                    ChipScoPy │ ┌───────────┬──────────────────────┐     │
+│                              │ │ Attribute │ Value                │     │
+│                              │ ├───────────┼──────────────────────┤     │
+│                              │ │     Build │ 2023.2.1710645976    │     │
+│                              │ │ Timestamp │ Mar 17 2024-11:26:16 │     │
+│                              │ └───────────┴──────────────────────┘     │
+│                              │                                          │
+│ hw_server @ 10.20.2.145:3121 │ ┌───────────┬──────────────────────────┐ │
+│                              │ │ Attribute │ Value                    │ │
+│                              │ ├───────────┼──────────────────────────┤ │
+│                              │ │    Status │ Connected                │ │
+│                              │ │     Build │ 1707461461               │ │
+│                              │ │   Version │ 2023.2.2                 │ │
+│                              │ │ Timestamp │ Thu Feb  8 23:51:01 2024 │ │
+│                              │ └───────────┴──────────────────────────┘ │
+│                              │                                          │
+│ cs_server @ 10.20.2.145:3042 │ ┌───────────────┬──────────────────────┐ │
+│                              │ │     Attribute │ Value                │ │
+│                              │ ├───────────────┼──────────────────────┤ │
+│                              │ │        Status │ Connected            │ │
+│                              │ │         Build │ 1696910516           │ │
+│                              │ │       Version │ 2023.2.0             │ │
+│                              │ │     Timestamp │ Oct 10 2023-12:01:56 │ │
+│                              │ │       Package │ 2023.2.1696910516    │ │
+│                              │ │ Artifact type │ pyinstaller          │ │
+│                              │ └───────────────┴──────────────────────┘ │
+└──────────────────────────────┴──────────────────────────────────────────┘
+
+
+
+--> INFO: Programming device with: /mnt/extDisk/fpga_share/fpgaspace/VIVADO_projects/BZProj_iBERT_Testing/VPK120_iBERT_2xQDD_56G/VPK120_iBERT_2xQDD_56G.runs/impl_1/versal_ibert_wrapper.pdi
+    
+Device program progress ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% Done
+Discovering debug cores...
+--> Found ['IBERT Versal GTM (IBERT_0)', 'IBERT Versal GTYP (IBERT_1)']
+
+IBERT Versal GTM
+├── Quad_206
+│   ├── PLL_0
+│   ├── PLL_1
+│   ├── CH_0
+│   │   ├── TX
+│   │   └── RX
+│   ├── CH_1
+│   │   ├── TX
+│   │   └── RX
+│   ├── CH_2
+│   │   ├── TX
+│   │   └── RX
+│   └── CH_3
+│       ├── TX
+│       └── RX
+├── Quad_205
+│   ├── PLL_0
+│   ├── PLL_1
+│   ├── CH_0
+│   │   ├── TX
+│   │   └── RX
+│   ├── CH_1
+│   │   ├── TX
+│   │   └── RX
+│   ├── CH_2
+│   │   ├── TX
+│   │   └── RX
+│   └── CH_3
+│       ├── TX
+│       └── RX
+├── Quad_204
+│   ├── PLL_0
+│   ├── PLL_1
+│   ├── CH_0
+│   │   ├── TX
+│   │   └── RX
+│   ├── CH_1
+│   │   ├── TX
+│   │   └── RX
+│   ├── CH_2
+│   │   ├── TX
+│   │   └── RX
+│   └── CH_3
+│       ├── TX
+│       └── RX
+├── Quad_203
+│   ├── PLL_0
+│   ├── PLL_1
+│   ├── CH_0
+│   │   ├── TX
+│   │   └── RX
+│   ├── CH_1
+│   │   ├── TX
+│   │   └── RX
+│   ├── CH_2
+│   │   ├── TX
+│   │   └── RX
+│   └── CH_3
+│       ├── TX
+│       └── RX
+└── Quad_202
+    ├── PLL_0
+    ├── PLL_1
+    ├── CH_0
+    │   ├── TX
+    │   └── RX
+    ├── CH_1
+    │   ├── TX
+    │   └── RX
+    ├── CH_2
+    │   ├── TX
+    │   └── RX
+    └── CH_3
+        ├── TX
+        └── RX
+--> GT Groups available - [
+    'IBERT_0.Quad_206(GT_Group)',
+    'IBERT_0.Quad_205(GT_Group)',
+    'IBERT_0.Quad_204(GT_Group)',
+    'IBERT_0.Quad_203(GT_Group)',
+    'IBERT_0.Quad_202(GT_Group)'
+]
+Links_TXs: [IBERT_0.Quad_202.CH_0.TX(TX), IBERT_0.Quad_202.CH_1.TX(TX), IBERT_0.Quad_202.CH_2.TX(TX), IBERT_0.Quad_202.CH_3.TX(TX), IBERT_0.Quad_203.CH_0.TX(TX), IBERT_0.Quad_203.CH_1.TX(TX), IBERT_0.Quad_203.CH_2.TX(TX), IBERT_0.Quad_203.CH_3.TX(TX), IBERT_0.Quad_204.CH_0.TX(TX), IBERT_0.Quad_204.CH_2.TX(TX), IBERT_0.Quad_205.CH_0.TX(TX), IBERT_0.Quad_205.CH_2.TX(TX), IBERT_0.Quad_204.CH_1.TX(TX), IBERT_0.Quad_204.CH_3.TX(TX), IBERT_0.Quad_205.CH_1.TX(TX), IBERT_0.Quad_205.CH_3.TX(TX)]
+Links_RXs: [IBERT_0.Quad_202.CH_0.RX(RX), IBERT_0.Quad_202.CH_1.RX(RX), IBERT_0.Quad_202.CH_2.RX(RX), IBERT_0.Quad_202.CH_3.RX(RX), IBERT_0.Quad_203.CH_0.RX(RX), IBERT_0.Quad_203.CH_1.RX(RX), IBERT_0.Quad_203.CH_2.RX(RX), IBERT_0.Quad_203.CH_3.RX(RX), IBERT_0.Quad_204.CH_0.RX(RX), IBERT_0.Quad_204.CH_2.RX(RX), IBERT_0.Quad_205.CH_0.RX(RX), IBERT_0.Quad_205.CH_2.RX(RX), IBERT_0.Quad_204.CH_1.RX(RX), IBERT_0.Quad_204.CH_3.RX(RX), IBERT_0.Quad_205.CH_1.RX(RX), IBERT_0.Quad_205.CH_3.RX(RX)]
+
+----- Link_0 :: RX=IBERT_0.Quad_202.CH_0.RX(RX) TX=IBERT_0.Quad_202.CH_0.TX(TX)  GT=Quad_202 CH=0 -------
+--> Valid values for TX pattern - ['User Design', 'PRBS Disabled', 'PRBS 7', 'PRBS 9', 'PRBS 13', 'PRBS 15', 'PRBS 23', 'PRBS 31', 'QPRBS 9', 'QPRBS 13', 'QPRBS 15', 'QPRBS 23', 'QPRBS 31', 'PRBSQ 7', 'PRBSQ 9', 'PRBSQ 13', 'PRBSQ 15', 'PRBSQ 23', 'PRBSQ 31', 'Configurable data pattern', 'Square wave (2 * UI)', 'Square wave (Int data width * UI)']
+--> Valid values for RX pattern - ['User Design', 'PRBS Disabled', 'PRBS 7', 'PRBS 9', 'PRBS 13', 'PRBS 15', 'PRBS 23', 'PRBS 31', 'QPRBS 9', 'QPRBS 13', 'QPRBS 15', 'QPRBS 23', 'QPRBS 31', 'PRBSQ 7', 'PRBSQ 9', 'PRBSQ 13', 'PRBSQ 15', 'PRBSQ 23', 'PRBSQ 31', 'Configurable data pattern', 'Square wave (2 * UI)', 'Square wave (Int data width * UI)']
+--> Valid values for RX loopback - ['User Design', 'None', 'Near-End PCS', 'Far-End PCS', 'Near-End PMA', 'Far-End PMA']
+
+==> link.RX: IBERT_0.Quad_202.CH_0.RX(RX) / IBERT_0.Quad_202.CH_0(GT) RX_NAME=RX GT_NAME=CH_0 GT_alias={'PLL Type', 'PLL Source'} 
+==> link.TX: IBERT_0.Quad_202.CH_0.TX(TX) / IBERT_0.Quad_202.CH_0(GT) TX_NAME=TX GT_NAME=CH_0 GT_alias={'PLL Type', 'PLL Source'} 
+
+
+ Link "IBERT_0.Quad_202.CH_0.TX-->IBERT_0.Quad_202.CH_0.RX"  
+                           report                            
+┌────────────────────────────────┬──────────────────────────┐
+│                       Property │ Value                    │
+├────────────────────────────────┼──────────────────────────┤
+│                           Name │ Link_0                   │
+│                             RX │ IBERT_0.Quad_202.CH_0.RX │
+│                             TX │ IBERT_0.Quad_202.CH_0.TX │
+│                     Link Group │ None                     │
+│                                │                          │
+│                         RX BER │ N/A                      │
+│         RX RX USRCLK Frequency │ N/A                      │
+│         RX RX PHYCLK Frequency │ N/A                      │
+│                     RX Pattern │                          │
+│                 RX RX Polarity │                          │
+│                    RX PLL Type │ LCPLL0                   │
+│                  RX PLL Source │ PLL_0                    │
+│                       RX Reset │ N/A                      │
+│                      RX Status │ N/A                      │
+│                  RX Data Width │                          │
+│                    RX Loopback │                          │
+│                RX RX BER Reset │ N/A                      │
+│                   RX Line Rate │ N/A                      │
+│      RX USRCLK Frequency Count │ 0x0                      │
+│      RX PHYCLK Frequency Count │ 0x0                      │
+│         RX Internal Data Width │                          │
+│          RX Received Bit Count │ N/A                      │
+│ RX Pattern Checker Lock Status │                          │
+│ RX Pattern Checker Error Count │ N/A                      │
+│ RX Pattern Checker Cycle Count │ N/A                      │
+│                  RX Tx Pattern │                          │
+│                                │                          │
+│         TX TX USRCLK Frequency │ N/A                      │
+│         TX TX PHYCLK Frequency │ N/A                      │
+│                     TX Pattern │                          │
+│                       TX Reset │ N/A                      │
+│                 TX TX Polarity │                          │
+│                    TX PLL Type │ LCPLL0                   │
+│                  TX PLL Source │ PLL_0                    │
+│                  TX Data Width │                          │
+│                  TX Pre Cursor │                          │
+│                TX Pre Cursor 2 │                          │
+│                TX Pre Cursor 3 │                          │
+│                 TX Post Cursor │                          │
+│                 TX Main Cursor │                          │
+│      TX USRCLK Frequency Count │ 0x0                      │
+│      TX PHYCLK Frequency Count │ 0x0                      │
+│         TX Internal Data Width │                          │
+│                TX Inject Error │ N/A                      │
+│           TX Inject Error Mode │                          │
+│                    TX Loopback │                          │
+│                  TX Rx Pattern │                          │
+└────────────────────────────────┴──────────────────────────┘
+
+
+
+--> Set both patterns to 'PRBS 31' & loopback to 'Near-End PMA' for Link_0
+--> RX and TX PLLs are locked for Link_0. Checking for link lock...
+--> Link_0 Link Status: '53.121 Gbps'
+
+----- Link_1 :: RX=IBERT_0.Quad_202.CH_1.RX(RX) TX=IBERT_0.Quad_202.CH_1.TX(TX)  GT=Quad_202 CH=1 -------
+
+--> Set both patterns to 'PRBS 31' & loopback to 'Near-End PMA' for Link_1
+--> RX and TX PLLs are locked for Link_1. Checking for link lock...
+--> Link_1 Link Status: '53.121 Gbps'
+
+----- Link_2 :: RX=IBERT_0.Quad_202.CH_2.RX(RX) TX=IBERT_0.Quad_202.CH_2.TX(TX)  GT=Quad_202 CH=2 -------
+
+--> Set both patterns to 'PRBS 31' & loopback to 'Near-End PMA' for Link_2
+--> RX and TX PLLs are locked for Link_2. Checking for link lock...
+--> Link_2 Link Status: '53.109 Gbps'
+
+----- Link_3 :: RX=IBERT_0.Quad_202.CH_3.RX(RX) TX=IBERT_0.Quad_202.CH_3.TX(TX)  GT=Quad_202 CH=3 -------
+
+--> Set both patterns to 'PRBS 31' & loopback to 'Near-End PMA' for Link_3
+--> RX and TX PLLs are locked for Link_3. Checking for link lock...
+--> Link_3 Link Status: '53.109 Gbps'
+
+----- Link_4 :: RX=IBERT_0.Quad_203.CH_0.RX(RX) TX=IBERT_0.Quad_203.CH_0.TX(TX)  GT=Quad_203 CH=0 -------
+
+--> Set both patterns to 'PRBS 31' & loopback to 'Near-End PMA' for Link_4
+--> RX and TX PLLs are locked for Link_4. Checking for link lock...
+--> Link_4 Link Status: '53.109 Gbps'
+
+----- Link_5 :: RX=IBERT_0.Quad_203.CH_1.RX(RX) TX=IBERT_0.Quad_203.CH_1.TX(TX)  GT=Quad_203 CH=1 -------
+
+--> Set both patterns to 'PRBS 31' & loopback to 'Near-End PMA' for Link_5
+--> RX and TX PLLs are locked for Link_5. Checking for link lock...
+--> Link_5 Link Status: '53.109 Gbps'
+
+----- Link_6 :: RX=IBERT_0.Quad_203.CH_2.RX(RX) TX=IBERT_0.Quad_203.CH_2.TX(TX)  GT=Quad_203 CH=2 -------
+
+--> Set both patterns to 'PRBS 31' & loopback to 'Near-End PMA' for Link_6
+--> RX and TX PLLs are locked for Link_6. Checking for link lock...
+--> Link_6 Link Status: '53.109 Gbps'
+
+----- Link_7 :: RX=IBERT_0.Quad_203.CH_3.RX(RX) TX=IBERT_0.Quad_203.CH_3.TX(TX)  GT=Quad_203 CH=3 -------
+
+--> Set both patterns to 'PRBS 31' & loopback to 'Near-End PMA' for Link_7
+--> RX and TX PLLs are locked for Link_7. Checking for link lock...
+--> Link_7 Link Status: '53.121 Gbps'
+
+----- Link_8 :: RX=IBERT_0.Quad_204.CH_0.RX(RX) TX=IBERT_0.Quad_204.CH_0.TX(TX)  GT=Quad_204 CH=0 -------
+
+--> Set both patterns to 'PRBS 31' & loopback to 'Near-End PMA' for Link_8
+--> RX and TX PLLs are locked for Link_8. Checking for link lock...
+--> Link_8 Link Status: '53.109 Gbps'
+
+----- Link_9 :: RX=IBERT_0.Quad_204.CH_2.RX(RX) TX=IBERT_0.Quad_204.CH_2.TX(TX)  GT=Quad_204 CH=2 -------
+
+--> Set both patterns to 'PRBS 31' & loopback to 'Near-End PMA' for Link_9
+--> RX and TX PLLs are locked for Link_9. Checking for link lock...
+--> Link_9 Link Status: '53.121 Gbps'
+
+----- Link_10 :: RX=IBERT_0.Quad_205.CH_0.RX(RX) TX=IBERT_0.Quad_205.CH_0.TX(TX)  GT=Quad_205 CH=0 -------
+
+--> Set both patterns to 'PRBS 31' & loopback to 'Near-End PMA' for Link_10
+--> RX and TX PLLs are locked for Link_10. Checking for link lock...
+--> Link_10 Link Status: '53.121 Gbps'
+
+----- Link_11 :: RX=IBERT_0.Quad_205.CH_2.RX(RX) TX=IBERT_0.Quad_205.CH_2.TX(TX)  GT=Quad_205 CH=2 -------
+
+--> Set both patterns to 'PRBS 31' & loopback to 'Near-End PMA' for Link_11
+--> RX and TX PLLs are locked for Link_11. Checking for link lock...
+--> Link_11 Link Status: '53.109 Gbps'
+
+----- Link_12 :: RX=IBERT_0.Quad_204.CH_1.RX(RX) TX=IBERT_0.Quad_204.CH_1.TX(TX)  GT=Quad_204 CH=1 -------
+
+--> Set both patterns to 'PRBS 31' & loopback to 'Near-End PMA' for Link_12
+--> RX and TX PLLs are locked for Link_12. Checking for link lock...
+--> Link_12 Link Status: '53.109 Gbps'
+
+----- Link_13 :: RX=IBERT_0.Quad_204.CH_3.RX(RX) TX=IBERT_0.Quad_204.CH_3.TX(TX)  GT=Quad_204 CH=3 -------
+
+--> Set both patterns to 'PRBS 31' & loopback to 'Near-End PMA' for Link_13
+--> RX and TX PLLs are locked for Link_13. Checking for link lock...
+--> Link_13 Link Status: '53.109 Gbps'
+
+----- Link_14 :: RX=IBERT_0.Quad_205.CH_1.RX(RX) TX=IBERT_0.Quad_205.CH_1.TX(TX)  GT=Quad_205 CH=1 -------
+
+--> Set both patterns to 'PRBS 31' & loopback to 'Near-End PMA' for Link_14
+--> RX and TX PLLs are locked for Link_14. Checking for link lock...
+--> Link_14 Link Status: '53.109 Gbps'
+
+----- Link_15 :: RX=IBERT_0.Quad_205.CH_3.RX(RX) TX=IBERT_0.Quad_205.CH_3.TX(TX)  GT=Quad_205 CH=3 -------
+
+--> Set both patterns to 'PRBS 31' & loopback to 'Near-End PMA' for Link_15
+--> RX and TX PLLs are locked for Link_15. Checking for link lock...
+--> Link_15 Link Status: '53.121 Gbps'
+
+--> All Link Groups available - [
+    
+]
+
+--> All Links available - [
+    'Link_0',
+    'Link_1',
+    'Link_2',
+    'Link_3',
+    'Link_4',
+    'Link_5',
+    'Link_6',
+    'Link_7',
+    'Link_8',
+    'Link_9',
+    'Link_10',
+    'Link_11',
+    'Link_12',
+    'Link_13',
+    'Link_14',
+    'Link_15'
+]
+Warning: Ignoring XDG_SESSION_TYPE=wayland on Gnome. Use QT_QPA_PLATFORM=wayland to run on Wayland anyway.
+QSocketNotifier: Can only be used with threads started with QThread
+GT:Quad_202 CH:0::  RX='IBERT_0.Quad_202.CH_0.RX(RX)'  RX-link='Link_0'  RX-pll='IBERT_0.Quad_202.PLL_0(PLL/LCPLL0)' RX-yk_scan='YKScan_1' 
+GT:Quad_202 CH:0::  TX='IBERT_0.Quad_202.CH_0.TX(TX)'  TX-link='Link_0'  TX-pll='IBERT_0.Quad_202.PLL_0(PLL/LCPLL0)' 
+GT:Quad_202 CH:0::  SELF=<__main__.MyYKScan object at 0x7bfdf76bce80>  LINK='Link_0' values=(2.057341e-09, 53.121 Gbps, 53.121 Gbps, 9.030052e+11, 1833) 
+GT:Quad_202 CH:1::  RX='IBERT_0.Quad_202.CH_1.RX(RX)'  RX-link='Link_1'  RX-pll='IBERT_0.Quad_202.PLL_0(PLL/LCPLL0)' RX-yk_scan='YKScan_2' 
+GT:Quad_202 CH:1::  TX='IBERT_0.Quad_202.CH_1.TX(TX)'  TX-link='Link_1'  TX-pll='IBERT_0.Quad_202.PLL_0(PLL/LCPLL0)' 
+GT:Quad_202 CH:1::  SELF=<__main__.MyYKScan object at 0x7bfdf45772b0>  LINK='Link_1' values=(2.380592e-09, 53.109 Gbps, 53.109 Gbps, 9.304419e+11, 2189) 
+GT:Quad_202 CH:2::  RX='IBERT_0.Quad_202.CH_2.RX(RX)'  RX-link='Link_2'  RX-pll='IBERT_0.Quad_202.PLL_0(PLL/LCPLL0)' RX-yk_scan='YKScan_3' 
+GT:Quad_202 CH:2::  TX='IBERT_0.Quad_202.CH_2.TX(TX)'  TX-link='Link_2'  TX-pll='IBERT_0.Quad_202.PLL_0(PLL/LCPLL0)' 
+GT:Quad_202 CH:2::  SELF=<__main__.MyYKScan object at 0x7bfdca12d540>  LINK='Link_2' values=(3.08216e-09, 53.109 Gbps, 53.121 Gbps, 9.572161e+11, 2915) 
+GT:Quad_202 CH:3::  RX='IBERT_0.Quad_202.CH_3.RX(RX)'  RX-link='Link_3'  RX-pll='IBERT_0.Quad_202.PLL_0(PLL/LCPLL0)' RX-yk_scan='YKScan_4' 
+GT:Quad_202 CH:3::  TX='IBERT_0.Quad_202.CH_3.TX(TX)'  TX-link='Link_3'  TX-pll='IBERT_0.Quad_202.PLL_0(PLL/LCPLL0)' 
+GT:Quad_202 CH:3::  SELF=<__main__.MyYKScan object at 0x7bfdc89733a0>  LINK='Link_3' values=(1.482027e-09, 53.109 Gbps, 53.121 Gbps, 9.828736e+11, 1440) 
+GT:Quad_203 CH:0::  RX='IBERT_0.Quad_203.CH_0.RX(RX)'  RX-link='Link_4'  RX-pll='IBERT_0.Quad_203.PLL_0(PLL/LCPLL0)' RX-yk_scan='YKScan_5' 
+GT:Quad_203 CH:0::  TX='IBERT_0.Quad_203.CH_0.TX(TX)'  TX-link='Link_4'  TX-pll='IBERT_0.Quad_203.PLL_0(PLL/LCPLL0)' 
+GT:Quad_203 CH:0::  SELF=<__main__.MyYKScan object at 0x7bfdbde000a0>  LINK='Link_4' values=(1.505958e-09, 53.121 Gbps, 53.109 Gbps, 1.009493e+12, 1503) 
+GT:Quad_203 CH:1::  RX='IBERT_0.Quad_203.CH_1.RX(RX)'  RX-link='Link_5'  RX-pll='IBERT_0.Quad_203.PLL_0(PLL/LCPLL0)' RX-yk_scan='YKScan_6' 
+GT:Quad_203 CH:1::  TX='IBERT_0.Quad_203.CH_1.TX(TX)'  TX-link='Link_5'  TX-pll='IBERT_0.Quad_203.PLL_0(PLL/LCPLL0)' 
+GT:Quad_203 CH:1::  SELF=<__main__.MyYKScan object at 0x7bfdbda1c640>  LINK='Link_5' values=(1.592864e-09, 53.121 Gbps, 53.109 Gbps, 1.036893e+12, 1633) 
+GT:Quad_203 CH:2::  RX='IBERT_0.Quad_203.CH_2.RX(RX)'  RX-link='Link_6'  RX-pll='IBERT_0.Quad_203.PLL_0(PLL/LCPLL0)' RX-yk_scan='YKScan_7' 
+GT:Quad_203 CH:2::  TX='IBERT_0.Quad_203.CH_2.TX(TX)'  TX-link='Link_6'  TX-pll='IBERT_0.Quad_203.PLL_0(PLL/LCPLL0)' 
+GT:Quad_203 CH:2::  SELF=<__main__.MyYKScan object at 0x7bfdbd621600>  LINK='Link_6' values=(2.360051e-09, 53.109 Gbps, 53.109 Gbps, 1.064436e+12, 2481) 
+GT:Quad_203 CH:3::  RX='IBERT_0.Quad_203.CH_3.RX(RX)'  RX-link='Link_7'  RX-pll='IBERT_0.Quad_203.PLL_0(PLL/LCPLL0)' RX-yk_scan='YKScan_8' 
+GT:Quad_203 CH:3::  TX='IBERT_0.Quad_203.CH_3.TX(TX)'  TX-link='Link_7'  TX-pll='IBERT_0.Quad_203.PLL_0(PLL/LCPLL0)' 
+GT:Quad_203 CH:3::  SELF=<__main__.MyYKScan object at 0x7bfdbd054e80>  LINK='Link_7' values=(1.379717e-09, 53.121 Gbps, 53.121 Gbps, 1.092169e+12, 1490) 
+GT:Quad_204 CH:0::  RX='IBERT_0.Quad_204.CH_0.RX(RX)'  RX-link='Link_8'  RX-pll='IBERT_0.Quad_204.PLL_0(PLL/LCPLL0)' RX-yk_scan='YKScan_9' 
+GT:Quad_204 CH:0::  TX='IBERT_0.Quad_204.CH_0.TX(TX)'  TX-link='Link_8'  TX-pll='IBERT_0.Quad_204.PLL_0(PLL/LCPLL0)' 
+GT:Quad_204 CH:0::  SELF=<__main__.MyYKScan object at 0x7bfdbcc34940>  LINK='Link_8' values=(1.179643e-08, 53.109 Gbps, 53.121 Gbps, 1.120599e+12, 13084) 
+GT:Quad_204 CH:2::  RX='IBERT_0.Quad_204.CH_2.RX(RX)'  RX-link='Link_9'  RX-pll='IBERT_0.Quad_204.PLL_0(PLL/LCPLL0)' RX-yk_scan='YKScan_10' 
+GT:Quad_204 CH:2::  TX='IBERT_0.Quad_204.CH_2.TX(TX)'  TX-link='Link_9'  TX-pll='IBERT_0.Quad_204.PLL_0(PLL/LCPLL0)' 
+GT:Quad_204 CH:2::  SELF=<__main__.MyYKScan object at 0x7bfdbc8e3d60>  LINK='Link_9' values=(1.082128e-05, 53.121 Gbps, 53.109 Gbps, 1.146786e+12, 12286574) 
+GT:Quad_205 CH:0::  RX='IBERT_0.Quad_205.CH_0.RX(RX)'  RX-link='Link_10'  RX-pll='IBERT_0.Quad_205.PLL_0(PLL/LCPLL0)' RX-yk_scan='YKScan_11' 
+GT:Quad_205 CH:0::  TX='IBERT_0.Quad_205.CH_0.TX(TX)'  TX-link='Link_10'  TX-pll='IBERT_0.Quad_205.PLL_0(PLL/LCPLL0)' 
+GT:Quad_205 CH:0::  SELF=<__main__.MyYKScan object at 0x7bfdbc2239d0>  LINK='Link_10' values=(6.189973e-09, 53.121 Gbps, 53.121 Gbps, 1.173929e+12, 7191) 
+GT:Quad_205 CH:2::  RX='IBERT_0.Quad_205.CH_2.RX(RX)'  RX-link='Link_11'  RX-pll='IBERT_0.Quad_205.PLL_0(PLL/LCPLL0)' RX-yk_scan='YKScan_12' 
+GT:Quad_205 CH:2::  TX='IBERT_0.Quad_205.CH_2.TX(TX)'  TX-link='Link_11'  TX-pll='IBERT_0.Quad_205.PLL_0(PLL/LCPLL0)' 
+GT:Quad_205 CH:2::  SELF=<__main__.MyYKScan object at 0x7bfdbc2237f0>  LINK='Link_11' values=(9.330171e-09, 53.121 Gbps, 53.121 Gbps, 1.199754e+12, 11094) 
+GT:Quad_204 CH:1::  RX='IBERT_0.Quad_204.CH_1.RX(RX)'  RX-link='Link_12'  RX-pll='IBERT_0.Quad_204.PLL_0(PLL/LCPLL0)' RX-yk_scan='YKScan_13' 
+GT:Quad_204 CH:1::  TX='IBERT_0.Quad_204.CH_1.TX(TX)'  TX-link='Link_12'  TX-pll='IBERT_0.Quad_204.PLL_0(PLL/LCPLL0)' 
+GT:Quad_204 CH:1::  SELF=<__main__.MyYKScan object at 0x7bfdbb82bf70>  LINK='Link_12' values=(2.957355e-08, 53.121 Gbps, 53.109 Gbps, 1.225748e+12, 35940) 
+GT:Quad_204 CH:3::  RX='IBERT_0.Quad_204.CH_3.RX(RX)'  RX-link='Link_13'  RX-pll='IBERT_0.Quad_204.PLL_0(PLL/LCPLL0)' RX-yk_scan='YKScan_14' 
+GT:Quad_204 CH:3::  TX='IBERT_0.Quad_204.CH_3.TX(TX)'  TX-link='Link_13'  TX-pll='IBERT_0.Quad_204.PLL_0(PLL/LCPLL0)' 
+GT:Quad_204 CH:3::  SELF=<__main__.MyYKScan object at 0x7bfdbb3c9ea0>  LINK='Link_13' values=(2.158998e-08, 53.109 Gbps, 53.109 Gbps, 1.253417e+12, 26807) 
+GT:Quad_205 CH:1::  RX='IBERT_0.Quad_205.CH_1.RX(RX)'  RX-link='Link_14'  RX-pll='IBERT_0.Quad_205.PLL_0(PLL/LCPLL0)' RX-yk_scan='YKScan_15' 
+GT:Quad_205 CH:1::  TX='IBERT_0.Quad_205.CH_1.TX(TX)'  TX-link='Link_14'  TX-pll='IBERT_0.Quad_205.PLL_0(PLL/LCPLL0)' 
+GT:Quad_205 CH:1::  SELF=<__main__.MyYKScan object at 0x7bfdbae80280>  LINK='Link_14' values=(3.60818e-08, 53.109 Gbps, 53.121 Gbps, 1.279589e+12, 45730) 
+GT:Quad_205 CH:3::  RX='IBERT_0.Quad_205.CH_3.RX(RX)'  RX-link='Link_15'  RX-pll='IBERT_0.Quad_205.PLL_0(PLL/LCPLL0)' RX-yk_scan='YKScan_16' 
+GT:Quad_205 CH:3::  TX='IBERT_0.Quad_205.CH_3.TX(TX)'  TX-link='Link_15'  TX-pll='IBERT_0.Quad_205.PLL_0(PLL/LCPLL0)' 
+GT:Quad_205 CH:3::  SELF=<__main__.MyYKScan object at 0x7bfdbc4c33a0>  LINK='Link_15' values=(2.561038e-08, 53.109 Gbps, 53.121 Gbps, 1.306300e+12, 33211) 
+SELF=<__main__.MyYKScan object at 0x7bfdf76bce80>  LINK='Link_0' values=(1.379696e-09, 53.121 Gbps, 53.121 Gbps, 1.320194e+12, 1833) 
+YK-Quad_202[0]: samples#    1  SHAPE: (2000,) / (1, 2000)   		DATA: (14.2, 88.2, 15.7, 18.1)
+SELF=<__main__.MyYKScan object at 0x7bfdf45772b0>  LINK='Link_1' values=(1.621412e-09, 53.109 Gbps, 53.109 Gbps, 1.342850e+12, 2189) 
+YK-Quad_202[0]: samples#    2  SHAPE: (4000,) / (2, 2000)   		DATA: (85.8, 36.2, 32.3, 18.9)
+YK-Quad_202[1]: samples#    1  SHAPE: (2000,) / (1, 2000)   		DATA: (87.4, 35.4, 31.5, 15.0)
+YK-Quad_202[0]: samples#    3  SHAPE: (6000,) / (3, 2000)   		DATA: (15.0, 63.0, 68.5, 81.9)
+SELF=<__main__.MyYKScan object at 0x7bfdca12d540>  LINK='Link_2' values=(2.115956e-09, 53.109 Gbps, 53.109 Gbps, 1.369876e+12, 2915) 
+YK-Quad_202[1]: samples#    2  SHAPE: (4000,) / (2, 2000)   		DATA: (61.4, 13.4, 87.4, 36.2)
+YK-Quad_202[2]: samples#    1  SHAPE: (2000,) / (1, 2000)   		DATA: (66.1, 35.4, 64.6, 64.6)
+SELF=<__main__.MyYKScan object at 0x7bfdc89733a0>  LINK='Link_3' values=(1.020778e-09, 53.121 Gbps, 53.109 Gbps, 1.402827e+12, 1440) 
+YK-Quad_202[0]: samples#    4  SHAPE: (8000,) / (4, 2000)   		DATA: (13.4, 59.1, 15.0, 35.4)
+YK-Quad_202[1]: samples#    3  SHAPE: (6000,) / (3, 2000)   		DATA: (17.3, 14.2, 64.6, 69.3)
+YK-Quad_202[2]: samples#    2  SHAPE: (4000,) / (2, 2000)   		DATA: (65.4, 64.6, 13.4, 85.0)
+YK-Quad_202[3]: samples#    1  SHAPE: (2000,) / (1, 2000)   		DATA: (14.2, 86.6, 15.0, 61.4)
+SELF=<__main__.MyYKScan object at 0x7bfdbde000a0>  LINK='Link_4' values=(1.025862e-09, 53.121 Gbps, 53.121 Gbps, 1.455621e+12, 1503) 
+YK-Quad_202[1]: samples#    4  SHAPE: (8000,) / (4, 2000)   		DATA: (13.4, 30.7, 16.5, 15.7)
+YK-Quad_202[2]: samples#    3  SHAPE: (6000,) / (3, 2000)   		DATA: (15.7, 15.0, 60.6, 37.0)
+
+--> WARNING: Unhandled exception during YK scan update callback!
+    Exception - 
+YK-Quad_203[0]: samples#    1  SHAPE: (2000,) / (1, 2000)   		DATA: (85.0, 34.6, 18.1, 20.5)
+SELF=<__main__.MyYKScan object at 0x7bfdbda1c640>  LINK='Link_5' values=(1.089073e-09, 53.121 Gbps, 53.109 Gbps, 1.490602e+12, 1633) 
+YK-Quad_202[3]: samples#    2  SHAPE: (4000,) / (2, 2000)   		DATA: (15.7, 61.4, 37.8, 65.4)
+YK-Quad_203[0]: samples#    2  SHAPE: (4000,) / (2, 2000)   		DATA: (59.8, 15.7, 34.6, 82.7)
+YK-Quad_202[1]: samples#    5  SHAPE: (10000,) / (5, 2000)   		DATA: (82.7, 66.9, 11.8, 63.0)
+YK-Quad_203[1]: samples#    1  SHAPE: (2000,) / (1, 2000)   		DATA: (67.7, 64.6, 32.3, 16.5)
+YK-Quad_202[2]: samples#    4  SHAPE: (8000,) / (4, 2000)   		DATA: (67.7, 84.3, 37.0, 17.3)
+SELF=<__main__.MyYKScan object at 0x7bfdbd621600>  LINK='Link_6' values=(1.600619e-09, 53.109 Gbps, 53.109 Gbps, 1.538981e+12, 2481) 
+YK-Quad_203[0]: samples#    3  SHAPE: (6000,) / (3, 2000)   		DATA: (85.0, 34.6, 18.9, 19.7)
+YK-Quad_202[3]: samples#    3  SHAPE: (6000,) / (3, 2000)   		DATA: (17.3, 35.4, 85.8, 14.2)
+YK-Quad_203[1]: samples#    2  SHAPE: (4000,) / (2, 2000)   		DATA: (86.6, 37.8, 60.6, 15.7)
+YK-Quad_202[1]: samples#    6  SHAPE: (12000,) / (6, 2000)   		DATA: (37.8, 63.8, 37.0, 85.0)
+YK-Quad_203[2]: samples#    1  SHAPE: (2000,) / (1, 2000)   		DATA: (32.3, 15.0, 63.0, 64.6)
+YK-Quad_202[2]: samples#    5  SHAPE: (10000,) / (5, 2000)   		DATA: (34.6, 37.0, 86.6, 15.0)
+SELF=<__main__.MyYKScan object at 0x7bfdbd054e80>  LINK='Link_7' values=(9.247554e-10, 53.109 Gbps, 53.109 Gbps, 1.599428e+12, 1490) 
+YK-Quad_203[0]: samples#    4  SHAPE: (8000,) / (4, 2000)   		DATA: (66.1, 33.9, 32.3, 35.4)
+YK-Quad_202[3]: samples#    4  SHAPE: (8000,) / (4, 2000)   		DATA: (66.9, 64.6, 34.6, 15.7)
+YK-Quad_203[1]: samples#    3  SHAPE: (6000,) / (3, 2000)   		DATA: (86.6, 14.2, 59.8, 15.7)
+YK-Quad_202[1]: samples#    7  SHAPE: (14000,) / (7, 2000)   		DATA: (13.4, 33.9, 85.8, 34.6)
+YK-Quad_203[2]: samples#    2  SHAPE: (4000,) / (2, 2000)   		DATA: (36.2, 32.3, 15.0, 85.0)
+YK-Quad_202[2]: samples#    6  SHAPE: (12000,) / (6, 2000)   		DATA: (37.0, 65.4, 66.1, 64.6)
+YK-Quad_203[3]: samples#    1  SHAPE: (2000,) / (1, 2000)   		DATA: (35.4, 15.7, 84.3, 40.2)
+YK-Quad_202[3]: samples#    5  SHAPE: (10000,) / (5, 2000)   		DATA: (79.5, 82.7, 67.7, 13.4)
+SELF=<__main__.MyYKScan object at 0x7bfdbcc34940>  LINK='Link_8' values=(7.706381e-09, 53.109 Gbps, 53.109 Gbps, 1.682470e+12, 13084) 
+YK-Quad_203[1]: samples#    4  SHAPE: (8000,) / (4, 2000)   		DATA: (18.9, 17.3, 33.9, 87.4)
+YK-Quad_202[1]: samples#    8  SHAPE: (16000,) / (8, 2000)   		DATA: (66.1, 33.9, 33.9, 35.4)
+YK-Quad_204[0]: samples#    1  SHAPE: (2000,) / (1, 2000)   		DATA: (65.4, 34.6, 33.9, 34.6)
+SELF=<__main__.MyYKScan object at 0x7bfdbc8e3d60>  LINK='Link_9' values=(7.060727e-06, 53.121 Gbps, 53.121 Gbps, 1.727845e+12, 12286574) 
+YK-Quad_203[2]: samples#    3  SHAPE: (6000,) / (3, 2000)   		DATA: (33.9, 36.2, 85.0, 65.4)
+YK-Quad_202[2]: samples#    7  SHAPE: (14000,) / (7, 2000)   		DATA: (16.5, 33.1, 85.0, 40.2)
+
+--> WARNING: Unhandled exception during YK scan update callback!
+    Exception - 
+YK-Quad_203[3]: samples#    2  SHAPE: (4000,) / (2, 2000)   		DATA: (85.8, 67.7, 15.0, 63.0)
+YK-Quad_202[3]: samples#    6  SHAPE: (12000,) / (6, 2000)   		DATA: (85.0, 33.9, 18.1, 17.3)
+YK-Quad_204[0]: samples#    2  SHAPE: (4000,) / (2, 2000)   		DATA: (85.0, 66.9, 64.6, 15.7)
+YK-Quad_203[1]: samples#    5  SHAPE: (10000,) / (5, 2000)   		DATA: (64.6, 85.8, 14.2, 85.8)
+SELF=<__main__.MyYKScan object at 0x7bfdbc2239d0>  LINK='Link_10' values=(3.966851e-09, 53.109 Gbps, 53.121 Gbps, 1.798632e+12, 7191) 
+YK-Quad_202[1]: samples#    9  SHAPE: (18000,) / (9, 2000)   		DATA: (64.6, 37.0, 67.7, 85.0)
+YK-Quad_204[2]: samples#    1  SHAPE: (2000,) / (1, 2000)   		DATA: (67.7, 84.3, 13.4, 65.4)
+YK-Quad_203[2]: samples#    4  SHAPE: (8000,) / (4, 2000)   		DATA: (80.3, 81.1, 81.9, 38.6)
+YK-Quad_202[2]: samples#    8  SHAPE: (16000,) / (8, 2000)   		DATA: (63.0, 15.0, 32.3, 33.1)
+YK-Quad_204[0]: samples#    3  SHAPE: (6000,) / (3, 2000)   		DATA: (17.3, 32.3, 62.2, 16.5)
+YK-Quad_205[0]: samples#    1  SHAPE: (2000,) / (1, 2000)   		DATA: (17.3, 15.7, 63.0, 81.1)
+SELF=<__main__.MyYKScan object at 0x7bfdbc2237f0>  LINK='Link_11' values=(5.958314e-09, 53.109 Gbps, 53.121 Gbps, 1.849215e+12, 11094) 
+YK-Quad_203[3]: samples#    3  SHAPE: (6000,) / (3, 2000)   		DATA: (38.6, 34.6, 85.0, 35.4)
+YK-Quad_202[3]: samples#    7  SHAPE: (14000,) / (7, 2000)   		DATA: (67.7, 66.1, 38.6, 85.0)
+YK-Quad_204[2]: samples#    2  SHAPE: (4000,) / (2, 2000)   		DATA: (31.5, 15.0, 87.4, 13.4)
+YK-Quad_203[1]: samples#    6  SHAPE: (12000,) / (6, 2000)   		DATA: (68.5, 83.5, 36.2, 33.1)
+YK-Quad_202[1]: samples#   10  SHAPE: (20000,) / (10, 2000)   		DATA: (31.5, 14.2, 60.6, 14.2)
+YK-Quad_205[0]: samples#    2  SHAPE: (4000,) / (2, 2000)   		DATA: (83.5, 82.7, 38.6, 33.9)
+YK-Quad_204[0]: samples#    4  SHAPE: (8000,) / (4, 2000)   		DATA: (83.5, 66.9, 66.9, 81.9)
+YK-Quad_203[2]: samples#    5  SHAPE: (10000,) / (5, 2000)   		DATA: (17.3, 30.7, 17.3, 30.7)
+YK-Quad_202[2]: samples#    9  SHAPE: (18000,) / (9, 2000)   		DATA: (61.4, 14.2, 86.6, 15.0)
+YK-Quad_205[2]: samples#    1  SHAPE: (2000,) / (1, 2000)   		DATA: (82.7, 41.7, 81.9, 79.5)
+YK-Quad_204[2]: samples#    3  SHAPE: (6000,) / (3, 2000)   		DATA: (33.9, 82.7, 83.5, 40.9)
+SELF=<__main__.MyYKScan object at 0x7bfdbb82bf70>  LINK='Link_12' values=(1.851237e-08, 53.121 Gbps, 53.109 Gbps, 1.928018e+12, 35940) 
+YK-Quad_203[3]: samples#    4  SHAPE: (8000,) / (4, 2000)   		DATA: (85.8, 12.6, 62.2, 69.3)
+YK-Quad_202[3]: samples#    8  SHAPE: (16000,) / (8, 2000)   		DATA: (67.7, 66.1, 33.1, 16.5)
+YK-Quad_205[0]: samples#    3  SHAPE: (6000,) / (3, 2000)   		DATA: (85.8, 41.7, 85.0, 15.0)
+YK-Quad_204[0]: samples#    5  SHAPE: (10000,) / (5, 2000)   		DATA: (65.4, 36.2, 34.6, 63.0)
+YK-Quad_203[1]: samples#    7  SHAPE: (14000,) / (7, 2000)   		DATA: (86.6, 36.2, 32.3, 17.3)
+YK-Quad_202[1]: samples#   11  SHAPE: (22000,) / (11, 2000)   		DATA: (15.0, 59.8, 12.6, 85.8)
+YK-Quad_205[2]: samples#    2  SHAPE: (4000,) / (2, 2000)   		DATA: (62.2, 15.7, 84.3, 65.4)
+YK-Quad_204[1]: samples#    1  SHAPE: (2000,) / (1, 2000)   		DATA: (81.9, 67.7, 63.8, 38.6)
+SELF=<__main__.MyYKScan object at 0x7bfdbb3c9ea0>  LINK='Link_13' values=(1.333649e-08, 53.121 Gbps, 53.121 Gbps, 1.996926e+12, 26807) 
+YK-Quad_203[2]: samples#    6  SHAPE: (12000,) / (6, 2000)   		DATA: (31.5, 33.1, 32.3, 15.0)
+YK-Quad_202[2]: samples#   10  SHAPE: (20000,) / (10, 2000)   		DATA: (85.0, 13.4, 85.8, 68.5)
+YK-Quad_205[0]: samples#    4  SHAPE: (8000,) / (4, 2000)   		DATA: (33.9, 62.2, 14.2, 86.6)
+YK-Quad_204[2]: samples#    4  SHAPE: (8000,) / (4, 2000)   		DATA: (66.1, 65.4, 64.6, 15.0)
+YK-Quad_203[3]: samples#    5  SHAPE: (10000,) / (5, 2000)   		DATA: (83.5, 68.5, 81.9, 79.5)
+YK-Quad_202[3]: samples#    9  SHAPE: (18000,) / (9, 2000)   		DATA: (81.9, 67.7, 67.7, 66.9)
+YK-Quad_205[2]: samples#    3  SHAPE: (6000,) / (3, 2000)   		DATA: (82.7, 39.4, 66.1, 80.3)
+YK-Quad_204[3]: samples#    1  SHAPE: (2000,) / (1, 2000)   		DATA: (65.4, 69.3, 79.5, 81.1)
+SELF=<__main__.MyYKScan object at 0x7bfdbae80280>  LINK='Link_14' values=(2.191583e-08, 53.109 Gbps, 53.121 Gbps, 2.070833e+12, 45730) 
+YK-Quad_203[1]: samples#    8  SHAPE: (16000,) / (8, 2000)   		DATA: (88.2, 14.2, 15.7, 86.6)
+YK-Quad_202[1]: samples#   12  SHAPE: (24000,) / (12, 2000)   		DATA: (85.8, 67.7, 37.0, 84.3)
+YK-Quad_205[0]: samples#    5  SHAPE: (10000,) / (5, 2000)   		DATA: (79.5, 80.3, 84.3, 15.0)
+YK-Quad_204[1]: samples#    2  SHAPE: (4000,) / (2, 2000)   		DATA: (38.6, 67.7, 84.3, 15.0)
+YK-Quad_203[2]: samples#    7  SHAPE: (14000,) / (7, 2000)   		DATA: (60.6, 13.4, 86.6, 33.1)
+YK-Quad_202[2]: samples#   11  SHAPE: (22000,) / (11, 2000)   		DATA: (31.5, 15.0, 60.6, 34.6)
+YK-Quad_205[1]: samples#    1  SHAPE: (2000,) / (1, 2000)   		DATA: (62.2, 16.5, 33.1, 66.1)
+SELF=<__main__.MyYKScan object at 0x7bfdbc4c33a0>  LINK='Link_15' values=(1.534879e-08, 53.121 Gbps, 53.109 Gbps, 2.147572e+12, 33211) 
+YK-Quad_204[2]: samples#    5  SHAPE: (10000,) / (5, 2000)   		DATA: (33.1, 64.6, 65.4, 17.3)
+
+--> WARNING: Unhandled exception during YK scan update callback!
+    Exception - 
+YK-Quad_203[3]: samples#    6  SHAPE: (12000,) / (6, 2000)   		DATA: (64.6, 39.4, 83.5, 81.9)
+YK-Quad_202[3]: samples#   10  SHAPE: (20000,) / (10, 2000)   		DATA: (15.0, 61.4, 37.8, 66.1)
+YK-Quad_205[2]: samples#    4  SHAPE: (8000,) / (4, 2000)   		DATA: (15.7, 84.3, 66.9, 64.6)
+YK-Quad_204[3]: samples#    2  SHAPE: (4000,) / (2, 2000)   		DATA: (15.0, 33.1, 66.1, 80.3)
+YK-Quad_203[1]: samples#    9  SHAPE: (18000,) / (9, 2000)   		DATA: (37.0, 86.6, 40.9, 84.3)
+YK-Quad_202[1]: samples#   13  SHAPE: (26000,) / (13, 2000)   		DATA: (14.2, 15.7, 85.0, 66.9)
+YK-Quad_205[3]: samples#    1  SHAPE: (2000,) / (1, 2000)   		DATA: (18.9, 33.1, 64.6, 63.8)
+YK-Quad_204[1]: samples#    3  SHAPE: (6000,) / (3, 2000)   		DATA: (84.3, 14.2, 85.8, 15.7)
+YK-Quad_203[2]: samples#    8  SHAPE: (16000,) / (8, 2000)   		DATA: (86.6, 41.7, 83.5, 81.1)
+YK-Quad_202[2]: samples#   12  SHAPE: (24000,) / (12, 2000)   		DATA: (37.0, 85.0, 65.4, 35.4)
+YK-Quad_205[1]: samples#    2  SHAPE: (4000,) / (2, 2000)   		DATA: (62.2, 36.2, 33.1, 16.5)
+YK-Quad_204[2]: samples#    6  SHAPE: (12000,) / (6, 2000)   		DATA: (15.0, 36.2, 85.8, 37.0)
+YK-Quad_203[3]: samples#    7  SHAPE: (14000,) / (7, 2000)   		DATA: (64.6, 15.7, 32.3, 15.7)
+YK-Quad_202[3]: samples#   11  SHAPE: (22000,) / (11, 2000)   		DATA: (86.6, 11.8, 60.6, 31.5)
+YK-Quad_205[2]: samples#    5  SHAPE: (10000,) / (5, 2000)   		DATA: (81.9, 81.9, 38.6, 37.0)
+SELF=<__main__.MyYKScan object at 0x7bfdbc4c33a0>  LINK='Link_15' values=(1.43291e-08, 53.109 Gbps, 53.121 Gbps, 2.301750e+12, 33211) 
+YK-Quad_204[3]: samples#    3  SHAPE: (6000,) / (3, 2000)   		DATA: (82.7, 68.5, 81.9, 65.4)
+
+--> WARNING: Unhandled exception during YK scan update callback!
+    Exception - 
+YK-Quad_203[1]: samples#   10  SHAPE: (20000,) / (10, 2000)   		DATA: (62.2, 13.4, 58.3, 14.2)
+YK-Quad_202[1]: samples#   14  SHAPE: (28000,) / (14, 2000)   		DATA: (33.1, 15.7, 33.9, 68.5)
+YK-Quad_205[3]: samples#    2  SHAPE: (4000,) / (2, 2000)   		DATA: (12.6, 84.3, 81.9, 37.8)
+YK-Quad_204[1]: samples#    4  SHAPE: (8000,) / (4, 2000)   		DATA: (63.0, 83.5, 38.6, 63.8)
+SELF=<__main__.MyYKScan object at 0x7bfdbae80280>  LINK='Link_14' values=(1.939041e-08, 53.121 Gbps, 53.109 Gbps, 2.341516e+12, 45730) 
+YK-Quad_203[2]: samples#    9  SHAPE: (18000,) / (9, 2000)   		DATA: (64.6, 69.3, 84.3, 39.4)
+YK-Quad_202[2]: samples#   13  SHAPE: (26000,) / (13, 2000)   		DATA: (63.0, 36.2, 62.2, 14.2)
+YK-Quad_205[1]: samples#    3  SHAPE: (6000,) / (3, 2000)   		DATA: (33.1, 35.4, 33.9, 31.5)
+YK-Quad_204[2]: samples#    7  SHAPE: (14000,) / (7, 2000)   		DATA: (17.3, 33.1, 86.6, 38.6)
+SELF=<__main__.MyYKScan object at 0x7bfdbb3c9ea0>  LINK='Link_13' values=(1.115529e-08, 53.109 Gbps, 53.109 Gbps, 2.381581e+12, 26807) 
+YK-Quad_203[3]: samples#    8  SHAPE: (16000,) / (8, 2000)   		DATA: (84.3, 39.4, 63.8, 35.4)
+YK-Quad_202[3]: samples#   12  SHAPE: (24000,) / (12, 2000)   		DATA: (33.1, 34.6, 66.9, 67.7)
+YK-Quad_205[2]: samples#    6  SHAPE: (12000,) / (6, 2000)   		DATA: (18.9, 33.1, 64.6, 63.8)
+YK-Quad_204[3]: samples#    4  SHAPE: (8000,) / (4, 2000)   		DATA: (33.9, 36.2, 62.2, 37.8)
+SELF=<__main__.MyYKScan object at 0x7bfdbb82bf70>  LINK='Link_12' values=(1.47021e-08, 53.121 Gbps, 53.121 Gbps, 2.429499e+12, 35940) 
+YK-Quad_203[1]: samples#   11  SHAPE: (22000,) / (11, 2000)   		DATA: (31.5, 18.1, 16.5, 60.6)
+YK-Quad_202[1]: samples#   15  SHAPE: (30000,) / (15, 2000)   		DATA: (16.5, 18.1, 14.2, 62.2)
+YK-Quad_205[3]: samples#    3  SHAPE: (6000,) / (3, 2000)   		DATA: (33.9, 33.1, 15.7, 59.1)
+YK-Quad_204[1]: samples#    5  SHAPE: (10000,) / (5, 2000)   		DATA: (66.1, 66.1, 66.1, 67.7)
+SELF=<__main__.MyYKScan object at 0x7bfdbc2237f0>  LINK='Link_11' values=(4.449966e-09, 53.121 Gbps, 53.109 Gbps, 2.471800e+12, 11094) 
+YK-Quad_203[2]: samples#   10  SHAPE: (20000,) / (10, 2000)   		DATA: (14.2, 84.3, 85.0, 16.5)
+YK-Quad_202[2]: samples#   14  SHAPE: (28000,) / (14, 2000)   		DATA: (83.5, 85.0, 13.4, 31.5)
+YK-Quad_205[1]: samples#    4  SHAPE: (8000,) / (4, 2000)   		DATA: (14.2, 85.8, 15.0, 59.1)
+YK-Quad_204[2]: samples#    8  SHAPE: (16000,) / (8, 2000)   		DATA: (13.4, 85.0, 81.9, 40.9)
+YK-Quad_203[3]: samples#    9  SHAPE: (18000,) / (9, 2000)   		DATA: (68.5, 66.9, 85.0, 15.0)
+SELF=<__main__.MyYKScan object at 0x7bfdbc2239d0>  LINK='Link_10' values=(2.835628e-09, 53.121 Gbps, 53.109 Gbps, 2.521424e+12, 7191) 
+YK-Quad_202[3]: samples#   13  SHAPE: (26000,) / (13, 2000)   		DATA: (65.4, 13.4, 63.8, 81.9)
+YK-Quad_205[2]: samples#    7  SHAPE: (14000,) / (7, 2000)   		DATA: (81.9, 39.4, 63.8, 63.8)
+YK-Quad_204[3]: samples#    5  SHAPE: (10000,) / (5, 2000)   		DATA: (85.0, 67.7, 81.9, 14.2)
+YK-Quad_203[1]: samples#   12  SHAPE: (24000,) / (12, 2000)   		DATA: (37.8, 59.8, 12.6, 66.1)
+YK-Quad_202[1]: samples#   16  SHAPE: (32000,) / (16, 2000)   		DATA: (63.0, 14.2, 32.3, 67.7)
+YK-Quad_205[3]: samples#    4  SHAPE: (8000,) / (4, 2000)   		DATA: (15.7, 62.2, 85.0, 15.7)
+YK-Quad_204[1]: samples#    6  SHAPE: (12000,) / (6, 2000)   		DATA: (17.3, 84.3, 36.2, 33.1)
+SELF=<__main__.MyYKScan object at 0x7bfdbc8e3d60>  LINK='Link_9' values=(4.754568e-06, 53.109 Gbps, 53.109 Gbps, 2.565163e+12, 12286574) 
+YK-Quad_203[2]: samples#   11  SHAPE: (22000,) / (11, 2000)   		DATA: (85.0, 15.0, 18.1, 16.5)
+YK-Quad_202[2]: samples#   15  SHAPE: (30000,) / (15, 2000)   		DATA: (84.3, 81.1, 85.0, 15.0)
+YK-Quad_205[1]: samples#    5  SHAPE: (10000,) / (5, 2000)   		DATA: (84.3, 15.0, 63.0, 67.7)
+YK-Quad_204[2]: samples#    9  SHAPE: (18000,) / (9, 2000)   		DATA: (82.7, 68.5, 80.3, 81.1)
+SELF=<__main__.MyYKScan object at 0x7bfdbcc34940>  LINK='Link_8' values=(4.97965e-09, 53.121 Gbps, 53.121 Gbps, 2.612521e+12, 13084) 
+YK-Quad_203[3]: samples#   10  SHAPE: (20000,) / (10, 2000)   		DATA: (30.7, 32.3, 17.3, 33.9)
+YK-Quad_202[3]: samples#   14  SHAPE: (28000,) / (14, 2000)   		DATA: (15.7, 63.0, 66.9, 65.4)
+YK-Quad_205[2]: samples#    8  SHAPE: (16000,) / (8, 2000)   		DATA: (66.9, 80.3, 81.9, 40.2)
+YK-Quad_204[3]: samples#    6  SHAPE: (12000,) / (6, 2000)   		DATA: (68.5, 84.3, 16.5, 18.9)
+SELF=<__main__.MyYKScan object at 0x7bfdbd054e80>  LINK='Link_7' values=(5.572426e-10, 53.109 Gbps, 53.109 Gbps, 2.657622e+12, 1490) 
+YK-Quad_203[1]: samples#   13  SHAPE: (26000,) / (13, 2000)   		DATA: (35.4, 85.0, 66.1, 12.6)
+YK-Quad_202[1]: samples#   17  SHAPE: (34000,) / (17, 2000)   		DATA: (66.9, 67.7, 67.7, 67.7)
+YK-Quad_205[3]: samples#    5  SHAPE: (10000,) / (5, 2000)   		DATA: (68.5, 83.5, 38.6, 62.2)
+YK-Quad_204[1]: samples#    7  SHAPE: (14000,) / (7, 2000)   		DATA: (68.5, 64.6, 17.3, 14.2)
+SELF=<__main__.MyYKScan object at 0x7bfdbd621600>  LINK='Link_6' values=(9.135935e-10, 53.121 Gbps, 53.109 Gbps, 2.703101e+12, 2481) 
+YK-Quad_203[2]: samples#   12  SHAPE: (24000,) / (12, 2000)   		DATA: (85.8, 15.0, 86.6, 15.7)
+YK-Quad_202[2]: samples#   16  SHAPE: (32000,) / (16, 2000)   		DATA: (15.0, 59.8, 13.4, 87.4)
+YK-Quad_205[1]: samples#    6  SHAPE: (12000,) / (6, 2000)   		DATA: (66.1, 37.8, 63.8, 38.6)
+YK-Quad_204[2]: samples#   10  SHAPE: (20000,) / (10, 2000)   		DATA: (68.5, 65.4, 37.8, 82.7)
+SELF=<__main__.MyYKScan object at 0x7bfdbda1c640>  LINK='Link_5' values=(5.909229e-10, 53.109 Gbps, 53.121 Gbps, 2.749649e+12, 1633) 
+YK-Quad_203[3]: samples#   11  SHAPE: (22000,) / (11, 2000)   		DATA: (40.9, 66.9, 84.3, 13.4)
+YK-Quad_202[3]: samples#   15  SHAPE: (30000,) / (15, 2000)   		DATA: (14.2, 34.6, 84.3, 66.1)
+YK-Quad_205[2]: samples#    9  SHAPE: (18000,) / (9, 2000)   		DATA: (15.0, 84.3, 37.8, 17.3)
+YK-Quad_204[3]: samples#    7  SHAPE: (14000,) / (7, 2000)   		DATA: (81.9, 35.4, 16.5, 85.0)
+YK-Quad_203[1]: samples#   14  SHAPE: (28000,) / (14, 2000)   		DATA: (33.9, 63.8, 36.2, 86.6)
+SELF=<__main__.MyYKScan object at 0x7bfdbde000a0>  LINK='Link_4' values=(5.363067e-10, 53.121 Gbps, 53.109 Gbps, 2.789641e+12, 1503) 
+YK-Quad_202[1]: samples#   18  SHAPE: (36000,) / (18, 2000)   		DATA: (34.6, 35.4, 83.5, 84.3)
+YK-Quad_205[3]: samples#    6  SHAPE: (12000,) / (6, 2000)   		DATA: (32.3, 35.4, 63.0, 64.6)
+YK-Quad_204[1]: samples#    8  SHAPE: (16000,) / (8, 2000)   		DATA: (37.8, 32.3, 17.3, 32.3)
+YK-Quad_203[2]: samples#   13  SHAPE: (26000,) / (13, 2000)   		DATA: (81.1, 83.5, 40.2, 85.8)
+YK-Quad_202[2]: samples#   17  SHAPE: (34000,) / (17, 2000)   		DATA: (85.8, 41.7, 84.3, 80.3)
+SELF=<__main__.MyYKScan object at 0x7bfdc89733a0>  LINK='Link_3' values=(5.057967e-10, 53.109 Gbps, 53.109 Gbps, 2.831973e+12, 1440) 
+YK-Quad_204[2]: samples#   11  SHAPE: (22000,) / (11, 2000)   		DATA: (33.1, 85.0, 35.4, 30.7)
+YK-Quad_205[1]: samples#    7  SHAPE: (14000,) / (7, 2000)   		DATA: (14.2, 65.4, 85.0, 15.7)
+YK-Quad_203[3]: samples#   12  SHAPE: (24000,) / (12, 2000)   		DATA: (32.3, 36.2, 82.7, 85.0)
+YK-Quad_202[3]: samples#   16  SHAPE: (32000,) / (16, 2000)   		DATA: (85.0, 40.9, 84.3, 84.3)
+YK-Quad_205[2]: samples#   10  SHAPE: (20000,) / (10, 2000)   		DATA: (15.0, 85.0, 37.8, 34.6)
+YK-Quad_204[3]: samples#    8  SHAPE: (16000,) / (8, 2000)   		DATA: (82.7, 65.4, 15.7, 85.8)
+SELF=<__main__.MyYKScan object at 0x7bfdca12d540>  LINK='Link_2' values=(1.00892e-09, 53.109 Gbps, 53.109 Gbps, 2.875952e+12, 2915) 
+YK-Quad_203[1]: samples#   15  SHAPE: (30000,) / (15, 2000)   		DATA: (82.7, 81.9, 83.5, 65.4)
+YK-Quad_202[1]: samples#   19  SHAPE: (38000,) / (19, 2000)   		DATA: (85.0, 37.0, 35.4, 85.0)
+YK-Quad_205[3]: samples#    7  SHAPE: (14000,) / (7, 2000)   		DATA: (37.8, 81.9, 80.3, 79.5)
+YK-Quad_204[1]: samples#    9  SHAPE: (18000,) / (9, 2000)   		DATA: (14.2, 84.3, 79.5, 82.7)
+SELF=<__main__.MyYKScan object at 0x7bfdf45772b0>  LINK='Link_1' values=(7.447911e-10, 53.109 Gbps, 53.109 Gbps, 2.922233e+12, 2189) 
+YK-Quad_203[2]: samples#   14  SHAPE: (28000,) / (14, 2000)   		DATA: (36.2, 83.5, 80.3, 82.7)
+YK-Quad_202[2]: samples#   18  SHAPE: (36000,) / (18, 2000)   		DATA: (14.2, 87.4, 67.7, 33.9)
+YK-Quad_205[1]: samples#    8  SHAPE: (16000,) / (8, 2000)   		DATA: (64.6, 37.0, 36.2, 84.3)
+YK-Quad_204[2]: samples#   12  SHAPE: (24000,) / (12, 2000)   		DATA: (12.6, 85.0, 15.0, 33.1)
+SELF=<__main__.MyYKScan object at 0x7bfdf76bce80>  LINK='Link_0' values=(6.147481e-10, 53.121 Gbps, 53.121 Gbps, 2.967198e+12, 1833) 
+YK-Quad_203[3]: samples#   13  SHAPE: (26000,) / (13, 2000)   		DATA: (65.4, 36.2, 66.1, 66.1)
+YK-Quad_202[3]: samples#   17  SHAPE: (34000,) / (17, 2000)   		DATA: (65.4, 13.4, 66.9, 81.9)
+YK-Quad_205[2]: samples#   11  SHAPE: (22000,) / (11, 2000)   		DATA: (17.3, 15.7, 82.7, 78.7)
+YK-Quad_204[3]: samples#    9  SHAPE: (18000,) / (9, 2000)   		DATA: (84.3, 16.5, 33.9, 17.3)
+YK-Quad_203[1]: samples#   16  SHAPE: (32000,) / (16, 2000)   		DATA: (63.8, 37.0, 85.8, 63.8)
+YK-Quad_202[1]: samples#   20  SHAPE: (40000,) / (20, 2000)   		DATA: (15.0, 19.7, 16.5, 34.6)
+YK-Quad_205[3]: samples#    8  SHAPE: (16000,) / (8, 2000)   		DATA: (64.6, 34.6, 33.9, 37.0)
+YK-Quad_204[1]: samples#   10  SHAPE: (20000,) / (10, 2000)   		DATA: (83.5, 81.9, 66.1, 64.6)
+YK-Quad_203[2]: samples#   15  SHAPE: (30000,) / (15, 2000)   		DATA: (37.0, 34.6, 63.8, 14.2)
+YK-Quad_202[2]: samples#   19  SHAPE: (38000,) / (19, 2000)   		DATA: (85.8, 39.4, 63.8, 65.4)
+YK-Quad_205[1]: samples#    9  SHAPE: (18000,) / (9, 2000)   		DATA: (16.5, 19.7, 20.5, 12.6)
+YK-Quad_204[2]: samples#   13  SHAPE: (26000,) / (13, 2000)   		DATA: (66.1, 67.7, 79.5, 81.1)
+YK-Quad_203[3]: samples#   14  SHAPE: (28000,) / (14, 2000)   		DATA: (87.4, 15.0, 18.1, 59.8)
+YK-Quad_202[3]: samples#   18  SHAPE: (36000,) / (18, 2000)   		DATA: (81.9, 35.4, 15.7, 33.9)
+YK-Quad_205[2]: samples#   12  SHAPE: (24000,) / (12, 2000)   		DATA: (63.0, 37.0, 85.0, 17.3)
+YK-Quad_204[3]: samples#   10  SHAPE: (20000,) / (10, 2000)   		DATA: (68.5, 84.3, 16.5, 34.6)
+SELF=<__main__.MyYKScan object at 0x7bfdbc4c33a0>  LINK='Link_15' values=(1.06503e-08, 53.109 Gbps, 53.121 Gbps, 3.103254e+12, 33211) 
+YK-Quad_203[1]: samples#   17  SHAPE: (34000,) / (17, 2000)   		DATA: (33.9, 36.2, 85.0, 69.3)
+YK-Quad_205[3]: samples#    9  SHAPE: (18000,) / (9, 2000)   		DATA: (82.7, 66.1, 15.0, 35.4)
+YK-Quad_202[1]: samples#   21  SHAPE: (42000,) / (21, 2000)   		DATA: (64.6, 66.1, 37.0, 84.3)
+YK-Quad_204[1]: samples#   11  SHAPE: (22000,) / (11, 2000)   		DATA: (15.7, 32.3, 34.6, 36.2)
+SELF=<__main__.MyYKScan object at 0x7bfdbae80280>  LINK='Link_14' values=(1.447914e-08, 53.121 Gbps, 53.109 Gbps, 3.144359e+12, 45730) 
+YK-Quad_203[2]: samples#   16  SHAPE: (32000,) / (16, 2000)   		DATA: (66.9, 13.4, 32.3, 65.4)
+YK-Quad_205[1]: samples#   10  SHAPE: (20000,) / (10, 2000)   		DATA: (81.1, 66.1, 34.6, 35.4)
+YK-Quad_202[2]: samples#   20  SHAPE: (40000,) / (20, 2000)   		DATA: (85.0, 67.7, 64.6, 12.6)
+YK-Quad_204[2]: samples#   14  SHAPE: (28000,) / (14, 2000)   		DATA: (15.0, 32.3, 32.3, 18.1)
+SELF=<__main__.MyYKScan object at 0x7bfdbb3c9ea0>  LINK='Link_13' values=(8.368585e-09, 53.109 Gbps, 53.109 Gbps, 3.189667e+12, 26807) 
+YK-Quad_203[3]: samples#   15  SHAPE: (30000,) / (15, 2000)   		DATA: (85.0, 82.7, 40.9, 86.6)
+YK-Quad_202[3]: samples#   19  SHAPE: (38000,) / (19, 2000)   		DATA: (14.2, 18.9, 16.5, 59.8)
+YK-Quad_205[2]: samples#   13  SHAPE: (26000,) / (13, 2000)   		DATA: (65.4, 17.3, 15.7, 83.5)
+YK-Quad_204[3]: samples#   11  SHAPE: (22000,) / (11, 2000)   		DATA: (81.9, 78.7, 79.5, 67.7)
+YK-Quad_203[1]: samples#   18  SHAPE: (36000,) / (18, 2000)   		DATA: (14.2, 62.2, 66.1, 64.6)
+SELF=<__main__.MyYKScan object at 0x7bfdbb82bf70>  LINK='Link_12' values=(1.108281e-08, 53.109 Gbps, 53.121 Gbps, 3.229555e+12, 35940) 
+YK-Quad_202[1]: samples#   22  SHAPE: (44000,) / (22, 2000)   		DATA: (84.3, 68.5, 35.4, 85.8)
+YK-Quad_204[1]: samples#   12  SHAPE: (24000,) / (12, 2000)   		DATA: (66.1, 84.3, 14.2, 61.4)
+YK-Quad_205[3]: samples#   10  SHAPE: (20000,) / (10, 2000)   		DATA: (15.0, 86.6, 15.7, 15.7)
+YK-Quad_203[2]: samples#   17  SHAPE: (34000,) / (17, 2000)   		DATA: (37.0, 86.6, 37.0, 34.6)
+YK-Quad_202[2]: samples#   21  SHAPE: (42000,) / (21, 2000)   		DATA: (86.6, 13.4, 32.3, 18.1)
+YK-Quad_204[2]: samples#   15  SHAPE: (30000,) / (15, 2000)   		DATA: (33.1, 35.4, 35.4, 67.7)
+YK-Quad_205[1]: samples#   11  SHAPE: (22000,) / (11, 2000)   		DATA: (86.6, 37.8, 31.5, 17.3)
+SELF=<__main__.MyYKScan object at 0x7bfdbc2237f0>  LINK='Link_11' values=(3.372399e-09, 53.109 Gbps, 53.109 Gbps, 3.275798e+12, 11094) 
+YK-Quad_203[3]: samples#   16  SHAPE: (32000,) / (16, 2000)   		DATA: (59.8, 33.9, 18.1, 19.7)
+YK-Quad_202[3]: samples#   20  SHAPE: (40000,) / (20, 2000)   		DATA: (65.4, 68.5, 81.1, 80.3)
+YK-Quad_204[3]: samples#   12  SHAPE: (24000,) / (12, 2000)   		DATA: (66.9, 81.9, 66.1, 36.2)
+YK-Quad_205[2]: samples#   14  SHAPE: (28000,) / (14, 2000)   		DATA: (37.0, 33.1, 16.5, 83.5)
+SELF=<__main__.MyYKScan object at 0x7bfdbc2239d0>  LINK='Link_10' values=(2.157778e-09, 53.109 Gbps, 53.109 Gbps, 3.316952e+12, 7191) 
+YK-Quad_203[1]: samples#   19  SHAPE: (38000,) / (19, 2000)   		DATA: (63.0, 14.2, 60.6, 35.4)
+YK-Quad_202[1]: samples#   23  SHAPE: (46000,) / (23, 2000)   		DATA: (60.6, 13.4, 63.8, 65.4)
+YK-Quad_204[1]: samples#   13  SHAPE: (26000,) / (13, 2000)   		DATA: (15.0, 83.5, 66.9, 32.3)
+YK-Quad_205[3]: samples#   11  SHAPE: (22000,) / (11, 2000)   		DATA: (14.2, 85.8, 15.7, 20.5)
+SELF=<__main__.MyYKScan object at 0x7bfdbc8e3d60>  LINK='Link_9' values=(3.635083e-06, 53.109 Gbps, 53.109 Gbps, 3.364282e+12, 12286574) 
+YK-Quad_203[2]: samples#   18  SHAPE: (36000,) / (18, 2000)   		DATA: (63.8, 14.2, 16.5, 64.6)
+YK-Quad_202[2]: samples#   22  SHAPE: (44000,) / (22, 2000)   		DATA: (16.5, 31.5, 17.3, 18.1)
+YK-Quad_204[2]: samples#   16  SHAPE: (32000,) / (16, 2000)   		DATA: (34.6, 36.2, 85.0, 33.1)
+YK-Quad_205[1]: samples#   12  SHAPE: (24000,) / (12, 2000)   		DATA: (16.5, 85.8, 15.7, 20.5)
+SELF=<__main__.MyYKScan object at 0x7bfdbcc34940>  LINK='Link_8' values=(3.819176e-09, 53.109 Gbps, 53.109 Gbps, 3.406184e+12, 13084) 
+YK-Quad_203[3]: samples#   17  SHAPE: (34000,) / (17, 2000)   		DATA: (34.6, 86.6, 14.2, 85.0)
+YK-Quad_202[3]: samples#   21  SHAPE: (42000,) / (21, 2000)   		DATA: (85.8, 14.2, 33.9, 66.1)
+YK-Quad_204[3]: samples#   13  SHAPE: (26000,) / (13, 2000)   		DATA: (36.2, 33.1, 36.2, 85.0)
+YK-Quad_205[2]: samples#   15  SHAPE: (30000,) / (15, 2000)   		DATA: (18.1, 18.9, 33.1, 34.6)
+YK-Quad_203[1]: samples#   20  SHAPE: (40000,) / (20, 2000)   		DATA: (66.1, 31.5, 16.5, 34.6)
+SELF=<__main__.MyYKScan object at 0x7bfdbd054e80>  LINK='Link_7' values=(4.294158e-10, 53.109 Gbps, 53.109 Gbps, 3.456137e+12, 1490) 
+YK-Quad_204[1]: samples#   14  SHAPE: (28000,) / (14, 2000)   		DATA: (35.4, 63.8, 33.1, 33.9)
+YK-Quad_202[1]: samples#   24  SHAPE: (48000,) / (24, 2000)   		DATA: (13.4, 32.3, 63.0, 14.2)
+YK-Quad_205[3]: samples#   12  SHAPE: (24000,) / (12, 2000)   		DATA: (32.3, 16.5, 61.4, 66.1)
+YK-Quad_203[2]: samples#   19  SHAPE: (38000,) / (19, 2000)   		DATA: (63.0, 13.4, 85.8, 66.9)
+YK-Quad_204[2]: samples#   17  SHAPE: (34000,) / (17, 2000)   		DATA: (66.9, 15.0, 60.6, 14.2)
+YK-Quad_202[2]: samples#   23  SHAPE: (46000,) / (23, 2000)   		DATA: (15.0, 61.4, 34.6, 34.6)
+YK-Quad_205[1]: samples#   13  SHAPE: (26000,) / (13, 2000)   		DATA: (41.7, 83.5, 81.9, 34.6)
+SELF=<__main__.MyYKScan object at 0x7bfdbd621600>  LINK='Link_6' values=(7.052813e-10, 53.109 Gbps, 53.121 Gbps, 3.497343e+12, 2481) 
+YK-Quad_203[3]: samples#   18  SHAPE: (36000,) / (18, 2000)   		DATA: (15.7, 64.6, 63.8, 15.7)
+YK-Quad_204[3]: samples#   14  SHAPE: (28000,) / (14, 2000)   		DATA: (35.4, 60.6, 18.1, 20.5)
+YK-Quad_202[3]: samples#   22  SHAPE: (44000,) / (22, 2000)   		DATA: (14.2, 31.5, 17.3, 33.1)
+YK-Quad_205[2]: samples#   16  SHAPE: (32000,) / (16, 2000)   		DATA: (59.8, 14.2, 84.3, 40.2)
+SELF=<__main__.MyYKScan object at 0x7bfdbda1c640>  LINK='Link_5' values=(4.58913e-10, 53.109 Gbps, 53.109 Gbps, 3.542575e+12, 1633) 
+YK-Quad_203[1]: samples#   21  SHAPE: (42000,) / (21, 2000)   		DATA: (37.8, 85.0, 84.3, 15.0)
+YK-Quad_204[1]: samples#   15  SHAPE: (30000,) / (15, 2000)   		DATA: (15.0, 21.3, 18.9, 30.7)
+YK-Quad_202[1]: samples#   25  SHAPE: (50000,) / (25, 2000)   		DATA: (34.6, 66.9, 69.3, 84.3)
+YK-Quad_205[3]: samples#   13  SHAPE: (26000,) / (13, 2000)   		DATA: (66.1, 64.6, 37.0, 85.0)
+SELF=<__main__.MyYKScan object at 0x7bfdbde000a0>  LINK='Link_4' values=(4.169712e-10, 53.109 Gbps, 53.109 Gbps, 3.583855e+12, 1503) 
+YK-Quad_203[2]: samples#   20  SHAPE: (40000,) / (20, 2000)   		DATA: (12.6, 34.6, 86.6, 39.4)
+YK-Quad_204[2]: samples#   18  SHAPE: (36000,) / (18, 2000)   		DATA: (32.3, 36.2, 82.7, 68.5)
+YK-Quad_202[2]: samples#   24  SHAPE: (48000,) / (24, 2000)   		DATA: (16.5, 34.6, 64.6, 36.2)
+YK-Quad_205[1]: samples#   14  SHAPE: (28000,) / (14, 2000)   		DATA: (17.3, 60.6, 34.6, 32.3)
+SELF=<__main__.MyYKScan object at 0x7bfdc89733a0>  LINK='Link_3' values=(3.952139e-10, 53.109 Gbps, 53.121 Gbps, 3.629588e+12, 1440) 
+YK-Quad_203[3]: samples#   19  SHAPE: (38000,) / (19, 2000)   		DATA: (18.9, 15.0, 86.6, 66.9)
+YK-Quad_204[3]: samples#   15  SHAPE: (30000,) / (15, 2000)   		DATA: (84.3, 15.7, 33.9, 66.9)
+YK-Quad_202[3]: samples#   23  SHAPE: (46000,) / (23, 2000)   		DATA: (15.0, 84.3, 84.3, 14.2)
+YK-Quad_205[2]: samples#   17  SHAPE: (34000,) / (17, 2000)   		DATA: (65.4, 38.6, 83.5, 37.0)
+YK-Quad_203[1]: samples#   22  SHAPE: (44000,) / (22, 2000)   		DATA: (68.5, 81.1, 81.1, 83.5)
+SELF=<__main__.MyYKScan object at 0x7bfdca12d540>  LINK='Link_2' values=(7.904014e-10, 53.121 Gbps, 53.109 Gbps, 3.670227e+12, 2915) 
+YK-Quad_204[1]: samples#   16  SHAPE: (32000,) / (16, 2000)   		DATA: (37.8, 64.6, 63.8, 14.2)
+YK-Quad_202[1]: samples#   26  SHAPE: (52000,) / (26, 2000)   		DATA: (39.4, 84.3, 68.5, 64.6)
+YK-Quad_205[3]: samples#   14  SHAPE: (28000,) / (14, 2000)   		DATA: (84.3, 15.0, 85.0, 15.0)
+YK-Quad_203[2]: samples#   21  SHAPE: (42000,) / (21, 2000)   		DATA: (64.6, 35.4, 33.9, 35.4)
+YK-Quad_204[2]: samples#   19  SHAPE: (38000,) / (19, 2000)   		DATA: (85.8, 34.6, 18.1, 19.7)
+SELF=<__main__.MyYKScan object at 0x7bfdf45772b0>  LINK='Link_1' values=(5.870619e-10, 53.109 Gbps, 53.109 Gbps, 3.715932e+12, 2189) 
+YK-Quad_202[2]: samples#   25  SHAPE: (50000,) / (25, 2000)   		DATA: (13.4, 62.2, 65.4, 15.0)
+YK-Quad_205[1]: samples#   15  SHAPE: (30000,) / (15, 2000)   		DATA: (37.0, 83.5, 64.6, 17.3)
+YK-Quad_203[3]: samples#   20  SHAPE: (40000,) / (20, 2000)   		DATA: (85.8, 15.0, 31.5, 16.5)
+YK-Quad_204[3]: samples#   16  SHAPE: (32000,) / (16, 2000)   		DATA: (83.5, 40.2, 64.6, 64.6)
+YK-Quad_202[3]: samples#   24  SHAPE: (48000,) / (24, 2000)   		DATA: (66.1, 85.0, 14.2, 31.5)
+YK-Quad_205[2]: samples#   18  SHAPE: (36000,) / (18, 2000)   		DATA: (81.9, 15.7, 62.2, 65.4)
+SELF=<__main__.MyYKScan object at 0x7bfdf76bce80>  LINK='Link_0' values=(4.856854e-10, 53.109 Gbps, 53.109 Gbps, 3.757808e+12, 1833) 
+YK-Quad_203[1]: samples#   23  SHAPE: (46000,) / (23, 2000)   		DATA: (13.4, 85.0, 82.7, 37.0)
+YK-Quad_204[1]: samples#   17  SHAPE: (34000,) / (17, 2000)   		DATA: (64.6, 31.5, 17.3, 34.6)
+YK-Quad_202[1]: samples#   27  SHAPE: (54000,) / (27, 2000)   		DATA: (15.0, 32.3, 64.6, 31.5)
+YK-Quad_205[3]: samples#   15  SHAPE: (30000,) / (15, 2000)   		DATA: (33.1, 66.9, 82.7, 39.4)
+YK-Quad_203[2]: samples#   22  SHAPE: (44000,) / (22, 2000)   		DATA: (85.0, 66.1, 14.2, 31.5)
+YK-Quad_204[2]: samples#   20  SHAPE: (40000,) / (20, 2000)   		DATA: (81.9, 83.5, 13.4, 59.1)
+YK-Quad_202[2]: samples#   26  SHAPE: (52000,) / (26, 2000)   		DATA: (67.7, 83.5, 85.0, 15.0)
+YK-Quad_205[1]: samples#   16  SHAPE: (32000,) / (16, 2000)   		DATA: (32.3, 15.7, 84.3, 66.9)
+YK-Quad_203[3]: samples#   21  SHAPE: (42000,) / (21, 2000)   		DATA: (30.7, 17.3, 32.3, 36.2)
+YK-Quad_204[3]: samples#   17  SHAPE: (34000,) / (17, 2000)   		DATA: (63.8, 15.7, 34.6, 66.9)
+YK-Quad_202[3]: samples#   25  SHAPE: (50000,) / (25, 2000)   		DATA: (80.3, 80.3, 83.5, 15.0)
+YK-Quad_205[2]: samples#   19  SHAPE: (38000,) / (19, 2000)   		DATA: (34.6, 63.0, 16.5, 18.1)
+YK-Quad_203[1]: samples#   24  SHAPE: (48000,) / (24, 2000)   		DATA: (13.4, 85.0, 81.9, 66.1)
+YK-Quad_204[1]: samples#   18  SHAPE: (36000,) / (18, 2000)   		DATA: (85.0, 16.5, 31.5, 18.9)
+YK-Quad_202[1]: samples#   28  SHAPE: (56000,) / (28, 2000)   		DATA: (33.9, 63.8, 34.6, 35.4)
+YK-Quad_205[3]: samples#   16  SHAPE: (32000,) / (16, 2000)   		DATA: (20.5, 17.3, 31.5, 15.7)
+SELF=<__main__.MyYKScan object at 0x7bfdbc4c33a0>  LINK='Link_15' values=(8.455827e-09, 53.121 Gbps, 53.121 Gbps, 3.911921e+12, 33211) 
+YK-Quad_203[2]: samples#   23  SHAPE: (46000,) / (23, 2000)   		DATA: (63.0, 66.1, 33.9, 32.3)
+YK-Quad_204[2]: samples#   21  SHAPE: (42000,) / (21, 2000)   		DATA: (32.3, 18.1, 30.7, 17.3)
+YK-Quad_202[2]: samples#   27  SHAPE: (54000,) / (27, 2000)   		DATA: (82.7, 40.2, 64.6, 65.4)
+YK-Quad_205[1]: samples#   17  SHAPE: (34000,) / (17, 2000)   		DATA: (65.4, 37.0, 65.4, 67.7)
+SELF=<__main__.MyYKScan object at 0x7bfdbae80280>  LINK='Link_14' values=(1.151218e-08, 53.109 Gbps, 53.121 Gbps, 3.959068e+12, 45730) 
+YK-Quad_203[3]: samples#   22  SHAPE: (44000,) / (22, 2000)   		DATA: (85.0, 66.1, 66.9, 85.8)
+YK-Quad_204[3]: samples#   18  SHAPE: (36000,) / (18, 2000)   		DATA: (16.5, 60.6, 38.6, 85.0)
+YK-Quad_202[3]: samples#   26  SHAPE: (52000,) / (26, 2000)   		DATA: (18.9, 15.7, 65.4, 81.9)
+YK-Quad_205[2]: samples#   20  SHAPE: (40000,) / (20, 2000)   		DATA: (84.3, 66.9, 63.0, 18.9)
+YK-Quad_203[1]: samples#   25  SHAPE: (50000,) / (25, 2000)   		DATA: (63.8, 12.6, 85.8, 65.4)
+SELF=<__main__.MyYKScan object at 0x7bfdbb3c9ea0>  LINK='Link_13' values=(6.682669e-09, 53.109 Gbps, 53.109 Gbps, 3.998036e+12, 26807) 
+YK-Quad_204[1]: samples#   19  SHAPE: (38000,) / (19, 2000)   		DATA: (18.9, 33.9, 85.8, 15.0)
+YK-Quad_202[1]: samples#   29  SHAPE: (58000,) / (29, 2000)   		DATA: (68.5, 81.1, 85.8, 13.4)
+YK-Quad_205[3]: samples#   17  SHAPE: (34000,) / (17, 2000)   		DATA: (85.0, 68.5, 82.7, 39.4)
+YK-Quad_203[2]: samples#   24  SHAPE: (48000,) / (24, 2000)   		DATA: (63.8, 13.4, 86.6, 14.2)
+SELF=<__main__.MyYKScan object at 0x7bfdbb82bf70>  LINK='Link_12' values=(8.863649e-09, 53.121 Gbps, 53.109 Gbps, 4.041559e+12, 35940) 
+YK-Quad_204[2]: samples#   22  SHAPE: (44000,) / (22, 2000)   		DATA: (33.1, 61.4, 15.7, 34.6)
+YK-Quad_202[2]: samples#   28  SHAPE: (56000,) / (28, 2000)   		DATA: (15.0, 30.7, 18.1, 15.0)
+YK-Quad_205[1]: samples#   18  SHAPE: (36000,) / (18, 2000)   		DATA: (81.1, 69.3, 81.1, 79.5)
+YK-Quad_203[3]: samples#   23  SHAPE: (46000,) / (23, 2000)   		DATA: (61.4, 15.7, 17.3, 33.1)
+SELF=<__main__.MyYKScan object at 0x7bfdbc2237f0>  LINK='Link_11' values=(2.7095e-09, 53.109 Gbps, 53.121 Gbps, 4.081044e+12, 11094) 
+YK-Quad_204[3]: samples#   19  SHAPE: (38000,) / (19, 2000)   		DATA: (66.1, 65.4, 66.9, 83.5)
+YK-Quad_202[3]: samples#   27  SHAPE: (54000,) / (27, 2000)   		DATA: (41.7, 85.8, 34.6, 17.3)
+YK-Quad_205[2]: samples#   21  SHAPE: (42000,) / (21, 2000)   		DATA: (84.3, 15.7, 19.7, 16.5)
+YK-Quad_203[1]: samples#   26  SHAPE: (52000,) / (26, 2000)   		DATA: (84.3, 66.9, 63.0, 13.4)
+YK-Quad_204[1]: samples#   20  SHAPE: (40000,) / (20, 2000)   		DATA: (85.0, 39.4, 63.0, 31.5)
+YK-Quad_202[1]: samples#   30  SHAPE: (60000,) / (30, 2000)   		DATA: (81.9, 82.7, 68.5, 68.5)
+YK-Quad_205[3]: samples#   18  SHAPE: (36000,) / (18, 2000)   		DATA: (84.3, 15.7, 19.7, 17.3)
+SELF=<__main__.MyYKScan object at 0x7bfdbc2239d0>  LINK='Link_10' values=(1.737434e-09, 53.109 Gbps, 53.121 Gbps, 4.124773e+12, 7191) 
+YK-Quad_203[2]: samples#   25  SHAPE: (50000,) / (25, 2000)   		DATA: (40.2, 85.0, 38.6, 86.6)
+YK-Quad_204[2]: samples#   23  SHAPE: (46000,) / (23, 2000)   		DATA: (63.0, 16.5, 32.3, 34.6)
+YK-Quad_202[2]: samples#   29  SHAPE: (58000,) / (29, 2000)   		DATA: (31.5, 16.5, 14.2, 85.0)
+YK-Quad_205[1]: samples#   19  SHAPE: (38000,) / (19, 2000)   		DATA: (66.1, 33.1, 16.5, 59.8)
+SELF=<__main__.MyYKScan object at 0x7bfdbc8e3d60>  LINK='Link_9' values=(2.936202e-06, 53.109 Gbps, 53.109 Gbps, 4.164702e+12, 12286574) 
+YK-Quad_203[3]: samples#   24  SHAPE: (48000,) / (24, 2000)   		DATA: (17.3, 34.6, 63.8, 14.2)
+YK-Quad_204[3]: samples#   20  SHAPE: (40000,) / (20, 2000)   		DATA: (83.5, 66.9, 62.2, 17.3)
+YK-Quad_202[3]: samples#   28  SHAPE: (56000,) / (28, 2000)   		DATA: (62.2, 13.4, 85.0, 39.4)
+YK-Quad_205[2]: samples#   22  SHAPE: (44000,) / (22, 2000)   		DATA: (37.0, 63.8, 15.0, 61.4)
+SELF=<__main__.MyYKScan object at 0x7bfdbcc34940>  LINK='Link_8' values=(3.094666e-09, 53.121 Gbps, 53.121 Gbps, 4.209727e+12, 13084) 
+YK-Quad_203[1]: samples#   27  SHAPE: (54000,) / (27, 2000)   		DATA: (84.3, 83.5, 66.1, 37.8)
+YK-Quad_204[1]: samples#   21  SHAPE: (42000,) / (21, 2000)   		DATA: (85.0, 16.5, 33.9, 84.3)
+YK-Quad_202[1]: samples#   31  SHAPE: (62000,) / (31, 2000)   		DATA: (37.8, 66.1, 85.8, 14.2)
+YK-Quad_205[3]: samples#   19  SHAPE: (38000,) / (19, 2000)   		DATA: (66.9, 66.9, 64.6, 37.8)
+YK-Quad_203[2]: samples#   26  SHAPE: (52000,) / (26, 2000)   		DATA: (40.2, 85.8, 39.4, 61.4)
+SELF=<__main__.MyYKScan object at 0x7bfdbd054e80>  LINK='Link_7' values=(3.488918e-10, 53.109 Gbps, 53.109 Gbps, 4.252829e+12, 1490) 
+YK-Quad_204[2]: samples#   24  SHAPE: (48000,) / (24, 2000)   		DATA: (66.9, 66.9, 66.9, 66.9)
+YK-Quad_202[2]: samples#   30  SHAPE: (60000,) / (30, 2000)   		DATA: (85.8, 14.2, 33.1, 34.6)
+YK-Quad_205[1]: samples#   20  SHAPE: (40000,) / (20, 2000)   		DATA: (33.1, 17.3, 33.1, 67.7)
+YK-Quad_203[3]: samples#   25  SHAPE: (50000,) / (25, 2000)   		DATA: (69.3, 81.1, 81.9, 66.1)
+YK-Quad_204[3]: samples#   21  SHAPE: (42000,) / (21, 2000)   		DATA: (38.6, 34.6, 86.6, 15.0)
+SELF=<__main__.MyYKScan object at 0x7bfdbd621600>  LINK='Link_6' values=(5.75544e-10, 53.109 Gbps, 53.109 Gbps, 4.297182e+12, 2481) 
+YK-Quad_202[3]: samples#   29  SHAPE: (58000,) / (29, 2000)   		DATA: (39.4, 86.6, 13.4, 85.8)
+YK-Quad_205[2]: samples#   23  SHAPE: (46000,) / (23, 2000)   		DATA: (84.3, 39.4, 63.0, 33.9)
+YK-Quad_203[1]: samples#   28  SHAPE: (56000,) / (28, 2000)   		DATA: (85.8, 64.6, 15.0, 18.1)
+YK-Quad_204[1]: samples#   22  SHAPE: (44000,) / (22, 2000)   		DATA: (16.5, 20.5, 17.3, 64.6)
+YK-Quad_202[1]: samples#   32  SHAPE: (64000,) / (32, 2000)   		DATA: (62.2, 15.0, 31.5, 15.0)
+YK-Quad_205[3]: samples#   20  SHAPE: (40000,) / (20, 2000)   		DATA: (15.7, 14.2, 84.3, 80.3)
+SELF=<__main__.MyYKScan object at 0x7bfdbda1c640>  LINK='Link_5' values=(3.743369e-10, 53.109 Gbps, 53.121 Gbps, 4.340194e+12, 1633) 
+YK-Quad_203[2]: samples#   27  SHAPE: (54000,) / (27, 2000)   		DATA: (36.2, 30.7, 16.5, 32.3)
+YK-Quad_204[2]: samples#   25  SHAPE: (50000,) / (25, 2000)   		DATA: (15.0, 85.0, 15.0, 22.0)
+YK-Quad_202[2]: samples#   31  SHAPE: (62000,) / (31, 2000)   		DATA: (14.2, 61.4, 35.4, 35.4)
+YK-Quad_205[1]: samples#   21  SHAPE: (42000,) / (21, 2000)   		DATA: (81.1, 67.7, 63.8, 14.2)
+SELF=<__main__.MyYKScan object at 0x7bfdbde000a0>  LINK='Link_4' values=(3.408607e-10, 53.109 Gbps, 53.121 Gbps, 4.391720e+12, 1503) 
+YK-Quad_203[3]: samples#   26  SHAPE: (52000,) / (26, 2000)   		DATA: (86.6, 13.4, 33.9, 85.0)
+YK-Quad_204[3]: samples#   22  SHAPE: (44000,) / (22, 2000)   		DATA: (30.7, 18.9, 16.5, 64.6)
+YK-Quad_202[3]: samples#   30  SHAPE: (60000,) / (30, 2000)   		DATA: (82.7, 67.7, 14.2, 85.8)
+YK-Quad_205[2]: samples#   24  SHAPE: (48000,) / (24, 2000)   		DATA: (81.1, 40.2, 83.5, 39.4)
+SELF=<__main__.MyYKScan object at 0x7bfdc89733a0>  LINK='Link_3' values=(3.232962e-10, 53.109 Gbps, 53.109 Gbps, 4.433955e+12, 1440) 
+YK-Quad_203[1]: samples#   29  SHAPE: (58000,) / (29, 2000)   		DATA: (65.4, 35.4, 60.6, 14.2)
+YK-Quad_204[1]: samples#   23  SHAPE: (46000,) / (23, 2000)   		DATA: (62.2, 14.2, 85.8, 67.7)
+YK-Quad_202[1]: samples#   33  SHAPE: (66000,) / (33, 2000)   		DATA: (31.5, 15.7, 65.4, 83.5)
+YK-Quad_205[3]: samples#   21  SHAPE: (42000,) / (21, 2000)   		DATA: (85.8, 81.9, 65.4, 38.6)
+YK-Quad_203[2]: samples#   28  SHAPE: (56000,) / (28, 2000)   		DATA: (85.0, 37.0, 35.4, 84.3)
+SELF=<__main__.MyYKScan object at 0x7bfdca12d540>  LINK='Link_2' values=(6.485926e-10, 53.109 Gbps, 53.121 Gbps, 4.480721e+12, 2915) 
+YK-Quad_204[2]: samples#   26  SHAPE: (52000,) / (26, 2000)   		DATA: (68.5, 67.7, 81.9, 65.4)
+YK-Quad_202[2]: samples#   32  SHAPE: (64000,) / (32, 2000)   		DATA: (85.8, 84.3, 15.0, 86.6)
+YK-Quad_205[1]: samples#   22  SHAPE: (44000,) / (22, 2000)   		DATA: (14.2, 85.0, 37.0, 15.0)
+YK-Quad_203[3]: samples#   27  SHAPE: (54000,) / (27, 2000)   		DATA: (81.1, 81.1, 81.1, 81.9)
+SELF=<__main__.MyYKScan object at 0x7bfdf45772b0>  LINK='Link_1' values=(4.823359e-10, 53.109 Gbps, 53.121 Gbps, 4.518416e+12, 2189) 
+YK-Quad_204[3]: samples#   23  SHAPE: (46000,) / (23, 2000)   		DATA: (68.5, 82.7, 65.4, 37.0)
+YK-Quad_202[3]: samples#   31  SHAPE: (62000,) / (31, 2000)   		DATA: (33.9, 37.0, 85.0, 67.7)
+YK-Quad_205[2]: samples#   25  SHAPE: (50000,) / (25, 2000)   		DATA: (80.3, 68.5, 81.9, 37.8)
+YK-Quad_203[1]: samples#   30  SHAPE: (60000,) / (30, 2000)   		DATA: (30.7, 15.7, 61.4, 66.1)
+SELF=<__main__.MyYKScan object at 0x7bfdf76bce80>  LINK='Link_0' values=(3.999341e-10, 53.121 Gbps, 53.121 Gbps, 4.566720e+12, 1833) 
+YK-Quad_204[1]: samples#   24  SHAPE: (48000,) / (24, 2000)   		DATA: (29.9, 18.9, 19.7, 19.7)
+YK-Quad_202[1]: samples#   34  SHAPE: (68000,) / (34, 2000)   		DATA: (84.3, 40.9, 81.9, 81.1)
+YK-Quad_205[3]: samples#   22  SHAPE: (44000,) / (22, 2000)   		DATA: (14.2, 86.6, 66.1, 31.5)
+YK-Quad_203[2]: samples#   29  SHAPE: (58000,) / (29, 2000)   		DATA: (84.3, 84.3, 34.6, 15.7)
+YK-Quad_204[2]: samples#   27  SHAPE: (54000,) / (27, 2000)   		DATA: (12.6, 85.0, 37.0, 35.4)
+YK-Quad_202[2]: samples#   33  SHAPE: (66000,) / (33, 2000)   		DATA: (37.0, 15.0, 32.3, 34.6)
+YK-Quad_205[1]: samples#   23  SHAPE: (46000,) / (23, 2000)   		DATA: (34.6, 37.0, 81.9, 82.7)
+YK-Quad_203[3]: samples#   28  SHAPE: (56000,) / (28, 2000)   		DATA: (85.8, 37.8, 32.3, 16.5)
+YK-Quad_204[3]: samples#   24  SHAPE: (48000,) / (24, 2000)   		DATA: (15.7, 20.5, 15.7, 81.9)
+YK-Quad_202[3]: samples#   32  SHAPE: (64000,) / (32, 2000)   		DATA: (16.5, 18.1, 15.0, 84.3)
+YK-Quad_205[2]: samples#   26  SHAPE: (52000,) / (26, 2000)   		DATA: (17.3, 81.9, 80.3, 66.1)
+YK-Quad_203[1]: samples#   31  SHAPE: (62000,) / (31, 2000)   		DATA: (15.0, 59.1, 13.4, 59.8)
+YK-Quad_204[1]: samples#   25  SHAPE: (50000,) / (25, 2000)   		DATA: (14.2, 83.5, 84.3, 15.0)
+YK-Quad_202[1]: samples#   35  SHAPE: (70000,) / (35, 2000)   		DATA: (14.2, 15.0, 63.0, 67.7)
+YK-Quad_205[3]: samples#   23  SHAPE: (46000,) / (23, 2000)   		DATA: (84.3, 69.3, 64.6, 33.1)
+Close Widget & YK-Scan
+Traceback (most recent call last):
+  File "/home/bernard/workspace/bzwork/vajra_proj_FPGA.myGithub/ChipScoPy/HPC_Cable_BERT_YK_Scan.py", line 451, in closeEvent
+    c.ykobj.YK.stop() # Stops the YK scan from running.
+  File "/home/bernard/.VENV/lib/python3.10/site-packages/chipscopy/api/ibert/yk_scan/__init__.py", line 135, in stop
+    self.rx.core_tcf_node.terminate_yk_scan(rx_name=self.rx.handle)
+  File "/home/bernard/.VENV/lib/python3.10/site-packages/chipscopy/dm/request.py", line 307, in __call__
+    raise self.error
+Exception: TCF Error: IBERT terminate_yk_scan: ChipScope Service IBERT terminate_yk_scan: No YK scan in progress for 'IBERT_0.Quad_202.CH_0.RX'. Nothing to terminate
+YK-Quad_203[2]: samples#   30  SHAPE: (60000,) / (30, 2000)   		DATA: (81.9, 69.3, 85.8, 13.4)
+YK-Quad_204[2]: samples#   28  SHAPE: (56000,) / (28, 2000)   		DATA: (33.1, 34.6, 36.2, 85.0)
+YK-Quad_205[1]: samples#   24  SHAPE: (48000,) / (24, 2000)   		DATA: (81.1, 81.1, 66.9, 16.5)
+YK-Quad_202[2]: samples#   34  SHAPE: (68000,) / (34, 2000)   		DATA: (66.1, 37.0, 63.8, 33.1)
+SELF=<__main__.MyYKScan object at 0x7bfdbc4c33a0>  LINK='Link_15' values=(6.982632e-09, 53.109 Gbps, 53.109 Gbps, 4.741641e+12, 33211) 
+YK-Quad_203[3]: samples#   29  SHAPE: (58000,) / (29, 2000)   		DATA: (33.1, 36.2, 86.6, 14.2)
+YK-Quad_204[3]: samples#   25  SHAPE: (50000,) / (25, 2000)   		DATA: (38.6, 84.3, 37.8, 63.0)
+YK-Quad_202[3]: samples#   33  SHAPE: (66000,) / (33, 2000)   		DATA: (81.9, 66.9, 33.9, 18.1)
+YK-Quad_205[2]: samples#   27  SHAPE: (54000,) / (27, 2000)   		DATA: (61.4, 35.4, 33.1, 15.7)
+YK-Quad_203[1]: samples#   32  SHAPE: (64000,) / (32, 2000)   		DATA: (60.6, 37.0, 85.8, 37.8)
+SELF=<__main__.MyYKScan object at 0x7bfdbae80280>  LINK='Link_14' values=(9.531897e-09, 53.109 Gbps, 53.109 Gbps, 4.780010e+12, 45730) 
+YK-Quad_204[1]: samples#   26  SHAPE: (52000,) / (26, 2000)   		DATA: (15.7, 31.5, 18.9, 18.9)
+YK-Quad_202[1]: samples#   36  SHAPE: (72000,) / (36, 2000)   		DATA: (34.6, 63.8, 64.6, 37.0)
+YK-Quad_205[3]: samples#   24  SHAPE: (48000,) / (24, 2000)   		DATA: (34.6, 35.4, 85.8, 15.7)
+YK-Quad_203[2]: samples#   31  SHAPE: (62000,) / (31, 2000)   		DATA: (18.9, 15.7, 59.8, 15.7)
+YK-Quad_204[2]: samples#   29  SHAPE: (58000,) / (29, 2000)   		DATA: (17.3, 32.3, 35.4, 84.3)
+SELF=<__main__.MyYKScan object at 0x7bfdbb3c9ea0>  LINK='Link_13' values=(5.5431e-09, 53.121 Gbps, 53.121 Gbps, 4.823660e+12, 26807) 
+YK-Quad_205[1]: samples#   25  SHAPE: (50000,) / (25, 2000)   		DATA: (66.1, 65.4, 66.9, 67.7)
+YK-Quad_202[2]: samples#   35  SHAPE: (70000,) / (35, 2000)   		DATA: (16.5, 16.5, 62.2, 66.1)
+YK-Quad_203[3]: samples#   30  SHAPE: (60000,) / (30, 2000)   		DATA: (83.5, 81.9, 85.0, 14.2)
+YK-Quad_204[3]: samples#   26  SHAPE: (52000,) / (26, 2000)   		DATA: (79.5, 80.3, 81.9, 35.4)
+YK-Quad_202[3]: samples#   34  SHAPE: (68000,) / (34, 2000)   		DATA: (35.4, 31.5, 18.1, 15.0)
+YK-Quad_205[2]: samples#   28  SHAPE: (56000,) / (28, 2000)   		DATA: (63.8, 63.8, 16.5, 34.6)
+SELF=<__main__.MyYKScan object at 0x7bfdbb82bf70>  LINK='Link_12' values=(7.360522e-09, 53.121 Gbps, 53.121 Gbps, 4.863881e+12, 35940) 
+YK-Quad_203[1]: samples#   33  SHAPE: (66000,) / (33, 2000)   		DATA: (85.8, 66.1, 14.2, 87.4)
+YK-Quad_204[1]: samples#   27  SHAPE: (54000,) / (27, 2000)   		DATA: (15.0, 84.3, 84.3, 15.0)
+YK-Quad_202[1]: samples#   37  SHAPE: (74000,) / (37, 2000)   		DATA: (85.0, 82.7, 68.5, 68.5)
+YK-Quad_205[3]: samples#   25  SHAPE: (50000,) / (25, 2000)   		DATA: (65.4, 33.9, 15.0, 85.0)
+SELF=<__main__.MyYKScan object at 0x7bfdbc2237f0>  LINK='Link_11' values=(2.253331e-09, 53.121 Gbps, 53.109 Gbps, 4.906672e+12, 11094) 
+YK-Quad_203[2]: samples#   32  SHAPE: (64000,) / (32, 2000)   		DATA: (14.2, 85.0, 84.3, 15.7)
+YK-Quad_204[2]: samples#   30  SHAPE: (60000,) / (30, 2000)   		DATA: (12.6, 85.0, 39.4, 83.5)
+YK-Quad_205[1]: samples#   26  SHAPE: (52000,) / (26, 2000)   		DATA: (15.0, 61.4, 64.6, 15.0)
+YK-Quad_202[2]: samples#   36  SHAPE: (72000,) / (36, 2000)   		DATA: (18.9, 30.7, 18.1, 16.5)
+SELF=<__main__.MyYKScan object at 0x7bfdbc2239d0>  LINK='Link_10' values=(1.446399e-09, 53.109 Gbps, 53.109 Gbps, 4.950218e+12, 7191) 
+YK-Quad_203[3]: samples#   31  SHAPE: (62000,) / (31, 2000)   		DATA: (30.7, 19.7, 19.7, 15.7)
+YK-Quad_204[3]: samples#   27  SHAPE: (54000,) / (27, 2000)   		DATA: (85.0, 15.0, 31.5, 18.1)
+YK-Quad_205[2]: samples#   29  SHAPE: (58000,) / (29, 2000)   		DATA: (15.0, 82.7, 80.3, 67.7)
+YK-Quad_202[3]: samples#   35  SHAPE: (70000,) / (35, 2000)   		DATA: (79.5, 84.3, 15.0, 59.8)
+SELF=<__main__.MyYKScan object at 0x7bfdbc8e3d60>  LINK='Link_9' values=(2.451395e-06, 53.109 Gbps, 53.109 Gbps, 4.997458e+12, 12286574) 
+YK-Quad_203[1]: samples#   34  SHAPE: (68000,) / (34, 2000)   		DATA: (31.5, 18.1, 14.2, 85.8)
+YK-Quad_204[1]: samples#   28  SHAPE: (56000,) / (28, 2000)   		DATA: (84.3, 15.0, 85.8, 39.4)
+YK-Quad_205[3]: samples#   26  SHAPE: (52000,) / (26, 2000)   		DATA: (36.2, 62.2, 13.4, 83.5)
+YK-Quad_202[1]: samples#   38  SHAPE: (76000,) / (38, 2000)   		DATA: (12.6, 63.0, 66.9, 15.0)
+YK-Quad_203[2]: samples#   33  SHAPE: (66000,) / (33, 2000)   		DATA: (81.9, 69.3, 85.8, 13.4)
+SELF=<__main__.MyYKScan object at 0x7bfdbcc34940>  LINK='Link_8' values=(2.587035e-09, 53.109 Gbps, 53.109 Gbps, 5.038506e+12, 13084) 
+YK-Quad_204[2]: samples#   31  SHAPE: (62000,) / (31, 2000)   		DATA: (33.1, 33.9, 32.3, 15.0)
+YK-Quad_205[1]: samples#   27  SHAPE: (54000,) / (27, 2000)   		DATA: (80.3, 66.1, 64.6, 66.1)
+YK-Quad_202[2]: samples#   37  SHAPE: (74000,) / (37, 2000)   		DATA: (68.5, 83.5, 66.9, 36.2)
+Killed
+
+
+
+=================================================================================================================================================================================================================================
+commit f840b1f80b1e91cfc33fef87b319f30bd2cc18ea
+Date   Tue Apr 23 
        [SCOPY] MyYKFigure inherit Figure, sliding scatter
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
