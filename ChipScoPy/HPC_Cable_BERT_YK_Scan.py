@@ -196,37 +196,39 @@ BPrint(f"==> GT Groups available - {[gt_group_obj.name for gt_group_obj in ibert
 
 
 #------------------------------------------------------------------------------------------
-class FakeYKLink():
-    def __init__(self):
+# The class correlates to chipscopy.api.ibert.link.Link
+class FakeYKScanLink():
+    def __init__(self, qname, ch):
+        self.nID         = 0
         self.status      = "53.109 Gbps"
         self.line_rate   = "53.121 Gbps"
         self.bit_count   = 0
         self.error_count = 0
         self.ber         = random.random() / 1000000
+        self.GT_Group    = ibert_gtm.gt_groups.filter_by(name=qname)[0]
+        self.channel     = ch
+        BPrint(f"--> GT Group channels - {self.GT_Group.gts}", level=DBG_LEVEL_INFO)
 
-class MyYKScan():
-    def __init__(self, gt_group, gt_chan):
-        self.YKName = f"YK-{gt_group.name}[{gt_chan}]"
+
+class MyYKScanLink():
+    def __init__(self, link):
+        self.YKName = f"YK-{link.GT_Group.name}[{link.channel}]"
         self.fig = plt.figure(FigureClass=MyYKFigure, layout='constrained', num=self.YKName, figsize=[8,6])   # figsize=[12,10]  dpi=100
         self.fig.init_YK_axes(self.YKName)
 
-        self.RX  = gt_group.gts[gt_chan].rx
-        self.TX  = gt_group.gts[gt_chan].tx
-        self.PLL = gt_group.gts[gt_chan].pll
-        self.YK  = create_yk_scans(target_objs=gt_group.gts[gt_chan].rx)[0]
+        self.link = link
+        self.YK   = create_yk_scans(target_objs=link.rx)[0]                # returns: chipscopy.api.ibert.yk_scan.YKScan object
         self.YK.updates_callback = lambda obj: self.yk_scan_updates(obj)
-
-        if CREATE_LGROUP:   self.link = self.RX.link
-        else:               self.link = FakeYKLink()
-        self.ber   = self.link.ber
+        self.YK_samples_count = 0
 
         #------------------------------------------------------------------------------
-        BPrint(f"GT:{gt_group.name} CH:{gt_chan}::  RX='{self.RX}'  RX-link='{self.RX.link}'  RX-pll='{self.RX.pll}' RX-yk_scan='{self.RX.yk_scan}' ", level=DBG_LEVEL_INFO)
-        BPrint(f"GT:{gt_group.name} CH:{gt_chan}::  TX='{self.TX}'  TX-link='{self.TX.link}'  TX-pll='{self.TX.pll}' ", level=DBG_LEVEL_INFO)
-        BPrint(f"GT:{gt_group.name} CH:{gt_chan}::  SELF={self}  LINK='{self.link}' values=({self.link.ber}, {self.link.status}, {self.link.line_rate}, {self.link.bit_count}, {self.link.error_count}) ", level=DBG_LEVEL_INFO)
-        #       GT:Quad_202 CH:0::  RX='IBERT_0.Quad_202.CH_0.RX(RX)'  RX-link='None'  RX-pll='IBERT_0.Quad_202.PLL_0(PLL/LCPLL0)' RX-yk_scan='YKScan_1' 
-        #       GT:Quad_202 CH:0::  TX='IBERT_0.Quad_202.CH_0.TX(TX)'  TX-link='None'  TX-pll='IBERT_0.Quad_202.PLL_0(PLL/LCPLL0)' 
-        #------------------------------------------------------------------------------
+        BPrint(f"{self.YKName}:: TX='{link.tx}'  TX-pll='{link.tx.pll}'  LINK='{link}' ", level=DBG_LEVEL_INFO)
+        BPrint(f"{self.YKName}:: RX='{link.rx}'  RX-pll='{link.rx.pll}'  RX-yk_scan='{link.rx.yk_scan}' ", level=DBG_LEVEL_INFO)
+        self.update_link()
+        self.bprint_link(DBG_LEVEL_INFO)
+
+    def bprint_link(self, level):
+        BPrint(f"{self.YKName}:: SELF={self}  LINK='{self.link}' values=({self.ber}, {self.status}, {self.line_rate}, {self.bit_count}, {self.error_count}) ", level)
 
     def update_link(self):
         self.status      = self.link.status
@@ -236,7 +238,6 @@ class MyYKScan():
         self.ber         = self.link.ber                                                                                      # main BER read method: works
         #self.ber1       = self.link.rx.property_for_alias(RX_BER)                                                            # another BER method 1: not working
         #self.ber2       = list(self.link.rx.property.refresh(self.link.rx.property_for_alias[RX_BER]).values())[0]           # another BER method 2: works, almost the same value as <self.link.ber>
-        BPrint(f"SELF={self}  LINK='{self.link}' values=({self.ber}, {self.status}, {self.line_rate}, {self.bit_count}, {self.error_count}) ", level=DBG_LEVEL_TRACE)
 
     # ## 6 - Define YK Scan Update Method
     def yk_scan_updates(self, obj):
@@ -256,11 +257,13 @@ class MyYKScan():
         """
 
         #------------------------------------
-        self.fig.update_yk_scan(obj)
+        self.YK_samples_count +=1      #  ==> len(obj.scan_data) - 1
+        self.fig.update_yk_scan(obj, self)
 
     def yk_link_updates(self):
         self.update_link()
-        self.fig.update_yk_ber(self.ber)
+        self.bprint_link(DBG_LEVEL_TRACE)
+        self.fig.update_yk_ber(self)
 
 #------------------------------------------
 class MyYKFigure(matplotlib.figure.Figure):
@@ -275,7 +278,6 @@ class MyYKFigure(matplotlib.figure.Figure):
         super().__init__(*args, **kwargs)
 
     def init_YK_axes(self, fig_name):
-        self.axis_X_Count = 0
         self.axis_X_OFFSET = 0
         self.YKSCAN_SLICER_SIZE = 2000
         X_max = MAX_SLICES * self.YKSCAN_SLICER_SIZE 
@@ -334,9 +336,8 @@ class MyYKFigure(matplotlib.figure.Figure):
 
     # ## 6 - Define YK Scan Update Method
     # This method will be called each time the yk scan updates, allowing it to update its graphs in real time. 
-    def update_yk_scan(self, obj):
+    def update_yk_scan(self, obj, myYK):
 
-        self.axis_X_Count +=1      #  ==> len(obj.scan_data) - 1
         assert self.YKSCAN_SLICER_SIZE == len(obj.scan_data[-1].slicer)
 
         # Update the circular buffer with new data.
@@ -351,9 +352,9 @@ class MyYKFigure(matplotlib.figure.Figure):
         self.scatter_plot_EYE.set_offsets(np.column_stack((self.scatter_X_data[0:self.axis_X_OFFSET], self.YKScan_slicer_buf.flatten())))  # Set new data points
 
         BPrint("{}: samples#{:5d}  SHAPE: {} / {}   \t\tDATA: ({:.1f}, {:.1f}, {:.1f}, {:.1f})".format( self.fig_name,
-           self.axis_X_Count, self.scatter_X_data[0:self.axis_X_OFFSET].shape, self.YKScan_slicer_buf.shape,
+           myYK.YK_samples_count, self.scatter_X_data[0:self.axis_X_OFFSET].shape, self.YKScan_slicer_buf.shape,
            obj.scan_data[-1].slicer[-1], obj.scan_data[-1].slicer[-2], obj.scan_data[-1].slicer[-3], obj.scan_data[-1].slicer[-4]), level=DBG_LEVEL_TRACE)
-        #self.ax_EYE.set_xlabel("ES Sample ({}): ({:.1f}, {:.1f}, {:.1f})".format(self.axis_X_Count, obj.scan_data[-1].slicer[-1], obj.scan_data[-1].slicer[-2], obj.scan_data[-1].slicer[-3]))
+        #self.ax_EYE.set_xlabel("ES Sample ({}): ({:.1f}, {:.1f}, {:.1f})".format(myYK.YK_samples_count, obj.scan_data[-1].slicer[-1], obj.scan_data[-1].slicer[-2], obj.scan_data[-1].slicer[-3]))
 
         if self.ax_HIST.lines:
             for line2 in self.ax_HIST.lines:
@@ -365,36 +366,38 @@ class MyYKFigure(matplotlib.figure.Figure):
             #color: blue / green / teal / brown / charcoal / black / gray / silver / cyan / violet
             self.ax_HIST.hist(list(obj.scan_data[-1].slicer), 50, orientation = 'horizontal', color='cyan', stacked=True, range=(0,100))
 
-        val_snr =  obj.scan_data[-1].snr
+        myYK.snr =  obj.scan_data[-1].snr
         if self.ax_SNR.lines:
             for line3 in self.ax_SNR.lines:
-                if self.axis_X_Count > self.ax_SNR.get_xlim()[1]:
-                    self.ax_SNR.set_xlim(0, self.axis_X_Count+10)
-                line3.set_xdata(list(line3.get_xdata()) + [self.axis_X_Count])
-                line3.set_ydata(list(line3.get_ydata()) + [val_snr])
-                #self.ax_SNR.set_xlabel(f"SNR Sample: {val_snr:.3f}")
+                if myYK.YK_samples_count > self.ax_SNR.get_xlim()[1]:
+                    self.ax_SNR.set_xlim(0, myYK.YK_samples_count+10)
+                line3.set_xdata(list(line3.get_xdata()) + [myYK.YK_samples_count])
+                line3.set_ydata(list(line3.get_ydata()) + [myYK.snr])
+                #self.ax_SNR.set_xlabel(f"SNR Sample: {myYK.snr:.3f}")
         else:
-            self.ax_SNR.plot(self.axis_X_Count, val_snr)
+            self.ax_SNR.plot(myYK.YK_samples_count, myYK.snr)
 
-    def update_yk_ber(self, ber):
+    def update_yk_ber(self, myYK):
 
         if self.ax_BER.lines:
             for line4 in self.ax_BER.lines:
-                if self.axis_X_Count  > self.ax_BER.get_xlim()[1]:
-                    self.ax_BER.set_xlim(0, self.axis_X_Count+10)
-                line4.set_xdata(list(line4.get_xdata()) + [self.axis_X_Count])
-                line4.set_ydata(list(line4.get_ydata()) + [math.log10(ber)])
-                #self.ax_BER.set_xlabel(f"BER Sample: {ber:.3E}")
+                if myYK.YK_samples_count  > self.ax_BER.get_xlim()[1]:
+                    self.ax_BER.set_xlim(0, myYK.YK_samples_count+10)
+                line4.set_xdata(list(line4.get_xdata()) + [myYK.YK_samples_count])
+                line4.set_ydata(list(line4.get_ydata()) + [math.log10(myYK.ber)])
+                #self.ax_BER.set_xlabel(f"BER Sample: {myYK.ber:.3E}")
         else:
-            self.ax_BER.plot(self.axis_X_Count, math.log10(ber), color='violet')
+            self.ax_BER.plot(myYK.YK_samples_count, math.log10(myYK.ber), color='violet')
 
 
 #------------------------------------------
 class MplCanvas(FigureCanvas):
-    def __init__(self, parent=None, ykobj=None):
+    def __init__(self, parent=None, ykobj=None, nID=0):
         super().__init__(ykobj.fig)
         self.setParent(parent)
         self.ykobj = ykobj
+        self.nID   = nID
+        self.updateTable = parent.updateTable
 
         # Setup a timer to trigger the redraw by calling update_plot.
         self.timer = QtCore.QTimer()
@@ -406,6 +409,15 @@ class MplCanvas(FigureCanvas):
         self.flush_events()
         self.ykobj.yk_link_updates()
         self.draw_idle()
+        self.updateTable( self.nID, 0, str(self.ykobj.YK_samples_count) )
+        self.updateTable( self.nID, 3, str(self.ykobj.status) )
+        self.updateTable( self.nID, 4, "{}".format(self.ykobj.bit_count) )        # type: string
+        self.updateTable( self.nID, 5, "{:d}".format(self.ykobj.error_count) )    # type: int
+        self.updateTable( self.nID, 6, "{:.3e}".format(self.ykobj.ber) )          # type: float
+        self.updateTable( self.nID, 7, "{:.3f}".format(self.ykobj.snr) )          # type: float
+        #self.updateTable( self.nID, ?, str(self.ykobj.line_rate) )
+        #BPrint("QTable_TYP: bits={}, err={}, ber={}, snr={}".format(type(self.ykobj.bit_count), type(self.ykobj.error_count), type(self.ykobj.ber), type(self.ykobj.snr)), level=DBG_LEVEL_WIP)
+        BPrint("QTable_VAL: bits={}, err={}, ber={}, snr={}".format(     self.ykobj.bit_count,       self.ykobj.error_count,       self.ykobj.ber,       self.ykobj.snr),  level=DBG_LEVEL_WIP)
 
 
 #------------------------------------------
@@ -464,12 +476,20 @@ class MyWidget(QtWidgets.QMainWindow):
         self.tableWidget.horizontalHeader().setStretchLastSection(True) 
         self.tableWidget.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
 
-    def create_YKScan_figure(self, gt_group, gt_chan):
-        ykobj  = MyYKScan(gt_group, gt_chan)
-        canvas = MplCanvas(self, ykobj)
+    def updateTable(self, row, col, val): 
+        BPrint(f"QTable: ({row},{col}) <= {val}", level=DBG_LEVEL_TRACE)
+        self.tableWidget.setItem(row, col, QtWidgets.QTableWidgetItem(val)) 
+
+    def create_YKScan_figure(self, link):
+        ykobj  = MyYKScanLink(link)
+        canvas = MplCanvas(self, ykobj, link.nID)
         self.layout_grid.addWidget(canvas, self.grid_row, self.grid_col)
         self.canvases.append(canvas)
         canvas.draw()
+
+        self.updateTable( link.nID, 1, re.findall(".*(Quad_.*\.[RT]X).*", str(link.tx))[0] )
+        self.updateTable( link.nID, 2, re.findall(".*(Quad_.*\.[RT]X).*", str(link.rx))[0] )
+        self.updateTable( link.nID, 3, str(link.status) )
 
         #self.ui2(self.ykobj.fig)
         #ykobj.YK.start()
@@ -515,11 +535,13 @@ def create_links_common(RXs, TXs):
     BPrint(f"Links_RXs: {RXs}", level=DBG_LEVEL_INFO)
     myLinks = create_links(txs=TXs, rxs=RXs)
 
+    nID = 0
     dbg_print = True
     for link in myLinks:
+        link.nID = nID; nID += 1
         link.gt_name = re.findall(".*(Quad_[0-9]*).*", str(link.rx))[0]
         link.channel = int(re.findall(".*CH_([0-9]*).*", str(link.rx))[0])
-        link.gt_grp  = ibert_gtm.gt_groups.filter_by(name=link.gt_name)[0]
+        link.GT_Group  = ibert_gtm.gt_groups.filter_by(name=link.gt_name)[0]
         BPrint(f"\n----- {link.name} :: RX={link.rx} TX={link.tx}  GT={link.gt_name} CH={link.channel} -------", level=DBG_LEVEL_INFO)
         _, tx_pattern_report = link.tx.property.report(link.tx.property_for_alias[PATTERN]).popitem()
         _, rx_pattern_report = link.rx.property.report(link.rx.property_for_alias[PATTERN]).popitem()
@@ -594,19 +616,19 @@ def create_links_crossConnected():
 
 
 #------------------------------------------
-all_links = []
 if CREATE_LGROUP:
     q205 = one(ibert_gtm.gt_groups.filter_by(name="Quad_205"))
     q204 = one(ibert_gtm.gt_groups.filter_by(name="Quad_204"))
     q203 = one(ibert_gtm.gt_groups.filter_by(name="Quad_203"))
     q202 = one(ibert_gtm.gt_groups.filter_by(name="Quad_202"))
-
     create_links_crossConnected()
+else:
+    myLinks = [ FakeYKScanLink(QUAD_NAME, QUAD_CHAN) ]
 
-    all_lnkgrps = get_all_link_groups()
-    all_links   = get_all_links()
-    BPrint(f"\n--> All Link Groups available - {all_lnkgrps}", level=DBG_LEVEL_DEBUG)
-    BPrint(f"\n--> All Links available - {all_links}", level=DBG_LEVEL_DEBUG)
+all_lnkgrps = get_all_link_groups()
+all_links   = get_all_links()
+BPrint(f"\n--> All Link Groups available - {all_lnkgrps}", level=DBG_LEVEL_DEBUG)
+BPrint(f"\n--> All Links available - {all_links}", level=DBG_LEVEL_DEBUG)
 
 
 #------------------------------------------------------------------------------------------
@@ -616,13 +638,8 @@ if __name__ == '__main__':
 
     # ## 7 - Create YK Scan
     # This step initializes the YK scan, setting its update method to the method we defined in the last step. 
-    if CREATE_LGROUP:
-        for link in myLinks:
-            MainForm.create_YKScan_figure(link.gt_grp, link.channel)
-    else:
-        gt_group = ibert_gtm.gt_groups.filter_by(name=QUAD_NAME)[0]
-        BPrint(f"--> GT Group channels - {gt_group.gts}", level=DBG_LEVEL_INFO)
-        MainForm.create_YKScan_figure(gt_group, QUAD_CHAN)
+    for link in myLinks:
+        MainForm.create_YKScan_figure(link)
 
     MainForm.show_figures()
 
