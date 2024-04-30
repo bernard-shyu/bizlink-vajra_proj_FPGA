@@ -40,6 +40,7 @@ export HW_PLATFORM="vpk120"; export CREATE_LGROUP=False
 export PLOT_1_RESOL_X=900;   export PLOT_1_RESOL_Y=800;  export PLOT_F_RESOL_X=3840;  export PLOT_F_RESOL_Y=2160
 export PROG_DEVICE=True;     export PDI_FILE="./VPK120_iBERT_2xQDD_56G.pdi"
 export SHOW_FIG_TITLE=True;  export MAX_SLICES=100;
+export CSV_PATH="./YK_CSV_Files";
 export QUAD_NAME="Quad_202"; export QUAD_CHAN=2;
 export APP_DBG_LEVEL=5;
 """
@@ -70,6 +71,7 @@ import random
 import math
 import re
 import numpy as np
+import pandas as pd
 
 import matplotlib
 matplotlib.use("Qt5Agg")      # 表示使用 Qt5
@@ -78,8 +80,6 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
 import datetime
 import time
-
-app_start_time = datetime.datetime.now()
 
 #------------------------------------------------------------------------------------------
 # Print levels (default: info)
@@ -96,6 +96,9 @@ APP_DBG_LEVEL    = int(os.getenv("APP_DBG_LEVEL", "3"))
 def BPrint(*args, level=DBG_LEVEL_INFO):
     if level <= APP_DBG_LEVEL:
         print(*args)
+
+app_start_time = datetime.datetime.now()
+BPrint(f"\nChipScoPy APP fro BizLink iBERT HPC-cables testing --- {app_start_time}\n", level=DBG_LEVEL_NOTICE)
 
 #------------------------------------------------------------------------------------------
 # ## 2 - Create a session and connect to the hw_server and cs_server
@@ -114,6 +117,7 @@ PLOT_1_RESOL_Y = int(os.getenv("PLOT_1_RESOL_Y", "800"))
 PLOT_F_RESOL_X = int(os.getenv("PLOT_F_RESOL_X", "3200"))
 PLOT_F_RESOL_Y = int(os.getenv("PLOT_F_RESOL_Y", "1900"))
 
+CSV_PATH     =     os.getenv("CSV_PATH", "./YK_CSV_Files")
 QUAD_NAME    =     os.getenv("QUAD_NAME", "Quad_202")
 QUAD_CHAN    = int(os.getenv("QUAD_CHAN", "0"))
 
@@ -220,8 +224,8 @@ class FakeYKScanLink():
 
 class MyYKScanLink():
     def __init__(self, link):
-        self.YKName = f"YK-{link.GT_Group.name}[{link.channel}]"
-        self.fig = plt.figure(FigureClass=MyYKFigure, layout='constrained', num=self.YKName, figsize=[8,6])   # figsize=[12,10]  dpi=100
+        self.YKName = f"YK-{link.GT_Group.name}_CH{link.channel}"
+        self.fig = plt.figure(FigureClass=MyYKFigure, num=self.YKName, layout='constrained', edgecolor='black', linewidth=3, figsize=[8,6])   # facecolor='yellow', figsize=[12,10], dpi=100
         self.fig.init_YK_axes(self.YKName)
 
         #------------------------------------------------------------------------------
@@ -230,11 +234,16 @@ class MyYKScanLink():
         self.YK   = create_yk_scans(target_objs=link.rx)[0]                # returns: chipscopy.api.ibert.yk_scan.YKScan object
         self.YK.updates_callback = lambda obj: self.update_YKScan_data(obj)
         self.YK_samples_count = 0
+        self.LINK_samples_count = 0
 
         #------------------------------------------------------------------------------
         # Initialize circular buffer
         self.YKScan_slicer_buf = np.zeros((0, YKSCAN_SLICER_SIZE))  # Assuming 2D data (X, Y), X-dim will grow to MAX_SLICES
         self.YK_slice_samples_count = 0
+
+        #------------------------------------------------------------------------------
+        # Pandas table to keep data for CSV file
+        self.pd_data = pd.DataFrame(columns=["Samples", "Elapsed Time", "Status", "Line Rate", "Bits Count", "Errors Count", "BER", "SNR"])
 
         #------------------------------------------------------------------------------
         self.__refresh_link_data__()
@@ -246,8 +255,9 @@ class MyYKScanLink():
         BPrint("{}:: SELF={} LINK={:8s} BER=({} ST={} RATE={} BITS={} ERR={})".format(self.YKName, self, str(self.link), self.ber, self.status, self.line_rate, self.bit_count, self.error_count), level=l)
 
     def __refresh_link_data__(self):
+        self.LINK_samples_count +=1
         self.now         = datetime.datetime.now()
-        self.elapsed     = self.now - app_start_time
+        self.elapsed     = (self.now - app_start_time).seconds
         self.status      = self.link.status
         self.line_rate   = self.link.line_rate
         self.bit_count   = self.link.bit_count
@@ -255,6 +265,9 @@ class MyYKScanLink():
         self.ber         = self.link.ber                                                                                      # main BER read method: works
         #self.ber1       = self.link.rx.property_for_alias(RX_BER)                                                            # another BER method 1: not working
         #self.ber2       = list(self.link.rx.property.refresh(self.link.rx.property_for_alias[RX_BER]).values())[0]           # another BER method 2: works, almost the same value as <self.link.ber>
+
+        # Append data into Pandas table
+        self.pd_data.loc[len(self.pd_data)] = [ self.LINK_samples_count, self.elapsed, self.status, self.line_rate, self.bit_count, self.error_count, self.ber, self.snr ] 
 
     # ## 6 - Define YK Scan Update Method
     def update_YKScan_data(self, obj):
@@ -271,9 +284,11 @@ class MyYKScanLink():
         else:
             self.YK_slice_samples_count += YKSCAN_SLICER_SIZE
 
-        BPrint("{}: samples#{:5d}  SHAPE: {}   \t\tDATA: ({:.1f}, {:.1f}, {:.1f}, {:.1f})".format( 
-           self.YKName, self.YK_samples_count, self.YKScan_slicer_buf.shape,
-           self.YKScan_slicer_buf[0][-1], self.YKScan_slicer_buf[0][-2], self.YKScan_slicer_buf[0][-3], self.YKScan_slicer_buf[0][-4]), level=DBG_LEVEL_TRACE)
+        lvl = DBG_LEVEL_TRACE
+        #if self.YK_samples_count < 5:  lvl = DBG_LEVEL_WIP
+        BPrint("{}: samples#{:5d}  SHAPE: {}   \tSNR:{:.2f}\t  DATA: ({:.1f}, {:.1f}, {:.1f}, {:.1f})".format( 
+           self.YKName, self.YK_samples_count, self.YKScan_slicer_buf.shape, self.snr,
+           self.YKScan_slicer_buf[0][-1], self.YKScan_slicer_buf[0][-2], self.YKScan_slicer_buf[0][-3], self.YKScan_slicer_buf[0][-4]), level=lvl )    # level=DBG_LEVEL_TRACE
 
         #------------------------------------------------------------------------------
         if len(obj.scan_data) > 3:   # only keep a few samples
@@ -286,6 +301,15 @@ class MyYKScanLink():
     def update_YKScan_figures(self):
         self.fig.update_yk_ber(self)
         self.fig.update_yk_scan(self)
+
+    def finish_object(self):
+        path = f"{CSV_PATH}/YK_{app_start_time.year}-{app_start_time.month}{app_start_time.day}"
+        os.makedirs(path, exist_ok=True)
+        self.pd_data.to_csv(f"{path}/{self.YKName}-{app_start_time.hour}{app_start_time.minute}.csv")
+        try:
+            self.YK.stop()     # Stops the YK scan from running.
+        except Exception as e:
+            print(f"YKScan-{self.YKName} Exception: {str(e)}")
 
 
 #------------------------------------------------------------------------------------------
@@ -356,8 +380,6 @@ class MyYKFigure(matplotlib.figure.Figure):
         # Update the scatter plot with data from the buffer.
         self.scatter_plot_EYE.set_offsets(np.column_stack((self.scatter_X_data[0:myYK.YK_slice_samples_count], myYK.YKScan_slicer_buf.flatten())))  # Set new data points
 
-        #self.ax_EYE.set_xlabel("ES Sample ({}): ({:.1f}, {:.1f}, {:.1f})".format(myYK.YK_samples_count, myYK.YKScan_slicer_buf[0][-1], myYK.YKScan_slicer_buf[0][-2], myYK.YKScan_slicer_buf[0][-3]))
-
         if self.ax_HIST.lines:
             for line2 in self.ax_HIST.lines:
                 self.ax_HIST.set_xlim(0, self.ax_HIST.get_xlim()[1] + YKSCAN_SLICER_SIZE)
@@ -381,13 +403,13 @@ class MyYKFigure(matplotlib.figure.Figure):
     def update_yk_ber(self, myYK):
         if self.ax_BER.lines:
             for line4 in self.ax_BER.lines:
-                if myYK.YK_samples_count  > self.ax_BER.get_xlim()[1]:
-                    self.ax_BER.set_xlim(0, myYK.YK_samples_count+10)
-                line4.set_xdata(list(line4.get_xdata()) + [myYK.YK_samples_count])
+                if myYK.LINK_samples_count  > self.ax_BER.get_xlim()[1]:
+                    self.ax_BER.set_xlim(0, myYK.LINK_samples_count+10)
+                line4.set_xdata(list(line4.get_xdata()) + [myYK.LINK_samples_count])
                 line4.set_ydata(list(line4.get_ydata()) + [math.log10(myYK.ber)])
                 #self.ax_BER.set_xlabel(f"BER Sample: {myYK.ber:.3E}")
         else:
-            self.ax_BER.plot(myYK.YK_samples_count, math.log10(myYK.ber), color='violet')
+            self.ax_BER.plot(myYK.LINK_samples_count, math.log10(myYK.ber), color='violet')
 
 
 #------------------------------------------------------------------------------------------
@@ -483,12 +505,13 @@ class MyWidget(QtWidgets.QMainWindow):
         for c in self.canvases:
             c.timer_plot.stop()
             c.timer_table.stop()
-            c.ykobj.YK.stop() # Stops the YK scan from running.
+            c.ykobj.finish_object()
         BPrint("Closed YK-Scan", level=DBG_LEVEL_NOTICE)
         event.accept()  # Close the widget
         BPrint("Closed Widget", level=DBG_LEVEL_NOTICE)
 
     def show_figures(self): 
+        canvas_time = datetime.datetime.now()
         for c in self.canvases:
             BPrint(f"Start YK-Scan: {c.ykobj.YKName}", level=DBG_LEVEL_INFO)
             #c.draw()
@@ -497,6 +520,8 @@ class MyWidget(QtWidgets.QMainWindow):
             c.ykobj.update_link_data()
             c.start_timer()
         self.show()
+        gui_time = datetime.datetime.now()
+        BPrint(f"\nChipScoPy loading time: APP={app_start_time}  CANVAS={canvas_time - app_start_time}  GUI={gui_time - app_start_time} \n", level=DBG_LEVEL_NOTICE)
 
     def createTable(self): 
         self.tableWidget = QtWidgets.QTableWidget(self.n_links, 10) 
@@ -525,6 +550,7 @@ class MyWidget(QtWidgets.QMainWindow):
             self.grid_col = 0
             self.grid_row += 1
 
+    """
     def ui(self, fig):
         self.canvas = FigureCanvas(fig)
 
@@ -551,6 +577,7 @@ class MyWidget(QtWidgets.QMainWindow):
         widget = QtWidgets.QWidget()
         widget.setLayout(layout)
         self.setCentralWidget(widget)
+    """
 
 
 #------------------------------------------------------------------------------------------

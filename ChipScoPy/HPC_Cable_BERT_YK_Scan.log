@@ -9,6 +9,258 @@ Date   ???
 
 =================================================================================================================================================================================================================================
 commit ???
+Date   Tue Apr 30
+       [SCOPY] YK-Table exports to CSV files
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+(.VENV) bernard@BXUTP-FPGA-Linux:~/SDK_WIP/project/vajra_proj_FPGA/ChipScoPy$ ./HPC_Cable_BERT_YK_Scan.py
+
+ChipScoPy APP fro BizLink iBERT HPC-cables testing --- 2024-04-30 10:43:39.801972
+
+PROGRAMMING_FILE: ./VPK120_iBERT_2xQDD_56G.pdi
+Servers URL: TCP:10.20.2.145:3042 TCP:10.20.2.145:3121 HW: vpk120  Do_Programming: True
+
+
+
+                       ChipScoPy Version Information                       
+┌──────────────────────────────┬──────────────────────────────────────────┐
+│                       Entity │ Version                                  │
+├──────────────────────────────┼──────────────────────────────────────────┤
+│                    ChipScoPy │ ┌───────────┬──────────────────────┐     │
+│                              │ │ Attribute │ Value                │     │
+│                              │ ├───────────┼──────────────────────┤     │
+│                              │ │     Build │ 2023.2.1710645976    │     │
+│                              │ │ Timestamp │ Mar 17 2024-11:26:16 │     │
+│                              │ └───────────┴──────────────────────┘     │
+│                              │                                          │
+│ hw_server @ 10.20.2.145:3121 │ ┌───────────┬──────────────────────────┐ │
+│                              │ │ Attribute │ Value                    │ │
+│                              │ ├───────────┼──────────────────────────┤ │
+│                              │ │    Status │ Connected                │ │
+│                              │ │     Build │ 1707461461               │ │
+│                              │ │   Version │ 2023.2.2                 │ │
+│                              │ │ Timestamp │ Thu Feb  8 23:51:01 2024 │ │
+│                              │ └───────────┴──────────────────────────┘ │
+│                              │                                          │
+│ cs_server @ 10.20.2.145:3042 │ ┌───────────────┬──────────────────────┐ │
+│                              │ │     Attribute │ Value                │ │
+│                              │ ├───────────────┼──────────────────────┤ │
+│                              │ │        Status │ Connected            │ │
+│                              │ │         Build │ 1696910516           │ │
+│                              │ │       Version │ 2023.2.0             │ │
+│                              │ │     Timestamp │ Oct 10 2023-12:01:56 │ │
+│                              │ │       Package │ 2023.2.1696910516    │ │
+│                              │ │ Artifact type │ pyinstaller          │ │
+│                              │ └───────────────┴──────────────────────┘ │
+└──────────────────────────────┴──────────────────────────────────────────┘
+
+
+
+--> INFO: Programming device with: /mnt/extDisk/fpga_share/fpgaspace/VIVADO_projects/BZProj_iBERT_Testing/VPK120_iBERT_2xQDD_56G/VPK120_iBERT_2xQDD_56G.runs/impl_1/versal_ibert_wrapper.pdi
+    
+Device program progress ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% Done
+Discovering debug cores...
+--> Found ['IBERT Versal GTM (IBERT_0)', 'IBERT Versal GTYP (IBERT_1)']
+
+--> GT Groups available - [
+    'IBERT_0.Quad_206(GT_Group)',
+    'IBERT_0.Quad_205(GT_Group)',
+    'IBERT_0.Quad_204(GT_Group)',
+    'IBERT_0.Quad_203(GT_Group)',
+    'IBERT_0.Quad_202(GT_Group)'
+]
+Links_TXs: [IBERT_0.Quad_202.CH_0.TX(TX), IBERT_0.Quad_202.CH_1.TX(TX), IBERT_0.Quad_202.CH_2.TX(TX), IBERT_0.Quad_202.CH_3.TX(TX), IBERT_0.Quad_203.CH_0.TX(TX), IBERT_0.Quad_203.CH_1.TX(TX), IBERT_0.Quad_203.CH_2.TX(TX), IBERT_0.Quad_203.CH_3.TX(TX), IBERT_0.Quad_204.CH_0.TX(TX), IBERT_0.Quad_204.CH_2.TX(TX), IBERT_0.Quad_205.CH_0.TX(TX), IBERT_0.Quad_205.CH_2.TX(TX), IBERT_0.Quad_204.CH_1.TX(TX), IBERT_0.Quad_204.CH_3.TX(TX), IBERT_0.Quad_205.CH_1.TX(TX), IBERT_0.Quad_205.CH_3.TX(TX)]
+Links_RXs: [IBERT_0.Quad_204.CH_0.RX(RX), IBERT_0.Quad_204.CH_2.RX(RX), IBERT_0.Quad_205.CH_0.RX(RX), IBERT_0.Quad_205.CH_2.RX(RX), IBERT_0.Quad_204.CH_1.RX(RX), IBERT_0.Quad_204.CH_3.RX(RX), IBERT_0.Quad_205.CH_1.RX(RX), IBERT_0.Quad_205.CH_3.RX(RX), IBERT_0.Quad_202.CH_0.RX(RX), IBERT_0.Quad_202.CH_1.RX(RX), IBERT_0.Quad_202.CH_2.RX(RX), IBERT_0.Quad_202.CH_3.RX(RX), IBERT_0.Quad_203.CH_0.RX(RX), IBERT_0.Quad_203.CH_1.RX(RX), IBERT_0.Quad_203.CH_2.RX(RX), IBERT_0.Quad_203.CH_3.RX(RX)]
+
+--- Link_0 :: RX=IBERT_0.Quad_204.CH_0.RX(RX) TX=IBERT_0.Quad_202.CH_0.TX(TX)  GT=Quad_204 CH=0 ST=53.109 Gbps  -----
+
+--- Link_1 :: RX=IBERT_0.Quad_204.CH_2.RX(RX) TX=IBERT_0.Quad_202.CH_1.TX(TX)  GT=Quad_204 CH=2 ST=53.109 Gbps  -----
+
+--- Link_2 :: RX=IBERT_0.Quad_205.CH_0.RX(RX) TX=IBERT_0.Quad_202.CH_2.TX(TX)  GT=Quad_205 CH=0 ST=53.109 Gbps  -----
+
+--- Link_3 :: RX=IBERT_0.Quad_205.CH_2.RX(RX) TX=IBERT_0.Quad_202.CH_3.TX(TX)  GT=Quad_205 CH=2 ST=53.121 Gbps  -----
+
+--- Link_4 :: RX=IBERT_0.Quad_204.CH_1.RX(RX) TX=IBERT_0.Quad_203.CH_0.TX(TX)  GT=Quad_204 CH=1 ST=53.109 Gbps  -----
+
+--- Link_5 :: RX=IBERT_0.Quad_204.CH_3.RX(RX) TX=IBERT_0.Quad_203.CH_1.TX(TX)  GT=Quad_204 CH=3 ST=53.109 Gbps  -----
+
+--- Link_6 :: RX=IBERT_0.Quad_205.CH_1.RX(RX) TX=IBERT_0.Quad_203.CH_2.TX(TX)  GT=Quad_205 CH=1 ST=53.109 Gbps  -----
+
+--- Link_7 :: RX=IBERT_0.Quad_205.CH_3.RX(RX) TX=IBERT_0.Quad_203.CH_3.TX(TX)  GT=Quad_205 CH=3 ST=53.109 Gbps  -----
+
+--- Link_8 :: RX=IBERT_0.Quad_202.CH_0.RX(RX) TX=IBERT_0.Quad_204.CH_0.TX(TX)  GT=Quad_202 CH=0 ST=53.109 Gbps  -----
+
+--- Link_9 :: RX=IBERT_0.Quad_202.CH_1.RX(RX) TX=IBERT_0.Quad_204.CH_2.TX(TX)  GT=Quad_202 CH=1 ST=53.121 Gbps  -----
+
+--- Link_10 :: RX=IBERT_0.Quad_202.CH_2.RX(RX) TX=IBERT_0.Quad_205.CH_0.TX(TX)  GT=Quad_202 CH=2 ST=53.121 Gbps  -----
+
+--- Link_11 :: RX=IBERT_0.Quad_202.CH_3.RX(RX) TX=IBERT_0.Quad_205.CH_2.TX(TX)  GT=Quad_202 CH=3 ST=53.121 Gbps  -----
+
+--- Link_12 :: RX=IBERT_0.Quad_203.CH_0.RX(RX) TX=IBERT_0.Quad_204.CH_1.TX(TX)  GT=Quad_203 CH=0 ST=53.109 Gbps  -----
+
+--- Link_13 :: RX=IBERT_0.Quad_203.CH_1.RX(RX) TX=IBERT_0.Quad_204.CH_3.TX(TX)  GT=Quad_203 CH=1 ST=53.109 Gbps  -----
+
+--- Link_14 :: RX=IBERT_0.Quad_203.CH_2.RX(RX) TX=IBERT_0.Quad_205.CH_1.TX(TX)  GT=Quad_203 CH=2 ST=53.109 Gbps  -----
+
+--- Link_15 :: RX=IBERT_0.Quad_203.CH_3.RX(RX) TX=IBERT_0.Quad_205.CH_3.TX(TX)  GT=Quad_203 CH=3 ST=53.121 Gbps  -----
+Warning: Ignoring XDG_SESSION_TYPE=wayland on Gnome. Use QT_QPA_PLATFORM=wayland to run on Wayland anyway.
+QSocketNotifier: Can only be used with threads started with QThread
+
+YK-Quad_204_CH0:: TX='IBERT_0.Quad_202.CH_0.TX(TX)'  TX-pll='IBERT_0.Quad_202.PLL_0(PLL/LCPLL0)'  LINK='Link_0'  YK='YKScan_1' 
+YK-Quad_204_CH0:: RX='IBERT_0.Quad_204.CH_0.RX(RX)'  RX-pll='IBERT_0.Quad_204.PLL_0(PLL/LCPLL0)'  RX-yk_scan='YKScan_1' 
+YK-Quad_204_CH0:: SELF=<__main__.MyYKScanLink object at 0x7d76f7297460> LINK=Link_0   BER=(2.006045e-07 ST=53.109 Gbps RATE=53.109 Gbps BITS=7.236923e+11 ERR=145812)
+
+YK-Quad_204_CH2:: TX='IBERT_0.Quad_202.CH_1.TX(TX)'  TX-pll='IBERT_0.Quad_202.PLL_0(PLL/LCPLL0)'  LINK='Link_1'  YK='YKScan_2' 
+YK-Quad_204_CH2:: RX='IBERT_0.Quad_204.CH_2.RX(RX)'  RX-pll='IBERT_0.Quad_204.PLL_0(PLL/LCPLL0)'  RX-yk_scan='YKScan_2' 
+YK-Quad_204_CH2:: SELF=<__main__.MyYKScanLink object at 0x7d76dc02a0e0> LINK=Link_1   BER=(1.100281e-07 ST=53.109 Gbps RATE=53.109 Gbps BITS=6.995131e+11 ERR=77268)
+
+YK-Quad_205_CH0:: TX='IBERT_0.Quad_202.CH_2.TX(TX)'  TX-pll='IBERT_0.Quad_202.PLL_0(PLL/LCPLL0)'  LINK='Link_2'  YK='YKScan_3' 
+YK-Quad_205_CH0:: RX='IBERT_0.Quad_205.CH_0.RX(RX)'  RX-pll='IBERT_0.Quad_205.PLL_0(PLL/LCPLL0)'  RX-yk_scan='YKScan_3' 
+YK-Quad_205_CH0:: SELF=<__main__.MyYKScanLink object at 0x7d76dc185a50> LINK=Link_2   BER=(9.004957e-08 ST=53.121 Gbps RATE=53.109 Gbps BITS=6.803213e+11 ERR=61586)
+
+YK-Quad_205_CH2:: TX='IBERT_0.Quad_202.CH_3.TX(TX)'  TX-pll='IBERT_0.Quad_202.PLL_0(PLL/LCPLL0)'  LINK='Link_3'  YK='YKScan_4' 
+YK-Quad_205_CH2:: RX='IBERT_0.Quad_205.CH_2.RX(RX)'  RX-pll='IBERT_0.Quad_205.PLL_0(PLL/LCPLL0)'  RX-yk_scan='YKScan_4' 
+YK-Quad_205_CH2:: SELF=<__main__.MyYKScanLink object at 0x7d76c9b6d1b0> LINK=Link_3   BER=(4.355301e-10 ST=53.109 Gbps RATE=53.109 Gbps BITS=6.610586e+11 ERR=286)
+
+YK-Quad_204_CH1:: TX='IBERT_0.Quad_203.CH_0.TX(TX)'  TX-pll='IBERT_0.Quad_203.PLL_0(PLL/LCPLL0)'  LINK='Link_4'  YK='YKScan_5' 
+YK-Quad_204_CH1:: RX='IBERT_0.Quad_204.CH_1.RX(RX)'  RX-pll='IBERT_0.Quad_204.PLL_0(PLL/LCPLL0)'  RX-yk_scan='YKScan_5' 
+YK-Quad_204_CH1:: SELF=<__main__.MyYKScanLink object at 0x7d76c93c3520> LINK=Link_4   BER=(1.543101e-12 ST=53.109 Gbps RATE=53.109 Gbps BITS=6.411589e+11 ERR=0)
+
+YK-Quad_204_CH3:: TX='IBERT_0.Quad_203.CH_1.TX(TX)'  TX-pll='IBERT_0.Quad_203.PLL_0(PLL/LCPLL0)'  LINK='Link_5'  YK='YKScan_6' 
+YK-Quad_204_CH3:: RX='IBERT_0.Quad_204.CH_3.RX(RX)'  RX-pll='IBERT_0.Quad_204.PLL_0(PLL/LCPLL0)'  RX-yk_scan='YKScan_6' 
+YK-Quad_204_CH3:: SELF=<__main__.MyYKScanLink object at 0x7d76c8b1ea10> LINK=Link_5   BER=(1.58699e-12 ST=53.109 Gbps RATE=53.109 Gbps BITS=6.234835e+11 ERR=0)
+
+YK-Quad_205_CH1:: TX='IBERT_0.Quad_203.CH_2.TX(TX)'  TX-pll='IBERT_0.Quad_203.PLL_0(PLL/LCPLL0)'  LINK='Link_6'  YK='YKScan_7' 
+YK-Quad_205_CH1:: RX='IBERT_0.Quad_205.CH_1.RX(RX)'  RX-pll='IBERT_0.Quad_205.PLL_0(PLL/LCPLL0)'  RX-yk_scan='YKScan_7' 
+YK-Quad_205_CH1:: SELF=<__main__.MyYKScanLink object at 0x7d76c80e1cc0> LINK=Link_6   BER=(1.646241e-12 ST=53.121 Gbps RATE=53.121 Gbps BITS=6.003677e+11 ERR=0)
+
+YK-Quad_205_CH3:: TX='IBERT_0.Quad_203.CH_3.TX(TX)'  TX-pll='IBERT_0.Quad_203.PLL_0(PLL/LCPLL0)'  LINK='Link_7'  YK='YKScan_8' 
+YK-Quad_205_CH3:: RX='IBERT_0.Quad_205.CH_3.RX(RX)'  RX-pll='IBERT_0.Quad_205.PLL_0(PLL/LCPLL0)'  RX-yk_scan='YKScan_8' 
+YK-Quad_205_CH3:: SELF=<__main__.MyYKScanLink object at 0x7d76c171a470> LINK=Link_7   BER=(1.717056e-12 ST=53.109 Gbps RATE=53.121 Gbps BITS=5.758727e+11 ERR=0)
+
+YK-Quad_202_CH0:: TX='IBERT_0.Quad_204.CH_0.TX(TX)'  TX-pll='IBERT_0.Quad_204.PLL_0(PLL/LCPLL0)'  LINK='Link_8'  YK='YKScan_9' 
+YK-Quad_202_CH0:: RX='IBERT_0.Quad_202.CH_0.RX(RX)'  RX-pll='IBERT_0.Quad_202.PLL_0(PLL/LCPLL0)'  RX-yk_scan='YKScan_9' 
+YK-Quad_202_CH0:: SELF=<__main__.MyYKScanLink object at 0x7d76c14b2350> LINK=Link_8   BER=(1.656148e-10 ST=53.109 Gbps RATE=53.109 Gbps BITS=5.432009e+11 ERR=91)
+
+YK-Quad_202_CH1:: TX='IBERT_0.Quad_204.CH_2.TX(TX)'  TX-pll='IBERT_0.Quad_204.PLL_0(PLL/LCPLL0)'  LINK='Link_9'  YK='YKScan_10' 
+YK-Quad_202_CH1:: RX='IBERT_0.Quad_202.CH_1.RX(RX)'  RX-pll='IBERT_0.Quad_202.PLL_0(PLL/LCPLL0)'  RX-yk_scan='YKScan_10' 
+YK-Quad_202_CH1:: SELF=<__main__.MyYKScanLink object at 0x7d76c3f18ee0> LINK=Link_9   BER=(6.05001e-08 ST=53.109 Gbps RATE=53.109 Gbps BITS=5.146272e+11 ERR=31371)
+
+YK-Quad_202_CH2:: TX='IBERT_0.Quad_205.CH_0.TX(TX)'  TX-pll='IBERT_0.Quad_205.PLL_0(PLL/LCPLL0)'  LINK='Link_10'  YK='YKScan_11' 
+YK-Quad_202_CH2:: RX='IBERT_0.Quad_202.CH_2.RX(RX)'  RX-pll='IBERT_0.Quad_202.PLL_0(PLL/LCPLL0)'  RX-yk_scan='YKScan_11' 
+YK-Quad_202_CH2:: SELF=<__main__.MyYKScanLink object at 0x7d76c0dce7d0> LINK=Link_10  BER=(1.648716e-07 ST=53.109 Gbps RATE=53.121 Gbps BITS=4.910854e+11 ERR=81492)
+
+YK-Quad_202_CH3:: TX='IBERT_0.Quad_205.CH_2.TX(TX)'  TX-pll='IBERT_0.Quad_205.PLL_0(PLL/LCPLL0)'  LINK='Link_11'  YK='YKScan_12' 
+YK-Quad_202_CH3:: RX='IBERT_0.Quad_202.CH_3.RX(RX)'  RX-pll='IBERT_0.Quad_202.PLL_0(PLL/LCPLL0)'  RX-yk_scan='YKScan_12' 
+YK-Quad_202_CH3:: SELF=<__main__.MyYKScanLink object at 0x7d76c0b57850> LINK=Link_11  BER=(1.719597e-07 ST=53.121 Gbps RATE=53.121 Gbps BITS=4.631440e+11 ERR=80286)
+
+YK-Quad_203_CH0:: TX='IBERT_0.Quad_204.CH_1.TX(TX)'  TX-pll='IBERT_0.Quad_204.PLL_0(PLL/LCPLL0)'  LINK='Link_12'  YK='YKScan_13' 
+YK-Quad_203_CH0:: RX='IBERT_0.Quad_203.CH_0.RX(RX)'  RX-pll='IBERT_0.Quad_203.PLL_0(PLL/LCPLL0)'  RX-yk_scan='YKScan_13' 
+YK-Quad_203_CH0:: SELF=<__main__.MyYKScanLink object at 0x7d76c070cb50> LINK=Link_12  BER=(2.228878e-12 ST=53.121 Gbps RATE=53.121 Gbps BITS=4.416316e+11 ERR=0)
+
+YK-Quad_203_CH1:: TX='IBERT_0.Quad_204.CH_3.TX(TX)'  TX-pll='IBERT_0.Quad_204.PLL_0(PLL/LCPLL0)'  LINK='Link_13'  YK='YKScan_14' 
+YK-Quad_203_CH1:: RX='IBERT_0.Quad_203.CH_1.RX(RX)'  RX-pll='IBERT_0.Quad_203.PLL_0(PLL/LCPLL0)'  RX-yk_scan='YKScan_14' 
+YK-Quad_203_CH1:: SELF=<__main__.MyYKScanLink object at 0x7d76c049d2a0> LINK=Link_13  BER=(2.387958e-12 ST=53.121 Gbps RATE=53.121 Gbps BITS=4.127138e+11 ERR=0)
+
+YK-Quad_203_CH2:: TX='IBERT_0.Quad_205.CH_1.TX(TX)'  TX-pll='IBERT_0.Quad_205.PLL_0(PLL/LCPLL0)'  LINK='Link_14'  YK='YKScan_15' 
+YK-Quad_203_CH2:: RX='IBERT_0.Quad_203.CH_2.RX(RX)'  RX-pll='IBERT_0.Quad_203.PLL_0(PLL/LCPLL0)'  RX-yk_scan='YKScan_15' 
+YK-Quad_203_CH2:: SELF=<__main__.MyYKScanLink object at 0x7d76c0036680> LINK=Link_14  BER=(2.570638e-12 ST=53.121 Gbps RATE=53.109 Gbps BITS=3.826148e+11 ERR=0)
+
+YK-Quad_203_CH3:: TX='IBERT_0.Quad_205.CH_3.TX(TX)'  TX-pll='IBERT_0.Quad_205.PLL_0(PLL/LCPLL0)'  LINK='Link_15'  YK='YKScan_16' 
+YK-Quad_203_CH3:: RX='IBERT_0.Quad_203.CH_3.RX(RX)'  RX-pll='IBERT_0.Quad_203.PLL_0(PLL/LCPLL0)'  RX-yk_scan='YKScan_16' 
+YK-Quad_203_CH3:: SELF=<__main__.MyYKScanLink object at 0x7d76c0081960> LINK=Link_15  BER=(2.690057e-12 ST=53.109 Gbps RATE=53.109 Gbps BITS=3.652938e+11 ERR=0)
+Start YK-Scan: YK-Quad_204_CH0
+Start YK-Scan: YK-Quad_204_CH2
+Start YK-Scan: YK-Quad_205_CH0
+Start YK-Scan: YK-Quad_205_CH2
+Start YK-Scan: YK-Quad_204_CH1
+Start YK-Scan: YK-Quad_204_CH3
+Start YK-Scan: YK-Quad_205_CH1
+Unhandled exception during YK scan update callback!
+Exception -     WHO: .name=YKScan_1 .rx=IBERT_0.Quad_204.CH_0.RX(RX)  .cb=<function MyYKScanLink.__init__.<locals>.<lambda> at 0x7d76dc195240>
+
+Start YK-Scan: YK-Quad_205_CH3
+Start YK-Scan: YK-Quad_202_CH0
+Unhandled exception during YK scan update callback!
+Exception -     WHO: .name=YKScan_3 .rx=IBERT_0.Quad_205.CH_0.RX(RX)  .cb=<function MyYKScanLink.__init__.<locals>.<lambda> at 0x7d76c9b69c60>
+
+Start YK-Scan: YK-Quad_202_CH1
+Start YK-Scan: YK-Quad_202_CH2
+Start YK-Scan: YK-Quad_202_CH3
+Start YK-Scan: YK-Quad_203_CH0
+Unhandled exception during YK scan update callback!
+Exception -     WHO: .name=YKScan_9 .rx=IBERT_0.Quad_202.CH_0.RX(RX)  .cb=<function MyYKScanLink.__init__.<locals>.<lambda> at 0x7d76c1228670>
+
+Start YK-Scan: YK-Quad_203_CH1
+Start YK-Scan: YK-Quad_203_CH2
+Start YK-Scan: YK-Quad_203_CH3
+
+ChipScoPy loading time: APP=2024-04-30 10:43:39.801972  CANVAS=0:00:30.710963  GUI=0:01:02.456478 
+
+Unhandled exception during YK scan update callback!
+Exception -     WHO: .name=YKScan_13 .rx=IBERT_0.Quad_203.CH_0.RX(RX)  .cb=<function MyYKScanLink.__init__.<locals>.<lambda> at 0x7d76c048a440>
+
+Traceback (most recent call last):
+  File "/home/bernard/workspace/bzwork/vajra_proj_FPGA.myGithub/ChipScoPy/./HPC_Cable_BERT_YK_Scan.py", line 438, in update_plot
+    self.ykobj.update_YKScan_figures()
+  File "/home/bernard/workspace/bzwork/vajra_proj_FPGA.myGithub/ChipScoPy/./HPC_Cable_BERT_YK_Scan.py", line 303, in update_YKScan_figures
+    self.fig.update_yk_scan(self)
+  File "/home/bernard/workspace/bzwork/vajra_proj_FPGA.myGithub/ChipScoPy/./HPC_Cable_BERT_YK_Scan.py", line 381, in update_yk_scan
+    self.scatter_plot_EYE.set_offsets(np.column_stack((self.scatter_X_data[0:myYK.YK_slice_samples_count], myYK.YKScan_slicer_buf.flatten())))  # Set new data points
+  File "/home/bernard/.VENV/lib/python3.10/site-packages/numpy/lib/shape_base.py", line 652, in column_stack
+    return _nx.concatenate(arrays, 1)
+ValueError: all the input array dimensions except for the concatenation axis must match exactly, but along dimension 0, the array at index 0 has size 20000 and the array at index 1 has size 22000
+Traceback (most recent call last):
+  File "/home/bernard/workspace/bzwork/vajra_proj_FPGA.myGithub/ChipScoPy/./HPC_Cable_BERT_YK_Scan.py", line 438, in update_plot
+    self.ykobj.update_YKScan_figures()
+  File "/home/bernard/workspace/bzwork/vajra_proj_FPGA.myGithub/ChipScoPy/./HPC_Cable_BERT_YK_Scan.py", line 303, in update_YKScan_figures
+    self.fig.update_yk_scan(self)
+  File "/home/bernard/workspace/bzwork/vajra_proj_FPGA.myGithub/ChipScoPy/./HPC_Cable_BERT_YK_Scan.py", line 381, in update_yk_scan
+    self.scatter_plot_EYE.set_offsets(np.column_stack((self.scatter_X_data[0:myYK.YK_slice_samples_count], myYK.YKScan_slicer_buf.flatten())))  # Set new data points
+  File "/home/bernard/.VENV/lib/python3.10/site-packages/numpy/lib/shape_base.py", line 652, in column_stack
+    return _nx.concatenate(arrays, 1)
+ValueError: all the input array dimensions except for the concatenation axis must match exactly, but along dimension 0, the array at index 0 has size 20000 and the array at index 1 has size 22000
+Traceback (most recent call last):
+  File "/home/bernard/workspace/bzwork/vajra_proj_FPGA.myGithub/ChipScoPy/./HPC_Cable_BERT_YK_Scan.py", line 438, in update_plot
+    self.ykobj.update_YKScan_figures()
+  File "/home/bernard/workspace/bzwork/vajra_proj_FPGA.myGithub/ChipScoPy/./HPC_Cable_BERT_YK_Scan.py", line 303, in update_YKScan_figures
+    self.fig.update_yk_scan(self)
+  File "/home/bernard/workspace/bzwork/vajra_proj_FPGA.myGithub/ChipScoPy/./HPC_Cable_BERT_YK_Scan.py", line 381, in update_yk_scan
+    self.scatter_plot_EYE.set_offsets(np.column_stack((self.scatter_X_data[0:myYK.YK_slice_samples_count], myYK.YKScan_slicer_buf.flatten())))  # Set new data points
+  File "/home/bernard/.VENV/lib/python3.10/site-packages/numpy/lib/shape_base.py", line 652, in column_stack
+    return _nx.concatenate(arrays, 1)
+ValueError: all the input array dimensions except for the concatenation axis must match exactly, but along dimension 0, the array at index 0 has size 20000 and the array at index 1 has size 22000
+Traceback (most recent call last):
+  File "/home/bernard/workspace/bzwork/vajra_proj_FPGA.myGithub/ChipScoPy/./HPC_Cable_BERT_YK_Scan.py", line 438, in update_plot
+    self.ykobj.update_YKScan_figures()
+  File "/home/bernard/workspace/bzwork/vajra_proj_FPGA.myGithub/ChipScoPy/./HPC_Cable_BERT_YK_Scan.py", line 303, in update_YKScan_figures
+    self.fig.update_yk_scan(self)
+  File "/home/bernard/workspace/bzwork/vajra_proj_FPGA.myGithub/ChipScoPy/./HPC_Cable_BERT_YK_Scan.py", line 381, in update_yk_scan
+    self.scatter_plot_EYE.set_offsets(np.column_stack((self.scatter_X_data[0:myYK.YK_slice_samples_count], myYK.YKScan_slicer_buf.flatten())))  # Set new data points
+  File "/home/bernard/.VENV/lib/python3.10/site-packages/numpy/lib/shape_base.py", line 652, in column_stack
+    return _nx.concatenate(arrays, 1)
+ValueError: all the input array dimensions except for the concatenation axis must match exactly, but along dimension 0, the array at index 0 has size 20000 and the array at index 1 has size 22000
+Traceback (most recent call last):
+  File "/home/bernard/workspace/bzwork/vajra_proj_FPGA.myGithub/ChipScoPy/./HPC_Cable_BERT_YK_Scan.py", line 438, in update_plot
+    self.ykobj.update_YKScan_figures()
+  File "/home/bernard/workspace/bzwork/vajra_proj_FPGA.myGithub/ChipScoPy/./HPC_Cable_BERT_YK_Scan.py", line 303, in update_YKScan_figures
+    self.fig.update_yk_scan(self)
+  File "/home/bernard/workspace/bzwork/vajra_proj_FPGA.myGithub/ChipScoPy/./HPC_Cable_BERT_YK_Scan.py", line 381, in update_yk_scan
+    self.scatter_plot_EYE.set_offsets(np.column_stack((self.scatter_X_data[0:myYK.YK_slice_samples_count], myYK.YKScan_slicer_buf.flatten())))  # Set new data points
+  File "/home/bernard/.VENV/lib/python3.10/site-packages/numpy/lib/shape_base.py", line 652, in column_stack
+    return _nx.concatenate(arrays, 1)
+ValueError: all the input array dimensions except for the concatenation axis must match exactly, but along dimension 0, the array at index 0 has size 20000 and the array at index 1 has size 22000
+OnClose: to do YK.stop()
+YKScan-YK-Quad_204_CH0 Exception: TCF Error: IBERT terminate_yk_scan: ChipScope Service IBERT terminate_yk_scan: No YK scan in progress for 'IBERT_0.Quad_204.CH_0.RX'. Nothing to terminate
+YKScan-YK-Quad_205_CH0 Exception: TCF Error: IBERT terminate_yk_scan: ChipScope Service IBERT terminate_yk_scan: No YK scan in progress for 'IBERT_0.Quad_205.CH_0.RX'. Nothing to terminate
+YKScan-YK-Quad_202_CH0 Exception: TCF Error: IBERT terminate_yk_scan: ChipScope Service IBERT terminate_yk_scan: No YK scan in progress for 'IBERT_0.Quad_202.CH_0.RX'. Nothing to terminate
+YKScan-YK-Quad_203_CH0 Exception: TCF Error: IBERT terminate_yk_scan: ChipScope Service IBERT terminate_yk_scan: No YK scan in progress for 'IBERT_0.Quad_203.CH_0.RX'. Nothing to terminate
+Closed YK-Scan
+Closed Widget
+
+
+
+=================================================================================================================================================================================================================================
+commit 9756ae33407f9f6a9934a1e471bbc77e66a763a9
 Date   Mon Apr 29
        [SCOPY] Separate update for YKScan data & plotting
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
