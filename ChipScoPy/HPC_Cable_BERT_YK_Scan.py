@@ -52,9 +52,6 @@ export APP_DBG_LEVEL=5;
 # * Required functions and classes are imported
 # * Paths to server(s) and files are set correctly
 #------------------------------------------------------------------------------------------
-import os
-from more_itertools import one
-
 from chipscopy import create_session, report_versions, report_hierarchy, get_design_files
 from chipscopy.api.ibert import create_yk_scans
 from chipscopy.api.ibert import delete_link_groups, get_all_links, get_all_link_groups, create_links, create_link_groups
@@ -72,14 +69,15 @@ import math
 import re
 import numpy as np
 import pandas as pd
+import os
+import datetime
+import time
+from more_itertools import one
 
 import matplotlib
 matplotlib.use("Qt5Agg")      # 表示使用 Qt5
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas, NavigationToolbar2QT as NavigationToolbar
-
-import datetime
-import time
 
 #------------------------------------------------------------------------------------------
 # Print levels (default: info)
@@ -208,6 +206,44 @@ BPrint(f"==> GT Groups available - {[gt_group_obj.name for gt_group_obj in ibert
 
 
 #------------------------------------------------------------------------------------------
+def get_property_value(obj, propName, lv=DBG_LEVEL_DEBUG):
+    #-------------------------------------------------------------------
+    # other likely methods to get property values:
+    #-------------------------------------------------------------------
+    #val = obj.property.refresh(propName)[propName]
+    #val = obj.property.get(propName)
+    #val = obj.property.refresh(obj.property_for_alias[propName]).values()
+    #val = list(obj.property.refresh(obj.property_for_alias[propName]).values())[0]
+    #_, val = obj.property.get(obj.property_for_alias[propName]).popitem()
+    #val   = obj.property.refresh(obj.property_for_alias[propName]).values()
+    #-------------------------------------------------------------------
+    alias  = obj.property_for_alias.get(propName)
+    _, val = obj.property.get(alias).popitem()
+    BPrint(f"iBERT object {obj} property: {propName} = {val} ", level=lv)
+    return val
+
+def set_property_value(obj, propName, val, lv=DBG_LEVEL_DEBUG):
+    alias  = obj.property_for_alias.get(propName)
+    props = { alias: val }
+    obj.property.set(**props)
+    obj.property.commit(list(props.keys()))
+
+    if lv < DBG_LEVEL_DEBUG:
+        get_property_value(obj, propName, lv)
+
+
+def check_link_status(link):
+    if link.status == "No link" or link.ber > 1e-6:
+        lr = get_property_value( link.rx, 'Line Rate'                  )
+        ls = get_property_value( link.rx, 'Pattern Checker Lock Status')
+        ec = get_property_value( link.rx, 'Pattern Checker Error Count')
+        cc = get_property_value( link.rx, 'Pattern Checker Cycle Count')
+        return f"LinkStatus='{link.status}'   LineRate={lr}   Patten Checker: LockStatus='{ls}'  ErrorCount='{ec}'  CycleCount='{cc}'"
+    else:
+        return ""
+
+
+#------------------------------------------------------------------------------------------
 # The class correlates to chipscopy.api.ibert.link.Link
 class FakeYKScanLink():
     def __init__(self, qname, ch):
@@ -219,6 +255,8 @@ class FakeYKScanLink():
         self.ber         = random.random() / 1000000   # BER by random number simulation
         self.GT_Group    = ibert_gtm.gt_groups.filter_by(name=qname)[0]
         self.channel     = ch
+        self.rx          = self.GT_Group.gts[ch].rx
+        self.tx          = self.GT_Group.gts[ch].tx
         BPrint(f"--> GT Group channels - {self.GT_Group.gts}", level=DBG_LEVEL_INFO)
 
 
@@ -243,7 +281,7 @@ class MyYKScanLink():
 
         #------------------------------------------------------------------------------
         # Pandas table to keep data for CSV file
-        self.pd_data = pd.DataFrame(columns=["Samples", "Elapsed Time", "Status", "Line Rate", "Bits Count", "Errors Count", "BER", "SNR"])
+        self.pd_data = pd.DataFrame(columns=["Samples", "Elapsed Time", "Status", "Line Rate", "Bits Count", "Errors Count", "BER", "SNR", "comments"])
 
         #------------------------------------------------------------------------------
         self.__refresh_link_data__()
@@ -252,7 +290,7 @@ class MyYKScanLink():
         self.bprint_link(DBG_LEVEL_INFO)
 
     def bprint_link(self, l):
-        BPrint("{}:: SELF={} LINK={:8s} BER=({} ST={} RATE={} BITS={} ERR={})".format(self.YKName, self, str(self.link), self.ber, self.status, self.line_rate, self.bit_count, self.error_count), level=l)
+        BPrint("{}:: SELF={} LINK={:<19}  STATUS={:<15} BER={:<18} RATE={} BITS={} ERR={}".format(self.YKName, self, str(self.link), self.status, self.ber, self.line_rate, self.bit_count, self.error_count), level=l)
 
     def __refresh_link_data__(self):
         self.LINK_samples_count +=1
@@ -267,7 +305,8 @@ class MyYKScanLink():
         #self.ber2       = list(self.link.rx.property.refresh(self.link.rx.property_for_alias[RX_BER]).values())[0]           # another BER method 2: works, almost the same value as <self.link.ber>
 
         # Append data into Pandas table
-        self.pd_data.loc[len(self.pd_data)] = [ self.LINK_samples_count, self.elapsed, self.status, self.line_rate, self.bit_count, self.error_count, self.ber, self.snr ] 
+        self.comments = check_link_status(self.link)
+        self.pd_data.loc[len(self.pd_data)] = [ self.LINK_samples_count, self.elapsed, self.status, self.line_rate, self.bit_count, self.error_count, self.ber, self.snr, self.comments ]
 
     # ## 6 - Define YK Scan Update Method
     def update_YKScan_data(self, obj):
@@ -303,9 +342,9 @@ class MyYKScanLink():
         self.fig.update_yk_scan(self)
 
     def finish_object(self):
-        path = f"{CSV_PATH}/YK_{app_start_time.year}-{app_start_time.month}{app_start_time.day}"
+        path = f"{CSV_PATH}/YK_{app_start_time.year}-{app_start_time.month:02}{app_start_time.day:02}"
         os.makedirs(path, exist_ok=True)
-        self.pd_data.to_csv(f"{path}/{self.YKName}-{app_start_time.hour}{app_start_time.minute}.csv")
+        self.pd_data.to_csv(f"{path}/{self.YKName}-{app_start_time.hour:02}{app_start_time.minute:02}.csv")
         try:
             self.YK.stop()     # Stops the YK scan from running.
         except Exception as e:
@@ -440,13 +479,13 @@ class MplCanvas(FigureCanvas):
 
     def update_table(self):
         self.ykobj.update_link_data()
-        self.updateTable( self.nID, 0, str(self.ykobj.YK_samples_count) )
-        self.updateTable( self.nID, 3, str(self.ykobj.status) )
-        self.updateTable( self.nID, 4, "{}".format(self.ykobj.bit_count) )        # type: string
-        self.updateTable( self.nID, 5, "{:.3e}".format(self.ykobj.error_count) )  # type: int
-        self.updateTable( self.nID, 6, "{:.3e}".format(self.ykobj.ber) )          # type: float
-        self.updateTable( self.nID, 7, "{:.3f}".format(self.ykobj.snr) )          # type: float
-        #self.updateTable( self.nID, ?, str(self.ykobj.line_rate) )
+        self.updateTable( self.nID, 0, f"{self.ykobj.YK_samples_count:^20}" )
+        self.updateTable( self.nID, 3, f"{self.ykobj.status:^30}", QtGui.QColor(255,128,128) if self.ykobj.status == "No link" else QtGui.QColor(128,255,128) )
+        self.updateTable( self.nID, 4, f"{self.ykobj.bit_count:^30}" )                     # type: string
+        self.updateTable( self.nID, 5, "{:^30}".format(f"{self.ykobj.error_count:.3e}") )  # type: int
+        self.updateTable( self.nID, 6, "{:^30}".format(f"{self.ykobj.ber:.3e}") )          # type: float
+        self.updateTable( self.nID, 7, "{:^30}".format(f"{self.ykobj.snr:.3f}") )          # type: float
+        self.updateTable( self.nID, 8, self.ykobj.comments )
         #BPrint("QTable_TYP: bits={}, err={}, ber={}, snr={}".format(type(self.ykobj.bit_count), type(self.ykobj.error_count), type(self.ykobj.ber), type(self.ykobj.snr)), level=DBG_LEVEL_WIP)
         #BPrint("QTable_VAL: bits={}, err={}, ber={}, snr={}".format(     self.ykobj.bit_count,       self.ykobj.error_count,       self.ykobj.ber,       self.ykobj.snr),  level=DBG_LEVEL_WIP)
 
@@ -524,16 +563,19 @@ class MyWidget(QtWidgets.QMainWindow):
         BPrint(f"\nChipScoPy loading time: APP={app_start_time}  CANVAS={canvas_time - app_start_time}  GUI={gui_time - app_start_time} \n", level=DBG_LEVEL_NOTICE)
 
     def createTable(self): 
-        self.tableWidget = QtWidgets.QTableWidget(self.n_links, 10) 
+        self.tableWidget = QtWidgets.QTableWidget(self.n_links, 9) 
 
         # Table will fit the screen horizontally 
-        self.tableWidget.setHorizontalHeaderLabels( ("Samples", "TX", "RX", "Status", "Bits", "Errors", "BER", "SNR", "NA", "NA") )
-        self.tableWidget.horizontalHeader().setStretchLastSection(True) 
-        self.tableWidget.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+        self.tableWidget.setHorizontalHeaderLabels( ("Samples", "TX", "RX", "Status", "Bits", "Errors", "BER", "SNR", "comments") )
+        header = self.tableWidget.horizontalHeader()
+        header.setStretchLastSection(True) 
+        header.setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)    # header.setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
 
-    def updateTable(self, row, col, val): 
+    def updateTable(self, row, col, val, color=None): 
         BPrint(f"QTable: ({row},{col}) <= {val}", level=DBG_LEVEL_TRACE)
         self.tableWidget.setItem(row, col, QtWidgets.QTableWidgetItem(val)) 
+        if color is not None:
+            self.tableWidget.item(row, col).setBackground(color)
 
     def create_YKScan_figure(self, link):
         canvas = MplCanvas(self, MyYKScanLink(link), link.nID)
@@ -541,9 +583,9 @@ class MyWidget(QtWidgets.QMainWindow):
         self.canvases.append(canvas)
         canvas.draw()
 
-        self.updateTable( link.nID, 1, re.findall(".*(Quad_.*\.[RT]X).*", str(link.tx))[0] )
-        self.updateTable( link.nID, 2, re.findall(".*(Quad_.*\.[RT]X).*", str(link.rx))[0] )
-        self.updateTable( link.nID, 3, str(link.status) )
+        self.updateTable( link.nID, 1, "{:^30}".format(re.findall(".*(Quad_.*\.[RT]X).*", str(link.tx))[0]) )
+        self.updateTable( link.nID, 2, "{:^30}".format(re.findall(".*(Quad_.*\.[RT]X).*", str(link.rx))[0]) )
+        self.updateTable( link.nID, 3, "{:^20}".format(str(link.status)) )
 
         self.grid_col += 1
         if  self.grid_col >= self.layout_grid_cols:
@@ -589,49 +631,70 @@ def create_links_common(RXs, TXs):
     myLinks = create_links(txs=TXs, rxs=RXs)
 
     nID = 0
-    dbg_print = True
+    if   DBG_LEVEL_TRACE <= APP_DBG_LEVEL:  dbg_print = True;  dbg_print_all = True; 
+    elif DBG_LEVEL_DEBUG <= APP_DBG_LEVEL:  dbg_print = True;  dbg_print_all = False;
+    else:                                   dbg_print = False; dbg_print_all = False; 
+    dbg_print = True;  ### __WIP__  ###
+
     for link in myLinks:
         link.nID = nID; nID += 1
         link.gt_name = re.findall(".*(Quad_[0-9]*).*", str(link.rx))[0]
         link.channel = int(re.findall(".*CH_([0-9]*).*", str(link.rx))[0])
         link.GT_Group  = ibert_gtm.gt_groups.filter_by(name=link.gt_name)[0]
+        link.GT_Chan   = link.GT_Group.gts[link.channel]
         BPrint(f"\n--- {link.name} :: RX={link.rx} TX={link.tx}  GT={link.gt_name} CH={link.channel} ST={link.status}  -----", level=DBG_LEVEL_INFO)
-        _, tx_pattern_report = link.tx.property.report(link.tx.property_for_alias[PATTERN]).popitem()
-        _, rx_pattern_report = link.rx.property.report(link.rx.property_for_alias[PATTERN]).popitem()
-        _, rx_loopback_report = link.tx.property.report(
-            link.rx.property_for_alias[RX_LOOPBACK]
-        ).popitem()
 
-        if dbg_print:
-            BPrint(f"--> Valid values for TX pattern - {tx_pattern_report['Valid values']}", level=DBG_LEVEL_DEBUG)
-            BPrint(f"--> Valid values for RX pattern - {rx_pattern_report['Valid values']}", level=DBG_LEVEL_DEBUG)
-            BPrint(f"--> Valid values for RX loopback - {rx_loopback_report['Valid values']}\n", level=DBG_LEVEL_DEBUG)
-            BPrint(f"==> link.RX: {link.rx} / {link.rx.parent} RX_NAME={link.rx.name} GT_NAME={link.rx.parent.name} GT_alias={link.rx.parent.aliases} ", level=DBG_LEVEL_DEBUG)
-            BPrint(f"==> link.TX: {link.tx} / {link.tx.parent} TX_NAME={link.tx.name} GT_NAME={link.tx.parent.name} GT_alias={link.tx.parent.aliases} ", level=DBG_LEVEL_DEBUG)
-            if DBG_LEVEL_TRACE <= APP_DBG_LEVEL:
-                link.generate_report()
-            dbg_print = False
+        set_property_value( link.rx, 'Pattern',  "PRBS 31", DBG_LEVEL_INFO) 
+        set_property_value( link.rx, 'Loopback', "None"   , DBG_LEVEL_DEBUG)
+        set_property_value( link.tx, 'Pattern',  "PRBS 31", DBG_LEVEL_INFO) 
+        set_property_value( link.tx, 'Loopback', "None"   , DBG_LEVEL_DEBUG)
 
-        props = {link.tx.property_for_alias[PATTERN]: "PRBS 31"}
-        link.tx.property.set(**props)
-        link.tx.property.commit(list(props.keys()))
+        link.GT_Chan.reset()
+        link.tx.reset()
+        link.rx.reset()
 
-        props = {
-            link.rx.property_for_alias[PATTERN]: "PRBS 31",
-            link.rx.property_for_alias[RX_LOOPBACK]: "None",  # "Near-End PMA",
-        }
-        link.rx.property.set(**props)
-        link.rx.property.commit(list(props.keys()))
-        BPrint(f"\n--> Set both patterns to 'PRBS 31' & loopback to 'Near-End PMA' for {link}", level=DBG_LEVEL_DEBUG)
+        if link.status == "No link":     # assert link.status != "No link"
+            BPrint(f"link.status:'No link'   ==> {check_link_status(link)}", level=DBG_LEVEL_WARN)
 
         assert link.rx.pll.locked and link.tx.pll.locked
         BPrint(f"--> RX and TX PLLs are locked for {link}. Checking for link lock...", level=DBG_LEVEL_DEBUG)
-        #assert link.status != "No link"
-        BPrint(f"--> {link} Link Status: '{link.status}'", level=DBG_LEVEL_DEBUG)
 
-        #link.tx.reset()           # it's forbidden
-        link.rx.reset()
-        #BPrint(f"--> {link} properties:  BER={link.ber}  Count={link.bit_count}", level=DBG_LEVEL_DEBUG)
+        if dbg_print:
+            _, tx_pattern_report      = link.tx.property.report(link.tx.property_for_alias[PATTERN]).popitem()
+            _, tx_preCursor_report    = link.tx.property.report(link.tx.property_for_alias[TX_PRE_CURSOR]).popitem()
+            _, tx_postCursor_report   = link.tx.property.report(link.tx.property_for_alias[TX_POST_CURSOR]).popitem()
+            #_, tx_diffSwing_report    = link.tx.property.report(link.tx.property_for_alias[TX_DIFFERENTIAL_SWING]).popitem()
+            #_, rx_termVolt_report     = link.tx.property.report(link.rx.property_for_alias[RX_TERMINATION_VOLTAGE]).popitem()
+            _, rx_pattern_report      = link.rx.property.report(link.rx.property_for_alias[PATTERN]).popitem()
+            _, rx_loopback_report     = link.tx.property.report(link.rx.property_for_alias[RX_LOOPBACK]).popitem()
+
+            BPrint(f"\n\n--> {link} properties:  BER={link.ber}  Count={link.bit_count}", level=DBG_LEVEL_INFO)
+            BPrint(f"--> Valid values for TX pattern     - {tx_pattern_report['Valid values']}", level=DBG_LEVEL_INFO)
+            BPrint(f"--> Valid values for TX pre-Cursor  - {tx_preCursor_report['Valid values']}", level=DBG_LEVEL_INFO)
+            BPrint(f"--> Valid values for TX post-Cursor - {tx_postCursor_report['Valid values']}", level=DBG_LEVEL_INFO)
+            #BPrint(f"--> Valid values for TX diff Swing  - {tx_diffSwing_report['Valid values']}", level=DBG_LEVEL_INFO)
+            #BPrint(f"--> Valid values for RX term Volt   - {rx_termVolt_report['Valid values']}", level=DBG_LEVEL_INFO)
+            BPrint(f"--> Valid values for RX pattern     - {rx_pattern_report['Valid values']}", level=DBG_LEVEL_INFO)
+            BPrint(f"--> Valid values for RX loopback    - {rx_loopback_report['Valid values']}\n", level=DBG_LEVEL_INFO)
+
+            BPrint(f"==> link.RX: {link.rx} / {link.rx.parent} RX_NAME={link.rx.name} GT_NAME={link.rx.parent.name} GT_alias={link.rx.parent.aliases}", level=DBG_LEVEL_INFO)
+            BPrint(f"==> link.TX: {link.tx} / {link.tx.parent} TX_NAME={link.tx.name} GT_NAME={link.tx.parent.name} GT_alias={link.tx.parent.aliases}\n ", level=DBG_LEVEL_INFO)
+            BPrint(f"GTG_alias={link.GT_Group.property_for_alias}", level=DBG_LEVEL_INFO)
+            BPrint(f"GT_alias={link.GT_Chan.property_for_alias}", level=DBG_LEVEL_INFO)
+            BPrint(f"TX_alias={link.tx.property_for_alias}\n", level=DBG_LEVEL_INFO)
+            BPrint(f"RX_alias={link.rx.property_for_alias}\n", level=DBG_LEVEL_INFO)
+
+            get_property_value( link.rx, 'Pattern' )
+            get_property_value( link.rx, 'Loopback' )
+            get_property_value( link.rx, 'Line Rate' )
+            get_property_value( link.rx, 'Pattern Checker Lock Status' )
+            get_property_value( link.rx, 'Pattern Checker Error Count' )
+            get_property_value( link.rx, 'Pattern Checker Cycle Count' )
+            get_property_value( link.tx, 'Pattern' )
+            get_property_value( link.tx, 'Loopback' )
+
+            link.generate_report()
+            dbg_print = dbg_print_all
 
 #------------------------------------------
 """
