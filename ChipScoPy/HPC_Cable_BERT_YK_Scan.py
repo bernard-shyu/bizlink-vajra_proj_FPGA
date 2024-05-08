@@ -38,7 +38,7 @@
 export ip="10.20.2.146";     export CS_SERVER_URL="TCP:$ip:3042" HW_SERVER_URL="TCP:$ip:3121"
 export HW_PLATFORM="vpk120"; export CREATE_LGROUP=False
 export PLOT_1_RESOL_X=900;   export PLOT_1_RESOL_Y=800;  export PLOT_F_RESOL_X=3840;  export PLOT_F_RESOL_Y=2160
-export PROG_DEVICE=True;     export PDI_FILE="./VPK120_iBERT_2xQDD_56G.pdi"
+export PROG_DEVICE=True;     export PDI_FILE="./PDI_Files/VPK120_iBERT_2xQDD_56G.pdi"
 export SHOW_FIG_TITLE=True;  export MAX_SLICES=100;
 export CSV_PATH="./YK_CSV_Files";
 export QUAD_NAME="Quad_202"; export QUAD_CHAN=2;
@@ -130,14 +130,14 @@ SHOW_FIG_TITLE = os.getenv("SHOW_FIG_TITLE", 'False').lower() in ('true', '1', '
 
 # The get_design_files() function tries to find the PDI and LTX files. In non-standard
 # configurations, you can put the path for PROGRAMMING_FILE and PROBES_FILE below.
-design_files = get_design_files(f"{HW_PLATFORM}/production/chipscopy_ced")
-PDI_FILE = design_files.programming_file
-PDI_FILE = os.getenv("PDI_FILE", "./VPK120_iBERT_2xQDD_56G.pdi")
+# design_files = get_design_files(f"{HW_PLATFORM}/production/chipscopy_ced")
+# PDI_FILE = design_files.programming_file
+PDI_FILE = os.getenv("PDI_FILE", "./PDI_Files/VPK120_iBERT_2xQDD_56G.pdi")
 
 BPrint(f"PROGRAMMING_FILE: {PDI_FILE}", level=DBG_LEVEL_NOTICE)
 BPrint(f"Servers URL: {CS_URL} {HW_URL} HW: {HW_PLATFORM}  Do_Programming: {PROG_DEVICE}\n", level=DBG_LEVEL_NOTICE)
 
-MAX_SLICES   = int(os.getenv("MAX_SLICES", "10"))
+MAX_SLICES   = int(os.getenv("MAX_SLICES", "5"))
 YKSCAN_SLICER_SIZE = 2000
 SLICER_CHUNK_SIZE  = MAX_SLICES * YKSCAN_SLICER_SIZE 
 
@@ -306,6 +306,12 @@ class MyYKScanLink():
 
         # Append data into Pandas table
         self.comments = check_link_status(self.link)
+        if self.comments == "":
+            # the Link works normally, then get its statistical data
+            ber_series = self.pd_data['BER']
+            snr_series = self.pd_data['SNR']
+            self.comments = "BER: ({:.2e}, {:.2e}) mean={:.2e} std={:.2e}    SNR: ({:.2e}, {:.2e}) mean={:.2e} std={:.2e}".format( 
+               ber_series.min(), ber_series.max(), ber_series.mean(), ber_series.std(),  snr_series.min(), snr_series.max(), snr_series.mean(), snr_series.std() )
         self.pd_data.loc[len(self.pd_data)] = [ self.LINK_samples_count, self.elapsed, self.status, self.line_rate, self.bit_count, self.error_count, self.ber, self.snr, self.comments ]
 
     # ## 6 - Define YK Scan Update Method
@@ -479,13 +485,14 @@ class MplCanvas(FigureCanvas):
 
     def update_table(self):
         self.ykobj.update_link_data()
-        self.updateTable( self.nID, 0, f"{self.ykobj.YK_samples_count:^20}" )
-        self.updateTable( self.nID, 3, f"{self.ykobj.status:^30}", QtGui.QColor(255,128,128) if self.ykobj.status == "No link" else QtGui.QColor(128,255,128) )
-        self.updateTable( self.nID, 4, f"{self.ykobj.bit_count:^30}" )                     # type: string
-        self.updateTable( self.nID, 5, "{:^30}".format(f"{self.ykobj.error_count:.3e}") )  # type: int
-        self.updateTable( self.nID, 6, "{:^30}".format(f"{self.ykobj.ber:.3e}") )          # type: float
-        self.updateTable( self.nID, 7, "{:^30}".format(f"{self.ykobj.snr:.3f}") )          # type: float
-        self.updateTable( self.nID, 8, self.ykobj.comments )
+        self.updateTable( self.nID, 0, f"{self.ykobj.YK_samples_count:^16}" )
+        self.updateTable( self.nID, 1, f"{self.ykobj.LINK_samples_count:^16}" )
+        self.updateTable( self.nID, 4, f"{self.ykobj.status:^30}", QtGui.QColor(255,128,128) if self.ykobj.status == "No link" else QtGui.QColor(128,255,128) )
+        self.updateTable( self.nID, 5, f"{self.ykobj.bit_count:^30}" )                     # type: string
+        self.updateTable( self.nID, 6, "{:^30}".format(f"{self.ykobj.error_count:.3e}") )  # type: int
+        self.updateTable( self.nID, 7, "{:^30}".format(f"{self.ykobj.ber:.3e}") )          # type: float
+        self.updateTable( self.nID, 8, "{:^30}".format(f"{self.ykobj.snr:.3f}") )          # type: float
+        self.updateTable( self.nID, 9, self.ykobj.comments )
         #BPrint("QTable_TYP: bits={}, err={}, ber={}, snr={}".format(type(self.ykobj.bit_count), type(self.ykobj.error_count), type(self.ykobj.ber), type(self.ykobj.snr)), level=DBG_LEVEL_WIP)
         #BPrint("QTable_VAL: bits={}, err={}, ber={}, snr={}".format(     self.ykobj.bit_count,       self.ykobj.error_count,       self.ykobj.ber,       self.ykobj.snr),  level=DBG_LEVEL_WIP)
 
@@ -510,7 +517,7 @@ class MplCanvas(FigureCanvas):
 class MyWidget(QtWidgets.QMainWindow):
     def __init__(self, n_links):
         super().__init__()
-        self.setWindowTitle('BizLink HPC Cable Test')
+        self.setWindowTitle(f"<b><font color='black' size='8'>BizLink HPC Cable Test: </font><font color='blue' size='8'>{HW_URL}</font></b>")
 
         self.canvases = []
         self.grid_row = 0
@@ -563,10 +570,10 @@ class MyWidget(QtWidgets.QMainWindow):
         BPrint(f"\nChipScoPy loading time: APP={app_start_time}  CANVAS={canvas_time - app_start_time}  GUI={gui_time - app_start_time} \n", level=DBG_LEVEL_NOTICE)
 
     def createTable(self): 
-        self.tableWidget = QtWidgets.QTableWidget(self.n_links, 9) 
+        self.tableWidget = QtWidgets.QTableWidget(self.n_links, 10) 
 
         # Table will fit the screen horizontally 
-        self.tableWidget.setHorizontalHeaderLabels( ("Samples", "TX", "RX", "Status", "Bits", "Errors", "BER", "SNR", "comments") )
+        self.tableWidget.setHorizontalHeaderLabels( ("YK-Samples", "Link-Samples", "TX", "RX", "Status", "Bits", "Errors", "BER", "SNR", "comments") )
         header = self.tableWidget.horizontalHeader()
         header.setStretchLastSection(True) 
         header.setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)    # header.setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
@@ -583,9 +590,9 @@ class MyWidget(QtWidgets.QMainWindow):
         self.canvases.append(canvas)
         canvas.draw()
 
-        self.updateTable( link.nID, 1, "{:^30}".format(re.findall(".*(Quad_.*\.[RT]X).*", str(link.tx))[0]) )
-        self.updateTable( link.nID, 2, "{:^30}".format(re.findall(".*(Quad_.*\.[RT]X).*", str(link.rx))[0]) )
-        self.updateTable( link.nID, 3, "{:^20}".format(str(link.status)) )
+        self.updateTable( link.nID, 2, "{:^30}".format(re.findall(".*(Quad_.*\.[RT]X).*", str(link.tx))[0]) )
+        self.updateTable( link.nID, 3, "{:^30}".format(re.findall(".*(Quad_.*\.[RT]X).*", str(link.rx))[0]) )
+        self.updateTable( link.nID, 4, "{:^20}".format(str(link.status)) )
 
         self.grid_col += 1
         if  self.grid_col >= self.layout_grid_cols:
@@ -698,12 +705,12 @@ def create_links_common(RXs, TXs):
 
 #------------------------------------------
 """
-    Self-looped onnection scheme (TCL_scripts/vpk120_ibert_ChMap_56G.tcl / 112G):
+    Self-looped onnection scheme (TCL_scripts/vpk120_ibert_ChMap_SLoop_x8.tcl / x4):
             VPK120 QDD-1 cage <--------+
                                        | QSFP-DD cable
             VPK120 QDD-2 cage <--------+
 """
-def create_links_selfLooped():
+def create_links_SelfLooped():
     global q205, q204, q203, q202
 
     RXs = list(); TXs = list();
@@ -717,14 +724,14 @@ def create_links_selfLooped():
 
 #------------------------------------------
 """
-    Cross-connected connection scheme (TCL_scripts/vpk120_ibert_ChMap2_56G.tcl / 112G):
+    Cross-connected connection scheme (TCL_scripts/vpk120_ibert_ChMap_XConn_x8.tcl / x4):
     
             VPK120 (S/N 111)                             VPK120 (S/N 112)
             QDD-1 cage <-------------------------------> cage QDD-1
                             2x QSFP-DD 400G cables
             QDD-2 cage <-------------------------------> cage QDD-2
 """
-def create_links_crossConnected():
+def create_links_XConnected():
     global q202, q203, q204, q205
 
     RXs = list(); TXs = list();
@@ -741,8 +748,8 @@ if CREATE_LGROUP:
     q204 = one(ibert_gtm.gt_groups.filter_by(name="Quad_204"))
     q203 = one(ibert_gtm.gt_groups.filter_by(name="Quad_203"))
     q202 = one(ibert_gtm.gt_groups.filter_by(name="Quad_202"))
-    #create_links_crossConnected()
-    create_links_selfLooped()
+    #create_links_XConnected()
+    create_links_SelfLooped()
 else:
     myLinks = [ FakeYKScanLink(QUAD_NAME, QUAD_CHAN) ]
 

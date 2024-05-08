@@ -1,13 +1,14 @@
 #-------------------------------------------------------------------------------------------------------
 # Script execution examples: 
-#	BASH_shell:   export MY_HW_ID=111 MY_RATE=56G MY_PATH=BZProj_iBERT_Testing; export MY_PROJ=VPK120_iBERT_2xQDD_${MY_RATE};  TCL_Vivado.sh -source ~/fpgaspace/TCL_scripts/bxu_vivado_proj.tcl -tclargs $HOME/VIVADO_projects/$MY_PATH $MY_PROJ $MY_HW_ID  -I -S vpk120_ibert_ChMap2_${MY_RATE}.tcl
-#	TCL_Console%  set MY_HW_ID 111; set MY_RATE 56G; set MY_PATH BZProj_iBERT_Testing; set MY_PROJ VPK120_iBERT_2xQDD_${MY_RATE};
-#	TCL_Console%  set argc 5; set argv [list $env(HOME)/VIVADO_projects/$MY_PATH $MY_PROJ $MY_HW_ID -S vpk120_ibert_ChMap2_${MY_RATE}.tcl];    source $env(HOME)/fpgaspace/TCL_scripts/bxu_vivado_proj.tcl
-#	TCL_Console%  set argc 6; set argv [list $env(HOME)/VIVADO_projects/$MY_PATH $MY_PROJ $MY_HW_ID -S vpk120_ibert_ChMap2_${MY_RATE}.tcl -I]; source $env(HOME)/fpgaspace/TCL_scripts/bxu_vivado_proj.tcl
+#	BASH_shell:   export MY_HW_ID=0   MY_PATH=XilinxCEDStore-Learning      MY_PROJ=bxu_vpk120_ChipScoPy_Example_Design;  TCL_Vivado.sh -source ~/fpgaspace/TCL_scripts/bxu_vivado_proj.tcl  -tclargs $HOME/VIVADO_projects/$MY_PATH $MY_PROJ $MY_HW_ID  -B
+#	VIVADO%  set MY_HW_ID 0; set MY_PATH XilinxCEDStore-Learning; set MY_PROJ bxu_vpk120_ChipScoPy_Example_Design;
+#	         set argc 4; set argv [list $env(HOME)/VIVADO_projects/$MY_PATH $MY_PROJ $MY_HW_ID -I];  source $env(HOME)/fpgaspace/TCL_scripts/bxu_vivado_proj.tcl
 #-------------------------------------------------------------------------------------------------------
-#	BASH_shell:   export MY_HW_ID=111   MY_PATH=XilinxCEDStore-Learning      MY_PROJ=bxu_vpk120_ChipScoPy_Example_Design;  TCL_Vivado.sh -source ~/fpgaspace/TCL_scripts/bxu_vivado_proj.tcl  -tclargs $HOME/VIVADO_projects/$MY_PATH $MY_PROJ $MY_HW_ID  -B
-#	TCL_Console%  set MY_HW_ID 111; set MY_PATH XilinxCEDStore-Learning; set MY_PROJ bxu_vpk120_ChipScoPy_Example_Design;
-#	TCL_Console%  set argc 4; set argv [list $env(HOME)/VIVADO_projects/$MY_PATH $MY_PROJ $MY_HW_ID -I];  source $env(HOME)/fpgaspace/TCL_scripts/bxu_vivado_proj.tcl
+#	BASH_shell:   MY_HW_ID=111 MY_RATE=56G MY_LMAP=SLoop_x8 MY_PATH=BZProj_iBERT_Testing; export MY_PROJ=VPK120_iBERT_2xQDD_${MY_RATE};
+#	              TCL_Vivado.sh -source ~/fpgaspace/TCL_scripts/bxu_vivado_proj.tcl -tclargs $HOME/VIVADO_projects/$MY_PATH $MY_PROJ $MY_HW_ID -I vpk120_ibert_ChMap_$MY_LMAP.tcl
+#	VIVADO%  set MY_HW_ID 111; set MY_RATE 56G; set MY_LMAP SLoop_x8;  # set MY_HW_ID 0; set MY_HW_ID 112;   set MY_RATE 56G;  set MY_RATE 112G;  set MY_RATE ETH25G;   set MY_LMAP SLoop_x4;  set MY_LMAP SLoop_x8;  set MY_LMAP XConn_x4;  set MY_LMAP XConn_x8;
+#	         set MY_PATH BZProj_iBERT_Testing; set MY_PROJ VPK120_iBERT_2xQDD_${MY_RATE}; set argc 5; set argv [list $env(HOME)/VIVADO_projects/$MY_PATH $MY_PROJ $MY_HW_ID -S vpk120_ibert_ChMap_$MY_LMAP.tcl];    source $env(HOME)/fpgaspace/TCL_scripts/bxu_vivado_proj.tcl
+#                set MY_PATH BZProj_iBERT_Testing; set MY_PROJ VPK120_iBERT_2xQDD_${MY_RATE}; set argc 6; set argv [list $env(HOME)/VIVADO_projects/$MY_PATH $MY_PROJ $MY_HW_ID -S vpk120_ibert_ChMap_$MY_LMAP.tcl -I]; source $env(HOME)/fpgaspace/TCL_scripts/bxu_vivado_proj.tcl
 #-------------------------------------------------------------------------------------------------------
 if { $argc < 3 } {
 	puts "Syntax:  $argv0  <PROJ_PATH>  <PROJ_NAME>  <HW_ID>  \[ -B \] \[ -I \] \[ -S <TCL_script> \]"
