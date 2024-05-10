@@ -273,6 +273,8 @@ class MyYKScanLink():
         self.YK.updates_callback = lambda obj: self.update_YKScan_data(obj)
         self.YK_samples_count = 0
         self.LINK_samples_count = 0
+        self.YK_need_restart = 0
+        link.myLink = self
 
         #------------------------------------------------------------------------------
         # Initialize circular buffer
@@ -284,13 +286,20 @@ class MyYKScanLink():
         self.pd_data = pd.DataFrame(columns=["Samples", "Elapsed Time", "Status", "Line Rate", "Bits Count", "Errors Count", "BER", "SNR", "comments"])
 
         #------------------------------------------------------------------------------
-        self.__refresh_link_data__()
+        #self.__refresh_link_data__()
         BPrint(f"\n{self.YKName}:: TX='{link.tx}'  TX-pll='{link.tx.pll}'  LINK='{link}'  YK='{self.YK.name}' ", level=DBG_LEVEL_INFO)
         BPrint(f"{self.YKName}:: RX='{link.rx}'  RX-pll='{link.rx.pll}'  RX-yk_scan='{link.rx.yk_scan}' ", level=DBG_LEVEL_INFO)
-        self.bprint_link(DBG_LEVEL_INFO)
+        #self.bprint_link(DBG_LEVEL_INFO)
 
     def bprint_link(self, l):
         BPrint("{}:: SELF={} LINK={:<19}  STATUS={:<15} BER={:<18} RATE={} BITS={} ERR={}".format(self.YKName, self, str(self.link), self.status, self.ber, self.line_rate, self.bit_count, self.error_count), level=l)
+
+    def reset_iBERT_engine(self):
+        self.link.tx.reset()
+        self.link.rx.reset()
+        set_property_value( self.link.rx, 'RX BER Reset', 1, DBG_LEVEL_INFO) 
+        self.__refresh_link_data__()
+        self.bprint_link(DBG_LEVEL_INFO)
 
     def __refresh_link_data__(self):
         self.LINK_samples_count +=1
@@ -320,9 +329,14 @@ class MyYKScanLink():
         self.snr = obj.scan_data[-1].snr
 
         #------------------------------------------------------------------------------
-        # Update the circular buffer with new data.
-        assert YKSCAN_SLICER_SIZE == len(obj.scan_data[-1].slicer)
+        # assert YKSCAN_SLICER_SIZE == len(obj.scan_data[-1].slicer)
+        if YKSCAN_SLICER_SIZE != len(obj.scan_data[-1].slicer):
+            self.YK_need_restart +=1
+            BPrint(f"{self.YKName}: samples#{self.YK_samples_count:5d}  ERROR slicer: {len(obj.scan_data[-1].slicer)}", level=DBG_LEVEL_ERR)
+            return
 
+        #------------------------------------------------------------------------------
+        # Update the circular buffer with new data.
         self.YKScan_slicer_buf = np.append(self.YKScan_slicer_buf, [list(obj.scan_data[-1].slicer)], axis=0)          # append new data
         if self.YKScan_slicer_buf.shape[0] > MAX_SLICES:
             self.YKScan_slicer_buf = np.delete(self.YKScan_slicer_buf, 0, axis=0)                                     # remove oldest slice data
@@ -344,8 +358,15 @@ class MyYKScanLink():
         self.bprint_link(DBG_LEVEL_TRACE)
 
     def update_YKScan_figures(self):
+        BPrint(f"{self.YKName}: samples#{self.YK_samples_count:4d}, {self.LINK_samples_count:<4d}   BER: {self.ber:.2e}  SNR: {self.snr:6.2f}  Elapsed: {self.elapsed}", level=DBG_LEVEL_WIP)
         self.fig.update_yk_ber(self)
         self.fig.update_yk_scan(self)
+        try:
+            if self.YK_need_restart == 1:
+                self.YK_need_restart +=1
+                self.YK.start()
+        except Exception as e:
+            print(f"YKScan-{self.YKName} Exception (restart): {str(e)}")
 
     def finish_object(self):
         path = f"{CSV_PATH}/YK_{app_start_time.year}-{app_start_time.month:02}{app_start_time.day:02}"
@@ -354,7 +375,7 @@ class MyYKScanLink():
         try:
             self.YK.stop()     # Stops the YK scan from running.
         except Exception as e:
-            print(f"YKScan-{self.YKName} Exception: {str(e)}")
+            print(f"YKScan-{self.YKName} Exception (finish): {str(e)}")
 
 
 #------------------------------------------------------------------------------------------
@@ -656,9 +677,11 @@ def create_links_common(RXs, TXs):
         set_property_value( link.tx, 'Pattern',  "PRBS 31", DBG_LEVEL_INFO) 
         set_property_value( link.tx, 'Loopback', "None"   , DBG_LEVEL_DEBUG)
 
+        """
         link.GT_Chan.reset()
         link.tx.reset()
         link.rx.reset()
+        """
 
         if link.status == "No link":     # assert link.status != "No link"
             BPrint(f"link.status:'No link'   ==> {check_link_status(link)}", level=DBG_LEVEL_WARN)
@@ -748,8 +771,17 @@ if CREATE_LGROUP:
     q204 = one(ibert_gtm.gt_groups.filter_by(name="Quad_204"))
     q203 = one(ibert_gtm.gt_groups.filter_by(name="Quad_203"))
     q202 = one(ibert_gtm.gt_groups.filter_by(name="Quad_202"))
+
     #create_links_XConnected()
     create_links_SelfLooped()
+
+    # These below RESET aren't necessarily required
+    """
+    q202.reset()
+    q203.reset()
+    q204.reset()
+    q205.reset()
+    """
 else:
     myLinks = [ FakeYKScanLink(QUAD_NAME, QUAD_CHAN) ]
 
@@ -768,6 +800,7 @@ if __name__ == '__main__':
     # This step initializes the YK scan, setting its update method to the method we defined in the last step. 
     for link in myLinks:
         MainForm.create_YKScan_figure(link)
+        link.myLink.reset_iBERT_engine()
 
     MainForm.show_figures()
 

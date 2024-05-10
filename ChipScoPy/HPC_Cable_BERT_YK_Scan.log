@@ -9,6 +9,466 @@ Date   ???
 
 =================================================================================================================================================================================================================================
 commit ???
+Date   Fri May 10
+       [SCOPY] iBERT RESET & YK-Scan empty slice data
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+(.VENV) bernard@BXUTP-FPGA-Linux:~/SDK_WIP/project/vajra_proj_FPGA/ChipScoPy$ ./HPC_Cable_BERT_YK_Scan.py 
+
+ChipScoPy APP fro BizLink iBERT HPC-cables testing --- 2024-05-10 14:11:55.223663
+
+PROGRAMMING_FILE: ./PDI_Files/VPK120_iBERT_2xQDD_25G.pdi
+Servers URL: TCP:10.20.2.146:3042 TCP:10.20.2.146:3121 HW: vpk120  Do_Programming: True
+
+
+
+                       ChipScoPy Version Information                       
+┌──────────────────────────────┬──────────────────────────────────────────┐
+│                       Entity │ Version                                  │
+├──────────────────────────────┼──────────────────────────────────────────┤
+│                    ChipScoPy │ ┌───────────┬──────────────────────┐     │
+│                              │ │ Attribute │ Value                │     │
+│                              │ ├───────────┼──────────────────────┤     │
+│                              │ │     Build │ 2023.2.1710645976    │     │
+│                              │ │ Timestamp │ Mar 17 2024-11:26:16 │     │
+│                              │ └───────────┴──────────────────────┘     │
+│                              │                                          │
+│ hw_server @ 10.20.2.146:3121 │ ┌───────────┬──────────────────────────┐ │
+│                              │ │ Attribute │ Value                    │ │
+│                              │ ├───────────┼──────────────────────────┤ │
+│                              │ │    Status │ Connected                │ │
+│                              │ │     Build │ 1702581799               │ │
+│                              │ │   Version │ 2023.2.1                 │ │
+│                              │ │ Timestamp │ Thu Dec 14 12:23:19 2023 │ │
+│                              │ └───────────┴──────────────────────────┘ │
+│                              │                                          │
+│ cs_server @ 10.20.2.146:3042 │ ┌───────────────┬──────────────────────┐ │
+│                              │ │     Attribute │ Value                │ │
+│                              │ ├───────────────┼──────────────────────┤ │
+│                              │ │        Status │ Connected            │ │
+│                              │ │         Build │ 1696910516           │ │
+│                              │ │       Version │ 2023.2.0             │ │
+│                              │ │     Timestamp │ Oct 10 2023-12:01:56 │ │
+│                              │ │       Package │ 2023.2.1696910516    │ │
+│                              │ │ Artifact type │ pyinstaller          │ │
+│                              │ └───────────────┴──────────────────────┘ │
+└──────────────────────────────┴──────────────────────────────────────────┘
+
+
+
+--> INFO: Programming device with: /mnt/extDisk/fpga_share/fpgaspace/VIVADO_projects/BZProj_iBERT_Testing/VPK120_iBERT_2xQDD_25G/VPK120_iBERT_2xQDD_25G.runs/impl_1/versal_ibert_wrapper.pdi
+    
+Device program progress ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% Done
+Discovering debug cores...
+--> Found ['IBERT Versal GTM (IBERT_0)', 'IBERT Versal GTYP (IBERT_1)']
+
+--> GT Groups available - [
+    'IBERT_0.Quad_206(GT_Group)',
+    'IBERT_0.Quad_205(GT_Group)',
+    'IBERT_0.Quad_204(GT_Group)',
+    'IBERT_0.Quad_203(GT_Group)',
+    'IBERT_0.Quad_202(GT_Group)'
+]
+Links_TXs: [IBERT_0.Quad_202.CH_0.TX(TX), IBERT_0.Quad_202.CH_1.TX(TX), IBERT_0.Quad_202.CH_2.TX(TX), IBERT_0.Quad_202.CH_3.TX(TX), IBERT_0.Quad_203.CH_0.TX(TX), IBERT_0.Quad_203.CH_1.TX(TX), IBERT_0.Quad_203.CH_2.TX(TX), IBERT_0.Quad_203.CH_3.TX(TX), IBERT_0.Quad_204.CH_0.TX(TX), IBERT_0.Quad_204.CH_2.TX(TX), IBERT_0.Quad_205.CH_0.TX(TX), IBERT_0.Quad_205.CH_2.TX(TX), IBERT_0.Quad_204.CH_1.TX(TX), IBERT_0.Quad_204.CH_3.TX(TX), IBERT_0.Quad_205.CH_1.TX(TX), IBERT_0.Quad_205.CH_3.TX(TX)]
+Links_RXs: [IBERT_0.Quad_204.CH_0.RX(RX), IBERT_0.Quad_204.CH_2.RX(RX), IBERT_0.Quad_205.CH_0.RX(RX), IBERT_0.Quad_205.CH_2.RX(RX), IBERT_0.Quad_204.CH_1.RX(RX), IBERT_0.Quad_204.CH_3.RX(RX), IBERT_0.Quad_205.CH_1.RX(RX), IBERT_0.Quad_205.CH_3.RX(RX), IBERT_0.Quad_202.CH_0.RX(RX), IBERT_0.Quad_202.CH_1.RX(RX), IBERT_0.Quad_202.CH_2.RX(RX), IBERT_0.Quad_202.CH_3.RX(RX), IBERT_0.Quad_203.CH_0.RX(RX), IBERT_0.Quad_203.CH_1.RX(RX), IBERT_0.Quad_203.CH_2.RX(RX), IBERT_0.Quad_203.CH_3.RX(RX)]
+
+--- Link_0 :: RX=IBERT_0.Quad_204.CH_0.RX(RX) TX=IBERT_0.Quad_202.CH_0.TX(TX)  GT=Quad_204 CH=0 ST=25.77 Gbps  -----
+iBERT object IBERT_0.Quad_204.CH_0.RX(RX) property: Pattern = PRBS 31 
+iBERT object IBERT_0.Quad_202.CH_0.TX(TX) property: Pattern = PRBS 31 
+
+
+--> Link_0 properties:  BER=5.690991e-12  Count=1.777174e+11
+--> Valid values for TX pattern     - ['User Design', 'PRBS Disabled', 'PRBS 7', 'PRBS 9', 'PRBS 13', 'PRBS 15', 'PRBS 23', 'PRBS 31', 'QPRBS 9', 'QPRBS 13', 'QPRBS 15', 'QPRBS 23', 'QPRBS 31', 'PRBSQ 7', 'PRBSQ 9', 'PRBSQ 13', 'PRBSQ 15', 'PRBSQ 23', 'PRBSQ 31', 'Configurable data pattern', 'Square wave (2 * UI)', 'Square wave (Int data width * UI)']
+--> Valid values for TX pre-Cursor  - ['User Design', '0 dB', '-0.20 dB', '-0.41 dB', '-0.63 dB', '-0.85 dB', '-1.07 dB', '-1.31 dB', '-1.54 dB', '-1.79 dB', '-2.04 dB', '-2.30 dB', '-2.57 dB', '-2.84 dB', '-3.13 dB', '-3.42 dB', '-3.73 dB', '-4.04 dB', '-4.37 dB', '-4.71 dB', '-5.07 dB', '-5.43 dB', '-5.82 dB', '-6.22 dB', '-6.65 dB', '-7.09 dB', '-7.56 dB', '-8.06 dB', '-8.59 dB', '-9.15 dB', '-9.75 dB', '-10.39 dB', '-11.09 dB', '-11.84 dB', '-12.67 dB', '-13.58 dB', '-14.61 dB', '-15.77 dB']
+--> Valid values for TX post-Cursor - ['User Design', '0 dB', '-0.20 dB', '-0.41 dB', '-0.63 dB', '-0.85 dB', '-1.07 dB', '-1.31 dB', '-1.54 dB', '-1.79 dB', '-2.04 dB', '-2.30 dB', '-2.57 dB', '-2.84 dB', '-3.13 dB', '-3.42 dB', '-3.73 dB', '-4.04 dB', '-4.37 dB', '-4.71 dB', '-5.07 dB', '-5.43 dB', '-5.82 dB', '-6.22 dB', '-6.65 dB', '-7.09 dB', '-7.56 dB', '-8.06 dB', '-8.59 dB', '-9.15 dB', '-9.75 dB', '-10.39 dB', '-11.09 dB', '-11.84 dB', '-12.67 dB', '-13.58 dB', '-14.61 dB', '-15.77 dB']
+--> Valid values for RX pattern     - ['User Design', 'PRBS Disabled', 'PRBS 7', 'PRBS 9', 'PRBS 13', 'PRBS 15', 'PRBS 23', 'PRBS 31', 'QPRBS 9', 'QPRBS 13', 'QPRBS 15', 'QPRBS 23', 'QPRBS 31', 'PRBSQ 7', 'PRBSQ 9', 'PRBSQ 13', 'PRBSQ 15', 'PRBSQ 23', 'PRBSQ 31', 'Configurable data pattern', 'Square wave (2 * UI)', 'Square wave (Int data width * UI)']
+--> Valid values for RX loopback    - ['User Design', 'None', 'Near-End PCS', 'Far-End PCS', 'Near-End PMA', 'Far-End PMA']
+
+==> link.RX: IBERT_0.Quad_204.CH_0.RX(RX) / IBERT_0.Quad_204.CH_0(GT) RX_NAME=RX GT_NAME=CH_0 GT_alias={'PLL Source', 'PLL Type'}
+==> link.TX: IBERT_0.Quad_202.CH_0.TX(TX) / IBERT_0.Quad_202.CH_0(GT) TX_NAME=TX GT_NAME=CH_0 GT_alias={'PLL Source', 'PLL Type'}
+ 
+GTG_alias={}
+GT_alias={'PLL Type': 'CH0_PLL_TYPE', 'PLL Source': 'CH0_PLL_SOURCE'}
+TX_alias={'TX USRCLK Frequency': 'CH0_TX_USRCLK_FREQ', 'TX PHYCLK Frequency': 'CH0_TX_PHYCLK_FREQ', 'Pattern': 'CH0_TX_PATTERN', 'Reset': 'CH0_TX_RESET', 'TX Polarity': 'CH0_TX_POLARITY', 'PLL Type': 'CH0_TX_PLL_TYPE', 'PLL Source': 'CH0_TX_PLL_SOURCE', 'Data Width': 'CH0_TX_DATA_WIDTH', 'Pre Cursor': 'CH0_TX_PRE_CURSOR', 'Pre Cursor 2': 'CH0_TX_PRE_CURSOR2', 'Pre Cursor 3': 'CH0_TX_PRE_CURSOR3', 'Post Cursor': 'CH0_TX_POST_CURSOR', 'Main Cursor': 'CH0_TX_MAIN_CURSOR', 'USRCLK Frequency Count': 'CH0_COE_STATUS_TXUSRCLK_FREQ_CNT', 'PHYCLK Frequency Count': 'CH0_COE_STATUS_TXPHYCLK_FREQ_CNT', 'Internal Data Width': 'CH0_TX_INT_DATA_WIDTH', 'Inject Error': 'CH0_TX_ERROR_INJECTION.INJECT', 'Inject Error Mode': 'CH0_TX_ERROR_INJECTION.MODE', 'Loopback': 'CH0_LOOPBACK', 'Rx Pattern': 'CH0_RX_PATTERN'}
+
+RX_alias={'BER': 'CH0_RX_PRBS_BER', 'RX USRCLK Frequency': 'CH0_RX_USRCLK_FREQ', 'RX PHYCLK Frequency': 'CH0_RX_PHYCLK_FREQ', 'Pattern': 'CH0_RX_PATTERN', 'RX Polarity': 'CH0_RX_POLARITY', 'PLL Type': 'CH0_RX_PLL_TYPE', 'PLL Source': 'CH0_RX_PLL_SOURCE', 'Reset': 'CH0_RX_RESET', 'Status': 'CH0_RX_STATUS', 'Data Width': 'CH0_RX_DATA_WIDTH', 'Loopback': 'CH0_LOOPBACK', 'RX BER Reset': 'CH0_RX_PRBS_RESET.BER', 'Line Rate': 'CH0_RX_LINE_RATE', 'USRCLK Frequency Count': 'CH0_COE_STATUS_RXUSRCLK_FREQ_CNT', 'PHYCLK Frequency Count': 'CH0_COE_STATUS_RXPHYCLK_FREQ_CNT', 'Internal Data Width': 'CH0_RX_INT_DATA_WIDTH', 'Received Bit Count': 'CH0_RX_RECEIVED_BIT_COUNT', 'Pattern Checker Lock Status': 'CH0_RX_PRBS_LOCKED', 'Pattern Checker Error Count': 'CH0_RX_PRBS_ERR_CNT', 'Pattern Checker Cycle Count': 'CH0_RX_PRBS_CYCLE_CNT', 'Tx Pattern': 'CH0_TX_PATTERN'}
+
+
+
+ Link "IBERT_0.Quad_202.CH_0.TX-->IBERT_0.Quad_204.CH_0.RX"  
+                           report                            
+┌────────────────────────────────┬──────────────────────────┐
+│                       Property │ Value                    │
+├────────────────────────────────┼──────────────────────────┤
+│                           Name │ Link_0                   │
+│                             RX │ IBERT_0.Quad_204.CH_0.RX │
+│                             TX │ IBERT_0.Quad_202.CH_0.TX │
+│                     Link Group │ None                     │
+│                                │                          │
+│                         RX BER │ 5.690991e-12             │
+│         RX RX USRCLK Frequency │ 161.06 MHz               │
+│         RX RX PHYCLK Frequency │ N/A                      │
+│                     RX Pattern │ PRBS 31                  │
+│                 RX RX Polarity │                          │
+│                    RX PLL Type │ LCPLL0                   │
+│                  RX PLL Source │ PLL_0                    │
+│                       RX Reset │ N/A                      │
+│                      RX Status │ 25.77 Gbps               │
+│                  RX Data Width │ 160 bits                 │
+│                    RX Loopback │ None                     │
+│                RX RX BER Reset │ N/A                      │
+│                   RX Line Rate │ 25.77 Gbps               │
+│      RX USRCLK Frequency Count │ 0x0000_0897              │
+│      RX PHYCLK Frequency Count │ 0x0                      │
+│         RX Internal Data Width │ 80 bits                  │
+│          RX Received Bit Count │ 1.777174e+11             │
+│ RX Pattern Checker Lock Status │ Locked                   │
+│ RX Pattern Checker Error Count │ 0x0                      │
+│ RX Pattern Checker Cycle Count │ 0x8468_E650              │
+│                  RX Tx Pattern │                          │
+│                                │                          │
+│         TX TX USRCLK Frequency │ N/A                      │
+│         TX TX PHYCLK Frequency │ N/A                      │
+│                     TX Pattern │ PRBS 31                  │
+│                       TX Reset │ N/A                      │
+│                 TX TX Polarity │                          │
+│                    TX PLL Type │ LCPLL0                   │
+│                  TX PLL Source │ PLL_0                    │
+│                  TX Data Width │                          │
+│                  TX Pre Cursor │                          │
+│                TX Pre Cursor 2 │                          │
+│                TX Pre Cursor 3 │                          │
+│                 TX Post Cursor │                          │
+│                 TX Main Cursor │                          │
+│      TX USRCLK Frequency Count │ 0x0                      │
+│      TX PHYCLK Frequency Count │ 0x0                      │
+│         TX Internal Data Width │                          │
+│                TX Inject Error │ N/A                      │
+│           TX Inject Error Mode │                          │
+│                    TX Loopback │ None                     │
+│                  TX Rx Pattern │                          │
+└────────────────────────────────┴──────────────────────────┘
+
+
+
+--- Link_1 :: RX=IBERT_0.Quad_204.CH_2.RX(RX) TX=IBERT_0.Quad_202.CH_1.TX(TX)  GT=Quad_204 CH=2 ST=25.77 Gbps  -----
+iBERT object IBERT_0.Quad_204.CH_2.RX(RX) property: Pattern = PRBS 31 
+iBERT object IBERT_0.Quad_202.CH_1.TX(TX) property: Pattern = PRBS 31 
+
+--- Link_2 :: RX=IBERT_0.Quad_205.CH_0.RX(RX) TX=IBERT_0.Quad_202.CH_2.TX(TX)  GT=Quad_205 CH=0 ST=25.77 Gbps  -----
+iBERT object IBERT_0.Quad_205.CH_0.RX(RX) property: Pattern = PRBS 31 
+iBERT object IBERT_0.Quad_202.CH_2.TX(TX) property: Pattern = PRBS 31 
+
+--- Link_3 :: RX=IBERT_0.Quad_205.CH_2.RX(RX) TX=IBERT_0.Quad_202.CH_3.TX(TX)  GT=Quad_205 CH=2 ST=25.77 Gbps  -----
+iBERT object IBERT_0.Quad_205.CH_2.RX(RX) property: Pattern = PRBS 31 
+iBERT object IBERT_0.Quad_202.CH_3.TX(TX) property: Pattern = PRBS 31 
+
+--- Link_4 :: RX=IBERT_0.Quad_204.CH_1.RX(RX) TX=IBERT_0.Quad_203.CH_0.TX(TX)  GT=Quad_204 CH=1 ST=25.77 Gbps  -----
+iBERT object IBERT_0.Quad_204.CH_1.RX(RX) property: Pattern = PRBS 31 
+iBERT object IBERT_0.Quad_203.CH_0.TX(TX) property: Pattern = PRBS 31 
+
+--- Link_5 :: RX=IBERT_0.Quad_204.CH_3.RX(RX) TX=IBERT_0.Quad_203.CH_1.TX(TX)  GT=Quad_204 CH=3 ST=25.77 Gbps  -----
+iBERT object IBERT_0.Quad_204.CH_3.RX(RX) property: Pattern = PRBS 31 
+iBERT object IBERT_0.Quad_203.CH_1.TX(TX) property: Pattern = PRBS 31 
+
+--- Link_6 :: RX=IBERT_0.Quad_205.CH_1.RX(RX) TX=IBERT_0.Quad_203.CH_2.TX(TX)  GT=Quad_205 CH=1 ST=25.77 Gbps  -----
+iBERT object IBERT_0.Quad_205.CH_1.RX(RX) property: Pattern = PRBS 31 
+iBERT object IBERT_0.Quad_203.CH_2.TX(TX) property: Pattern = PRBS 31 
+
+--- Link_7 :: RX=IBERT_0.Quad_205.CH_3.RX(RX) TX=IBERT_0.Quad_203.CH_3.TX(TX)  GT=Quad_205 CH=3 ST=25.77 Gbps  -----
+iBERT object IBERT_0.Quad_205.CH_3.RX(RX) property: Pattern = PRBS 31 
+iBERT object IBERT_0.Quad_203.CH_3.TX(TX) property: Pattern = PRBS 31 
+
+--- Link_8 :: RX=IBERT_0.Quad_202.CH_0.RX(RX) TX=IBERT_0.Quad_204.CH_0.TX(TX)  GT=Quad_202 CH=0 ST=25.77 Gbps  -----
+iBERT object IBERT_0.Quad_202.CH_0.RX(RX) property: Pattern = PRBS 31 
+iBERT object IBERT_0.Quad_204.CH_0.TX(TX) property: Pattern = PRBS 31 
+
+--- Link_9 :: RX=IBERT_0.Quad_202.CH_1.RX(RX) TX=IBERT_0.Quad_204.CH_2.TX(TX)  GT=Quad_202 CH=1 ST=25.77 Gbps  -----
+iBERT object IBERT_0.Quad_202.CH_1.RX(RX) property: Pattern = PRBS 31 
+iBERT object IBERT_0.Quad_204.CH_2.TX(TX) property: Pattern = PRBS 31 
+
+--- Link_10 :: RX=IBERT_0.Quad_202.CH_2.RX(RX) TX=IBERT_0.Quad_205.CH_0.TX(TX)  GT=Quad_202 CH=2 ST=25.77 Gbps  -----
+iBERT object IBERT_0.Quad_202.CH_2.RX(RX) property: Pattern = PRBS 31 
+iBERT object IBERT_0.Quad_205.CH_0.TX(TX) property: Pattern = PRBS 31 
+
+--- Link_11 :: RX=IBERT_0.Quad_202.CH_3.RX(RX) TX=IBERT_0.Quad_205.CH_2.TX(TX)  GT=Quad_202 CH=3 ST=25.77 Gbps  -----
+iBERT object IBERT_0.Quad_202.CH_3.RX(RX) property: Pattern = PRBS 31 
+iBERT object IBERT_0.Quad_205.CH_2.TX(TX) property: Pattern = PRBS 31 
+
+--- Link_12 :: RX=IBERT_0.Quad_203.CH_0.RX(RX) TX=IBERT_0.Quad_204.CH_1.TX(TX)  GT=Quad_203 CH=0 ST=25.77 Gbps  -----
+iBERT object IBERT_0.Quad_203.CH_0.RX(RX) property: Pattern = PRBS 31 
+iBERT object IBERT_0.Quad_204.CH_1.TX(TX) property: Pattern = PRBS 31 
+
+--- Link_13 :: RX=IBERT_0.Quad_203.CH_1.RX(RX) TX=IBERT_0.Quad_204.CH_3.TX(TX)  GT=Quad_203 CH=1 ST=25.77 Gbps  -----
+iBERT object IBERT_0.Quad_203.CH_1.RX(RX) property: Pattern = PRBS 31 
+iBERT object IBERT_0.Quad_204.CH_3.TX(TX) property: Pattern = PRBS 31 
+
+--- Link_14 :: RX=IBERT_0.Quad_203.CH_2.RX(RX) TX=IBERT_0.Quad_205.CH_1.TX(TX)  GT=Quad_203 CH=2 ST=25.77 Gbps  -----
+iBERT object IBERT_0.Quad_203.CH_2.RX(RX) property: Pattern = PRBS 31 
+iBERT object IBERT_0.Quad_205.CH_1.TX(TX) property: Pattern = PRBS 31 
+
+--- Link_15 :: RX=IBERT_0.Quad_203.CH_3.RX(RX) TX=IBERT_0.Quad_205.CH_3.TX(TX)  GT=Quad_203 CH=3 ST=25.77 Gbps  -----
+iBERT object IBERT_0.Quad_203.CH_3.RX(RX) property: Pattern = PRBS 31 
+iBERT object IBERT_0.Quad_205.CH_3.TX(TX) property: Pattern = PRBS 31 
+Warning: Ignoring XDG_SESSION_TYPE=wayland on Gnome. Use QT_QPA_PLATFORM=wayland to run on Wayland anyway.
+QSocketNotifier: Can only be used with threads started with QThread
+
+YK-Quad_204_CH0:: TX='IBERT_0.Quad_202.CH_0.TX(TX)'  TX-pll='IBERT_0.Quad_202.PLL_0(PLL/LCPLL0)'  LINK='Link_0'  YK='YKScan_1' 
+YK-Quad_204_CH0:: RX='IBERT_0.Quad_204.CH_0.RX(RX)'  RX-pll='IBERT_0.Quad_204.PLL_0(PLL/LCPLL0)'  RX-yk_scan='YKScan_1' 
+iBERT object IBERT_0.Quad_204.CH_0.RX(RX) property: RX BER Reset = 0x0 
+YK-Quad_204_CH0:: SELF=<__main__.MyYKScanLink object at 0x766823473820> LINK=Link_0               STATUS=25.77 Gbps      BER=9.935119e-11       RATE=25.77 Gbps BITS=6.376332e+09 ERR=0
+
+YK-Quad_204_CH2:: TX='IBERT_0.Quad_202.CH_1.TX(TX)'  TX-pll='IBERT_0.Quad_202.PLL_0(PLL/LCPLL0)'  LINK='Link_1'  YK='YKScan_2' 
+YK-Quad_204_CH2:: RX='IBERT_0.Quad_204.CH_2.RX(RX)'  RX-pll='IBERT_0.Quad_204.PLL_0(PLL/LCPLL0)'  RX-yk_scan='YKScan_2' 
+iBERT object IBERT_0.Quad_204.CH_2.RX(RX) property: RX BER Reset = 0x0 
+YK-Quad_204_CH2:: SELF=<__main__.MyYKScanLink object at 0x7668234960b0> LINK=Link_1               STATUS=25.77 Gbps      BER=9.755788e-11       RATE=25.77 Gbps BITS=6.942631e+09 ERR=0
+
+YK-Quad_205_CH0:: TX='IBERT_0.Quad_202.CH_2.TX(TX)'  TX-pll='IBERT_0.Quad_202.PLL_0(PLL/LCPLL0)'  LINK='Link_2'  YK='YKScan_3' 
+YK-Quad_205_CH0:: RX='IBERT_0.Quad_205.CH_0.RX(RX)'  RX-pll='IBERT_0.Quad_205.PLL_0(PLL/LCPLL0)'  RX-yk_scan='YKScan_3' 
+iBERT object IBERT_0.Quad_205.CH_0.RX(RX) property: RX BER Reset = 0x0 
+YK-Quad_205_CH0:: SELF=<__main__.MyYKScanLink object at 0x7668234e3af0> LINK=Link_2               STATUS=25.77 Gbps      BER=9.033457e-11       RATE=25.77 Gbps BITS=7.087150e+09 ERR=0
+
+YK-Quad_205_CH2:: TX='IBERT_0.Quad_202.CH_3.TX(TX)'  TX-pll='IBERT_0.Quad_202.PLL_0(PLL/LCPLL0)'  LINK='Link_3'  YK='YKScan_4' 
+YK-Quad_205_CH2:: RX='IBERT_0.Quad_205.CH_2.RX(RX)'  RX-pll='IBERT_0.Quad_205.PLL_0(PLL/LCPLL0)'  RX-yk_scan='YKScan_4' 
+iBERT object IBERT_0.Quad_205.CH_2.RX(RX) property: RX BER Reset = 0x0 
+YK-Quad_205_CH2:: SELF=<__main__.MyYKScanLink object at 0x7668234e22c0> LINK=Link_3               STATUS=25.77 Gbps      BER=1.056148e-10       RATE=25.77 Gbps BITS=6.197586e+09 ERR=0
+
+YK-Quad_204_CH1:: TX='IBERT_0.Quad_203.CH_0.TX(TX)'  TX-pll='IBERT_0.Quad_203.PLL_0(PLL/LCPLL0)'  LINK='Link_4'  YK='YKScan_5' 
+YK-Quad_204_CH1:: RX='IBERT_0.Quad_204.CH_1.RX(RX)'  RX-pll='IBERT_0.Quad_204.PLL_0(PLL/LCPLL0)'  RX-yk_scan='YKScan_5' 
+iBERT object IBERT_0.Quad_204.CH_1.RX(RX) property: RX BER Reset = 0x0 
+YK-Quad_204_CH1:: SELF=<__main__.MyYKScanLink object at 0x7667f531b8b0> LINK=Link_4               STATUS=25.77 Gbps      BER=9.196324e-11       RATE=25.77 Gbps BITS=7.162799e+09 ERR=0
+
+YK-Quad_204_CH3:: TX='IBERT_0.Quad_203.CH_1.TX(TX)'  TX-pll='IBERT_0.Quad_203.PLL_0(PLL/LCPLL0)'  LINK='Link_5'  YK='YKScan_6' 
+YK-Quad_204_CH3:: RX='IBERT_0.Quad_204.CH_3.RX(RX)'  RX-pll='IBERT_0.Quad_204.PLL_0(PLL/LCPLL0)'  RX-yk_scan='YKScan_6' 
+iBERT object IBERT_0.Quad_204.CH_3.RX(RX) property: RX BER Reset = 0x0 
+YK-Quad_204_CH3:: SELF=<__main__.MyYKScanLink object at 0x7667f4b83850> LINK=Link_5               STATUS=25.77 Gbps      BER=1.030674e-10       RATE=25.77 Gbps BITS=6.289459e+09 ERR=0
+
+YK-Quad_205_CH1:: TX='IBERT_0.Quad_203.CH_2.TX(TX)'  TX-pll='IBERT_0.Quad_203.PLL_0(PLL/LCPLL0)'  LINK='Link_6'  YK='YKScan_7' 
+YK-Quad_205_CH1:: RX='IBERT_0.Quad_205.CH_1.RX(RX)'  RX-pll='IBERT_0.Quad_205.PLL_0(PLL/LCPLL0)'  RX-yk_scan='YKScan_7' 
+iBERT object IBERT_0.Quad_205.CH_1.RX(RX) property: RX BER Reset = 0x0 
+YK-Quad_205_CH1:: SELF=<__main__.MyYKScanLink object at 0x7667f437f6d0> LINK=Link_6               STATUS=25.77 Gbps      BER=1.025275e-10       RATE=25.77 Gbps BITS=6.144145e+09 ERR=0
+
+YK-Quad_205_CH3:: TX='IBERT_0.Quad_203.CH_3.TX(TX)'  TX-pll='IBERT_0.Quad_203.PLL_0(PLL/LCPLL0)'  LINK='Link_7'  YK='YKScan_8' 
+YK-Quad_205_CH3:: RX='IBERT_0.Quad_205.CH_3.RX(RX)'  RX-pll='IBERT_0.Quad_205.PLL_0(PLL/LCPLL0)'  RX-yk_scan='YKScan_8' 
+iBERT object IBERT_0.Quad_205.CH_3.RX(RX) property: RX BER Reset = 0x0 
+YK-Quad_205_CH3:: SELF=<__main__.MyYKScanLink object at 0x7667edf6dc00> LINK=Link_7               STATUS=25.77 Gbps      BER=9.876105e-11       RATE=25.77 Gbps BITS=6.796250e+09 ERR=0
+
+YK-Quad_202_CH0:: TX='IBERT_0.Quad_204.CH_0.TX(TX)'  TX-pll='IBERT_0.Quad_204.PLL_0(PLL/LCPLL0)'  LINK='Link_8'  YK='YKScan_9' 
+YK-Quad_202_CH0:: RX='IBERT_0.Quad_202.CH_0.RX(RX)'  RX-pll='IBERT_0.Quad_202.PLL_0(PLL/LCPLL0)'  RX-yk_scan='YKScan_9' 
+iBERT object IBERT_0.Quad_202.CH_0.RX(RX) property: RX BER Reset = 0x0 
+YK-Quad_202_CH0:: SELF=<__main__.MyYKScanLink object at 0x7667f43aa740> LINK=Link_8               STATUS=25.77 Gbps      BER=1.035271e-10       RATE=25.77 Gbps BITS=6.265254e+09 ERR=0
+
+YK-Quad_202_CH1:: TX='IBERT_0.Quad_204.CH_2.TX(TX)'  TX-pll='IBERT_0.Quad_204.PLL_0(PLL/LCPLL0)'  LINK='Link_9'  YK='YKScan_10' 
+YK-Quad_202_CH1:: RX='IBERT_0.Quad_202.CH_1.RX(RX)'  RX-pll='IBERT_0.Quad_202.PLL_0(PLL/LCPLL0)'  RX-yk_scan='YKScan_10' 
+iBERT object IBERT_0.Quad_202.CH_1.RX(RX) property: RX BER Reset = 0x0 
+YK-Quad_202_CH1:: SELF=<__main__.MyYKScanLink object at 0x7667eda0a200> LINK=Link_9               STATUS=25.77 Gbps      BER=1.024569e-10       RATE=25.77 Gbps BITS=6.375289e+09 ERR=0
+
+YK-Quad_202_CH2:: TX='IBERT_0.Quad_205.CH_0.TX(TX)'  TX-pll='IBERT_0.Quad_205.PLL_0(PLL/LCPLL0)'  LINK='Link_10'  YK='YKScan_11' 
+YK-Quad_202_CH2:: RX='IBERT_0.Quad_202.CH_2.RX(RX)'  RX-pll='IBERT_0.Quad_202.PLL_0(PLL/LCPLL0)'  RX-yk_scan='YKScan_11' 
+iBERT object IBERT_0.Quad_202.CH_2.RX(RX) property: RX BER Reset = 0x0 
+YK-Quad_202_CH2:: SELF=<__main__.MyYKScanLink object at 0x7667ed59b940> LINK=Link_10              STATUS=25.77 Gbps      BER=1.017128e-10       RATE=25.77 Gbps BITS=6.541391e+09 ERR=0
+
+YK-Quad_202_CH3:: TX='IBERT_0.Quad_205.CH_2.TX(TX)'  TX-pll='IBERT_0.Quad_205.PLL_0(PLL/LCPLL0)'  LINK='Link_11'  YK='YKScan_12' 
+YK-Quad_202_CH3:: RX='IBERT_0.Quad_202.CH_3.RX(RX)'  RX-pll='IBERT_0.Quad_202.PLL_0(PLL/LCPLL0)'  RX-yk_scan='YKScan_12' 
+iBERT object IBERT_0.Quad_202.CH_3.RX(RX) property: RX BER Reset = 0x0 
+YK-Quad_202_CH3:: SELF=<__main__.MyYKScanLink object at 0x7667ed3548b0> LINK=Link_11              STATUS=25.77 Gbps      BER=9.618588e-11       RATE=25.77 Gbps BITS=6.720878e+09 ERR=0
+
+YK-Quad_203_CH0:: TX='IBERT_0.Quad_204.CH_1.TX(TX)'  TX-pll='IBERT_0.Quad_204.PLL_0(PLL/LCPLL0)'  LINK='Link_12'  YK='YKScan_13' 
+YK-Quad_203_CH0:: RX='IBERT_0.Quad_203.CH_0.RX(RX)'  RX-pll='IBERT_0.Quad_203.PLL_0(PLL/LCPLL0)'  RX-yk_scan='YKScan_13' 
+iBERT object IBERT_0.Quad_203.CH_0.RX(RX) property: RX BER Reset = 0x0 
+YK-Quad_203_CH0:: SELF=<__main__.MyYKScanLink object at 0x7667ed0d1ea0> LINK=Link_12              STATUS=25.77 Gbps      BER=9.768507e-11       RATE=25.77 Gbps BITS=6.900278e+09 ERR=0
+
+YK-Quad_203_CH1:: TX='IBERT_0.Quad_204.CH_3.TX(TX)'  TX-pll='IBERT_0.Quad_204.PLL_0(PLL/LCPLL0)'  LINK='Link_13'  YK='YKScan_14' 
+YK-Quad_203_CH1:: RX='IBERT_0.Quad_203.CH_1.RX(RX)'  RX-pll='IBERT_0.Quad_203.PLL_0(PLL/LCPLL0)'  RX-yk_scan='YKScan_14' 
+iBERT object IBERT_0.Quad_203.CH_1.RX(RX) property: RX BER Reset = 0x0 
+YK-Quad_203_CH1:: SELF=<__main__.MyYKScanLink object at 0x7667ecc6f130> LINK=Link_13              STATUS=25.77 Gbps      BER=9.759702e-11       RATE=25.77 Gbps BITS=6.695145e+09 ERR=0
+
+YK-Quad_203_CH2:: TX='IBERT_0.Quad_205.CH_1.TX(TX)'  TX-pll='IBERT_0.Quad_205.PLL_0(PLL/LCPLL0)'  LINK='Link_14'  YK='YKScan_15' 
+YK-Quad_203_CH2:: RX='IBERT_0.Quad_203.CH_2.RX(RX)'  RX-pll='IBERT_0.Quad_203.PLL_0(PLL/LCPLL0)'  RX-yk_scan='YKScan_15' 
+iBERT object IBERT_0.Quad_203.CH_2.RX(RX) property: RX BER Reset = 0x0 
+YK-Quad_203_CH2:: SELF=<__main__.MyYKScanLink object at 0x7667ed598d90> LINK=Link_14              STATUS=25.77 Gbps      BER=9.730428e-11       RATE=25.77 Gbps BITS=6.493124e+09 ERR=0
+
+YK-Quad_203_CH3:: TX='IBERT_0.Quad_205.CH_3.TX(TX)'  TX-pll='IBERT_0.Quad_205.PLL_0(PLL/LCPLL0)'  LINK='Link_15'  YK='YKScan_16' 
+YK-Quad_203_CH3:: RX='IBERT_0.Quad_203.CH_3.RX(RX)'  RX-pll='IBERT_0.Quad_203.PLL_0(PLL/LCPLL0)'  RX-yk_scan='YKScan_16' 
+iBERT object IBERT_0.Quad_203.CH_3.RX(RX) property: RX BER Reset = 0x0 
+YK-Quad_203_CH3:: SELF=<__main__.MyYKScanLink object at 0x7667ec57f730> LINK=Link_15              STATUS=25.77 Gbps      BER=1.123096e-10       RATE=25.77 Gbps BITS=5.834970e+09 ERR=0
+Start YK-Scan: YK-Quad_204_CH0
+Start YK-Scan: YK-Quad_204_CH2
+Start YK-Scan: YK-Quad_205_CH0
+Start YK-Scan: YK-Quad_205_CH2
+Start YK-Scan: YK-Quad_204_CH1
+Start YK-Scan: YK-Quad_204_CH3
+Start YK-Scan: YK-Quad_205_CH1
+YK-Quad_204_CH0: samples#   14  ERROR slicer: 0
+Start YK-Scan: YK-Quad_205_CH3
+Start YK-Scan: YK-Quad_202_CH0
+YK-Quad_205_CH0: samples#   12  ERROR slicer: 0
+Start YK-Scan: YK-Quad_202_CH1
+Start YK-Scan: YK-Quad_202_CH2
+Start YK-Scan: YK-Quad_202_CH3
+Start YK-Scan: YK-Quad_203_CH0
+YK-Quad_202_CH0: samples#    7  ERROR slicer: 0
+Start YK-Scan: YK-Quad_203_CH1
+Start YK-Scan: YK-Quad_203_CH2
+Start YK-Scan: YK-Quad_203_CH3
+
+ChipScoPy loading time: APP=2024-05-10 14:11:55.223663  CANVAS=0:00:44.061234  GUI=0:01:35.920609 
+
+YK-Quad_203_CH0: samples#    5  ERROR slicer: 0
+YK-Quad_204_CH0: samples#  14, 3      BER: 5.38e-13  SNR:   0.00  Elapsed: 96
+YKScan-YK-Quad_204_CH0 Exception (restart): TCF Error: IBERT start_yk_scan: ChipScope Service IBERT start_yk_scan: A test is already running in the MB!
+YK-Quad_204_CH2: samples#  24, 3      BER: 5.33e-13  SNR:   0.00  Elapsed: 98
+YK-Quad_205_CH0: samples#  12, 3      BER: 5.27e-13  SNR:   0.00  Elapsed: 100
+YK-Quad_205_CH2: samples#  22, 3      BER: 5.23e-13  SNR:   0.00  Elapsed: 102
+YK-Quad_204_CH1: samples#  19, 3      BER: 5.18e-13  SNR:   0.00  Elapsed: 104
+YK-Quad_205_CH1: samples#   16  ERROR slicer: 0
+YK-Quad_204_CH3: samples#  18, 3      BER: 5.09e-13  SNR:   0.00  Elapsed: 107
+YK-Quad_205_CH1: samples#  16, 3      BER: 5.04e-13  SNR:   0.00  Elapsed: 108
+YK-Quad_205_CH3: samples#  16, 3      BER: 5.00e-13  SNR:   0.00  Elapsed: 110
+YK-Quad_202_CH0: samples#   7, 3      BER: 4.97e-13  SNR:   0.00  Elapsed: 112
+YKScan-YK-Quad_202_CH0 Exception (restart): TCF Error: IBERT start_yk_scan: ChipScope Service IBERT start_yk_scan: A test is already running in the MB!
+YK-Quad_202_CH1: samples#  15, 3      BER: 4.89e-13  SNR:   0.00  Elapsed: 114
+YK-Quad_205_CH2: samples#   25  ERROR slicer: 0
+YK-Quad_202_CH2: samples#  14, 3      BER: 4.84e-13  SNR:   0.00  Elapsed: 117
+YK-Quad_202_CH3: samples#  13, 3      BER: 4.79e-13  SNR:   0.00  Elapsed: 118
+YK-Quad_203_CH0: samples#   5, 3      BER: 4.76e-13  SNR:   0.00  Elapsed: 120
+YKScan-YK-Quad_203_CH0 Exception (restart): TCF Error: IBERT start_yk_scan: ChipScope Service IBERT start_yk_scan: A test is already running in the MB!
+YK-Quad_202_CH2: samples#  15, 3      BER: 4.84e-13  SNR:   0.00  Elapsed: 117
+YK-Quad_203_CH1: samples#  12, 3      BER: 4.73e-13  SNR:   0.00  Elapsed: 122
+YK-Quad_203_CH2: samples#  20, 4      BER: 3.43e-13  SNR:   0.00  Elapsed: 154
+YK-Quad_202_CH3: samples#  23, 4      BER: 3.49e-13  SNR:   0.00  Elapsed: 149
+YK-Quad_203_CH0: samples#   5, 4      BER: 3.47e-13  SNR:   0.00  Elapsed: 150
+YK-Quad_203_CH3: samples#  18, 3      BER: 4.59e-13  SNR:   0.00  Elapsed: 127
+YK-Quad_204_CH0: samples#  14, 4      BER: 3.73e-13  SNR:   0.00  Elapsed: 128
+YK-Quad_204_CH2: samples#  39, 4      BER: 3.71e-13  SNR:   0.00  Elapsed: 130
+YK-Quad_205_CH0: samples#  27, 4      BER: 3.69e-13  SNR:   0.00  Elapsed: 132
+YK-Quad_205_CH2: samples#  25, 4      BER: 3.66e-13  SNR:   0.00  Elapsed: 134
+YKScan-YK-Quad_205_CH2 Exception (restart): TCF Error: IBERT start_yk_scan: ChipScope Service IBERT start_yk_scan: A test is already running in the MB!
+YK-Quad_204_CH1: samples#  33, 4      BER: 3.64e-13  SNR:   0.00  Elapsed: 136
+YK-Quad_204_CH3: samples#  31, 4      BER: 3.62e-13  SNR:   0.00  Elapsed: 137
+YK-Quad_205_CH1: samples#  28, 4      BER: 3.60e-13  SNR:   0.00  Elapsed: 139
+YK-Quad_205_CH3: samples#  28, 4      BER: 3.58e-13  SNR:   0.00  Elapsed: 141
+YK-Quad_202_CH0: samples#   7, 4      BER: 3.56e-13  SNR:   0.00  Elapsed: 143
+YK-Quad_202_CH1: samples#  26, 4      BER: 3.53e-13  SNR:   0.00  Elapsed: 145
+YK-Quad_202_CH2: samples#  33, 5      BER: 2.74e-13  SNR:   0.00  Elapsed: 178
+YK-Quad_203_CH1: samples#  30, 5      BER: 2.70e-13  SNR:   0.00  Elapsed: 183
+YK-Quad_203_CH2: samples#  29, 5      BER: 2.69e-13  SNR:   0.00  Elapsed: 185
+YK-Quad_202_CH3: samples#  32, 5      BER: 2.73e-13  SNR:   0.00  Elapsed: 180
+YK-Quad_203_CH0: samples#   5, 5      BER: 2.72e-13  SNR:   0.00  Elapsed: 181
+YK-Quad_203_CH3: samples#  27, 4      BER: 3.37e-13  SNR:   0.00  Elapsed: 157
+YK-Quad_204_CH0: samples#  14, 5      BER: 2.88e-13  SNR:   0.00  Elapsed: 159
+YK-Quad_204_CH2: samples#  48, 5      BER: 2.87e-13  SNR:   0.00  Elapsed: 161
+YK-Quad_205_CH0: samples#  36, 5      BER: 2.85e-13  SNR:   0.00  Elapsed: 163
+YK-Quad_205_CH2: samples#  25, 5      BER: 2.84e-13  SNR:   0.00  Elapsed: 165
+YK-Quad_204_CH1: samples#  42, 5      BER: 2.83e-13  SNR:   0.00  Elapsed: 166
+YK-Quad_204_CH3: samples#  40, 5      BER: 2.81e-13  SNR:   0.00  Elapsed: 168
+YK-Quad_205_CH1: samples#  37, 5      BER: 2.80e-13  SNR:   0.00  Elapsed: 170
+YK-Quad_205_CH3: samples#  37, 5      BER: 2.79e-13  SNR:   0.00  Elapsed: 172
+YK-Quad_202_CH0: samples#   7, 5      BER: 2.77e-13  SNR:   0.00  Elapsed: 174
+YK-Quad_202_CH1: samples#  35, 5      BER: 2.76e-13  SNR:   0.00  Elapsed: 176
+YK-Quad_202_CH2: samples#  42, 6      BER: 2.24e-13  SNR:   0.00  Elapsed: 209
+YK-Quad_203_CH1: samples#  39, 6      BER: 2.21e-13  SNR:   0.00  Elapsed: 215
+YK-Quad_203_CH2: samples#  38, 6      BER: 2.20e-13  SNR:   0.00  Elapsed: 217
+YK-Quad_202_CH3: samples#  41, 6      BER: 2.23e-13  SNR:   0.00  Elapsed: 211
+YK-Quad_203_CH0: samples#   5, 6      BER: 2.22e-13  SNR:   0.00  Elapsed: 213
+YK-Quad_203_CH3: samples#  36, 5      BER: 2.65e-13  SNR:   0.00  Elapsed: 189
+YK-Quad_204_CH0: samples#  14, 6      BER: 2.33e-13  SNR:   0.00  Elapsed: 190
+YK-Quad_204_CH2: samples#  57, 6      BER: 2.33e-13  SNR:   0.00  Elapsed: 192
+YK-Quad_205_CH0: samples#  45, 6      BER: 2.31e-13  SNR:   0.00  Elapsed: 194
+YK-Quad_205_CH2: samples#  25, 6      BER: 2.31e-13  SNR:   0.00  Elapsed: 196
+YK-Quad_204_CH1: samples#  51, 6      BER: 2.30e-13  SNR:   0.00  Elapsed: 198
+YK-Quad_204_CH3: samples#  49, 6      BER: 2.29e-13  SNR:   0.00  Elapsed: 200
+YK-Quad_205_CH1: samples#  46, 6      BER: 2.28e-13  SNR:   0.00  Elapsed: 202
+YK-Quad_205_CH3: samples#  46, 6      BER: 2.27e-13  SNR:   0.00  Elapsed: 203
+YK-Quad_202_CH0: samples#   7, 6      BER: 2.26e-13  SNR:   0.00  Elapsed: 205
+YK-Quad_202_CH1: samples#  44, 6      BER: 2.25e-13  SNR:   0.00  Elapsed: 207
+YK-Quad_202_CH2: samples#  51, 7      BER: 1.87e-13  SNR:   0.00  Elapsed: 243
+YK-Quad_203_CH1: samples#  48, 7      BER: 1.82e-13  SNR:   0.00  Elapsed: 252
+YK-Quad_203_CH2: samples#  46, 7      BER: 1.81e-13  SNR:   0.00  Elapsed: 255
+YK-Quad_202_CH3: samples#  49, 7      BER: 1.85e-13  SNR:   0.00  Elapsed: 246
+YK-Quad_203_CH0: samples#   5, 7      BER: 1.84e-13  SNR:   0.00  Elapsed: 249
+YK-Quad_203_CH3: samples#  45, 6      BER: 2.17e-13  SNR:   0.00  Elapsed: 221
+YK-Quad_204_CH0: samples#  14, 7      BER: 1.95e-13  SNR:   0.00  Elapsed: 223
+YK-Quad_204_CH2: samples#  66, 7      BER: 1.95e-13  SNR:   0.00  Elapsed: 225
+YK-Quad_205_CH0: samples#  53, 7      BER: 1.94e-13  SNR:   0.00  Elapsed: 227
+YK-Quad_205_CH2: samples#  25, 7      BER: 1.93e-13  SNR:   0.00  Elapsed: 229
+YK-Quad_204_CH1: samples#  59, 7      BER: 1.92e-13  SNR:   0.00  Elapsed: 231
+YK-Quad_204_CH3: samples#  58, 7      BER: 1.91e-13  SNR:   0.00  Elapsed: 233
+YK-Quad_205_CH1: samples#  55, 7      BER: 1.90e-13  SNR:   0.00  Elapsed: 235
+YK-Quad_205_CH3: samples#  55, 7      BER: 1.90e-13  SNR:   0.00  Elapsed: 237
+YK-Quad_202_CH0: samples#   7, 7      BER: 1.89e-13  SNR:   0.00  Elapsed: 239
+YK-Quad_202_CH1: samples#  53, 7      BER: 1.88e-13  SNR:   0.00  Elapsed: 241
+YK-Quad_202_CH2: samples#  59, 8      BER: 1.59e-13  SNR:   0.00  Elapsed: 281
+YK-Quad_203_CH1: samples#  56, 8      BER: 1.57e-13  SNR:   0.00  Elapsed: 287
+YK-Quad_203_CH2: samples#  55, 8      BER: 1.57e-13  SNR:   0.00  Elapsed: 289
+YK-Quad_202_CH3: samples#  58, 8      BER: 1.58e-13  SNR:   0.00  Elapsed: 283
+YK-Quad_203_CH0: samples#   5, 8      BER: 1.57e-13  SNR:   0.00  Elapsed: 285
+YK-Quad_203_CH3: samples#  54, 7      BER: 1.80e-13  SNR:   0.00  Elapsed: 258
+YK-Quad_204_CH0: samples#  14, 8      BER: 1.64e-13  SNR:   0.00  Elapsed: 260
+YK-Quad_204_CH2: samples#  75, 8      BER: 1.64e-13  SNR:   0.00  Elapsed: 262
+YK-Quad_205_CH0: samples#  62, 8      BER: 1.63e-13  SNR:   0.00  Elapsed: 264
+YK-Quad_205_CH2: samples#  25, 8      BER: 1.63e-13  SNR:   0.00  Elapsed: 266
+YK-Quad_204_CH1: samples#  68, 8      BER: 1.62e-13  SNR:   0.00  Elapsed: 268
+YK-Quad_204_CH3: samples#  66, 8      BER: 1.61e-13  SNR:   0.00  Elapsed: 270
+YK-Quad_205_CH1: samples#  64, 8      BER: 1.61e-13  SNR:   0.00  Elapsed: 273
+YK-Quad_205_CH3: samples#  63, 8      BER: 1.60e-13  SNR:   0.00  Elapsed: 275
+YK-Quad_202_CH0: samples#   7, 8      BER: 1.60e-13  SNR:   0.00  Elapsed: 277
+YK-Quad_202_CH1: samples#  62, 8      BER: 1.59e-13  SNR:   0.00  Elapsed: 278
+YK-Quad_202_CH2: samples#  68, 9      BER: 1.40e-13  SNR:   0.00  Elapsed: 313
+YK-Quad_203_CH1: samples#  65, 9      BER: 1.39e-13  SNR:   0.00  Elapsed: 319
+YK-Quad_203_CH2: samples#  64, 9      BER: 1.39e-13  SNR:   0.00  Elapsed: 321
+YK-Quad_202_CH3: samples#  67, 9      BER: 1.40e-13  SNR:   0.00  Elapsed: 315
+YK-Quad_203_CH0: samples#   5, 9      BER: 1.39e-13  SNR:   0.00  Elapsed: 317
+YK-Quad_203_CH3: samples#  63, 8      BER: 1.55e-13  SNR:   0.00  Elapsed: 292
+YK-Quad_204_CH0: samples#  14, 9      BER: 1.44e-13  SNR:   0.00  Elapsed: 294
+YK-Quad_204_CH2: samples#  84, 9      BER: 1.43e-13  SNR:   0.00  Elapsed: 296
+YK-Quad_205_CH0: samples#  71, 9      BER: 1.43e-13  SNR:   0.00  Elapsed: 298
+YK-Quad_205_CH2: samples#  25, 9      BER: 1.43e-13  SNR:   0.00  Elapsed: 300
+YK-Quad_204_CH1: samples#  77, 9      BER: 1.42e-13  SNR:   0.00  Elapsed: 301
+YK-Quad_204_CH3: samples#  75, 9      BER: 1.42e-13  SNR:   0.00  Elapsed: 303
+YK-Quad_205_CH1: samples#  73, 9      BER: 1.42e-13  SNR:   0.00  Elapsed: 306
+YK-Quad_205_CH3: samples#  72, 9      BER: 1.41e-13  SNR:   0.00  Elapsed: 308
+YK-Quad_202_CH0: samples#   7, 9      BER: 1.41e-13  SNR:   0.00  Elapsed: 309
+YK-Quad_202_CH1: samples#  71, 9      BER: 1.40e-13  SNR:   0.00  Elapsed: 312
+YK-Quad_202_CH2: samples#  77, 10     BER: 1.26e-13  SNR:   0.00  Elapsed: 344
+YK-Quad_203_CH1: samples#  74, 10     BER: 1.25e-13  SNR:   0.00  Elapsed: 350
+YK-Quad_203_CH2: samples#  73, 10     BER: 1.25e-13  SNR:   0.00  Elapsed: 351
+YK-Quad_202_CH3: samples#  76, 10     BER: 1.26e-13  SNR:   0.00  Elapsed: 346
+YK-Quad_203_CH0: samples#   5, 10     BER: 1.25e-13  SNR:   0.00  Elapsed: 348
+YK-Quad_203_CH3: samples#  72, 9      BER: 1.38e-13  SNR:   0.00  Elapsed: 324
+YK-Quad_204_CH0: samples#  14, 10     BER: 1.29e-13  SNR:   0.00  Elapsed: 326
+YK-Quad_204_CH2: samples#  93, 10     BER: 1.28e-13  SNR:   0.00  Elapsed: 328
+YK-Quad_205_CH0: samples#  80, 10     BER: 1.28e-13  SNR:   0.00  Elapsed: 329
+YK-Quad_205_CH2: samples#  25, 10     BER: 1.28e-13  SNR:   0.00  Elapsed: 331
+YK-Quad_204_CH1: samples#  86, 10     BER: 1.28e-13  SNR:   0.00  Elapsed: 333
+YK-Quad_204_CH3: samples#  84, 10     BER: 1.27e-13  SNR:   0.00  Elapsed: 335
+YK-Quad_205_CH1: samples#  82, 10     BER: 1.27e-13  SNR:   0.00  Elapsed: 337
+YK-Quad_205_CH3: samples#  81, 10     BER: 1.27e-13  SNR:   0.00  Elapsed: 338
+YK-Quad_202_CH0: samples#   7, 10     BER: 1.27e-13  SNR:   0.00  Elapsed: 340
+YK-Quad_202_CH1: samples#  80, 10     BER: 1.26e-13  SNR:   0.00  Elapsed: 342
+YK-Quad_202_CH2: samples#  86, 11     BER: 1.14e-13  SNR:   0.00  Elapsed: 376
+YK-Quad_203_CH1: samples#  83, 11     BER: 1.13e-13  SNR:   0.00  Elapsed: 382
+YK-Quad_203_CH2: samples#  82, 11     BER: 1.13e-13  SNR:   0.00  Elapsed: 384
+YK-Quad_202_CH3: samples#  85, 11     BER: 1.14e-13  SNR:   0.00  Elapsed: 378
+YK-Quad_203_CH0: samples#   5, 11     BER: 1.14e-13  SNR:   0.00  Elapsed: 380
+YK-Quad_203_CH3: samples#  81, 10     BER: 1.24e-13  SNR:   0.00  Elapsed: 355
+YK-Quad_204_CH0: samples#  14, 11     BER: 1.17e-13  SNR:   0.00  Elapsed: 357
+YK-Quad_204_CH2: samples# 102, 11     BER: 1.17e-13  SNR:   0.00  Elapsed: 358
+YK-Quad_205_CH0: samples#  89, 11     BER: 1.16e-13  SNR:   0.00  Elapsed: 360
+YK-Quad_205_CH2: samples#  25, 11     BER: 1.16e-13  SNR:   0.00  Elapsed: 362
+YK-Quad_204_CH1: samples#  95, 11     BER: 1.16e-13  SNR:   0.00  Elapsed: 364
+YK-Quad_204_CH3: samples#  93, 11     BER: 1.15e-13  SNR:   0.00  Elapsed: 366
+YK-Quad_205_CH1: samples#  91, 11     BER: 1.15e-13  SNR:   0.00  Elapsed: 368
+YK-Quad_205_CH3: samples#  90, 11     BER: 1.15e-13  SNR:   0.00  Elapsed: 370
+YK-Quad_202_CH0: samples#   7, 11     BER: 1.15e-13  SNR:   0.00  Elapsed: 372
+YK-Quad_202_CH1: samples#  89, 11     BER: 1.15e-13  SNR:   0.00  Elapsed: 374
+OnClose: to do YK.stop()
+Closed YK-Scan
+Closed Widget
+
+
+
+=================================================================================================================================================================================================================================
+commit 3583a78bf88f3f7ed822c8f81f3bad1e84fb9a12
 Date   Mon May 6
        [SCOPY] Enhance YK-Link Status treatments
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

@@ -43,6 +43,7 @@ else
 			./hw_server  -d -L/tmp/FPGA-hw_$JTAG_PORT.`date +%F_%H%M`.log -stcp::$JTAG_PORT -levents,eventcore,protocol,discovery,tcflog,jtag2,jtag,xvc,pcie
 			#./hw_server -d -L/tmp/FPGA-$JTAG_PORT.`date +%F_%H%M`.log -stcp::$JTAG_PORT
 			#./hw_server -d -L/tmp/FPGA-$JTAG_PORT.`date +%F_%H%M`.log -stcp::$JTAG_PORT -e "set xvc-servers $XVC_SERVER:localhost:3000"
+			sleep 5;   # ensure it's up-running for cs_server to access
 		fi
 
 		#----------------------------------------------------------------------------
