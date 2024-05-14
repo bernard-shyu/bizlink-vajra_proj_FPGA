@@ -1,32 +1,57 @@
-#------------------------------------------------------------------------------------------------
-proc setup_links_SelfLooped {f_link_method} {
+#--------------------------------------------------------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------------------------------------------
+set connType "XConnected_X4"
+set connType "SelfLooped_X4"
+set connType "XConnected_X8"
+set connType "SelfLooped_X8"
+
+#--------------------------------------------------------------------------------------------------------------------------------------
+# Connection Map for QSFP-DD ports: QDD-1 & QDD-2 on 2x VPK120 (SN: 111/112)
+#--------------------------------------------------------------------------------------------------------------------------------------
+#     "XConnected":                                                                   "SelfLooped": 
+#     VPK120 (S/N 111)                        VPK120 (S/N 112)                        VPK120 (S/N 111)  and/or  VPK120 (S/N 112) 
+#     ----------------                        ----------------                        ------------------------------------------
+#     QDD-1 cage <-------------------------------> cage QDD-1                         QDD-1 cage <--------+                    
+#                      2x QSFP-DD cables                                                                  |  1x QSFP-DD cable
+#     QDD-2 cage <-------------------------------> cage QDD-2                         QDD-2 cage <--------+                   
+#--------------------------------------------------------------------------------------------------------------------------------------
+proc setup_links_common {cType f_link_method quad_list} {
 	global links 
 	set links {}
-	foreach q { {Quad_202 0 Quad_204 0} {Quad_202 1 Quad_204 2}  {Quad_202 2 Quad_205 0} {Quad_202 3 Quad_205 2}
-	            {Quad_203 0 Quad_204 1} {Quad_203 1 Quad_204 3}  {Quad_203 2 Quad_205 1} {Quad_203 3 Quad_205 3}
-	            {Quad_204 0 Quad_202 0} {Quad_204 2 Quad_202 1}  {Quad_205 0 Quad_202 2} {Quad_205 2 Quad_202 3}
-	            {Quad_204 1 Quad_203 0} {Quad_204 3 Quad_203 1}  {Quad_205 1 Quad_203 2} {Quad_205 3 Quad_203 3}
-	          } {
-		set qq [split $q]
+	foreach q $quad_list {
+		if { $cType == "XConnected" } { set qq [split "$q $q"] }  else  { set qq [split $q] }
 		lappend links $qq
 	}
 
 	$f_link_method $links
 }
 
-proc setup_links_XConnected {f_link_method} {
-	global links 
-	set links {}
-	foreach q { {Quad_202 0} {Quad_202 1} {Quad_202 2} {Quad_202 3}
-	            {Quad_203 0} {Quad_203 1} {Quad_203 2} {Quad_203 3}
-	            {Quad_204 0} {Quad_204 2} {Quad_205 0} {Quad_205 2}
-	            {Quad_204 1} {Quad_204 3} {Quad_205 1} {Quad_205 3}
-	          } {
-		set qq [split "$q $q"]
-		lappend links $qq
-	}
+proc setup_links_SelfLooped_X8 {f_link_method} {
+	setup_links_common "SelfLooped" $f_link_method {
+	            {Quad_202 0 Quad_204 0} {Quad_202 1 Quad_204 2}  {Quad_202 2 Quad_205 0} {Quad_202 3 Quad_205 2}
+	            {Quad_203 0 Quad_204 1} {Quad_203 1 Quad_204 3}  {Quad_203 2 Quad_205 1} {Quad_203 3 Quad_205 3}
+	            {Quad_204 0 Quad_202 0} {Quad_204 2 Quad_202 1}  {Quad_205 0 Quad_202 2} {Quad_205 2 Quad_202 3}
+	            {Quad_204 1 Quad_203 0} {Quad_204 3 Quad_203 1}  {Quad_205 1 Quad_203 2} {Quad_205 3 Quad_203 3} }
+}
 
-	$f_link_method $links
+proc setup_links_SelfLooped_X4 {f_link_method} {
+	setup_links_common "SelfLooped" $f_link_method {
+	            {Quad_202 0 Quad_204 0} {Quad_202 1 Quad_204 2}  {Quad_202 2 Quad_205 0} {Quad_202 3 Quad_205 2}
+	            {Quad_204 0 Quad_202 0} {Quad_205 0 Quad_202 2}  {Quad_204 1 Quad_203 0} {Quad_205 1 Quad_203 2} }
+}
+
+proc setup_links_XConnected_X8 {f_link_method} {
+	setup_links_common "XConnected" $f_link_method {
+	            {Quad_202 0} {Quad_202 1}  {Quad_202 2} {Quad_202 3}
+	            {Quad_203 0} {Quad_203 1}  {Quad_203 2} {Quad_203 3}
+	            {Quad_204 0} {Quad_204 2}  {Quad_205 0} {Quad_205 2}
+	            {Quad_204 1} {Quad_204 3}  {Quad_205 1} {Quad_205 3} }
+}
+
+proc setup_links_XConnected_X4 {f_link_method} {
+	setup_links_common "XConnected" $f_link_method {
+	            {Quad_202 0} {Quad_202 2}  {Quad_203 0} {Quad_203 2}
+	            {Quad_204 0} {Quad_204 2}  {Quad_205 0} {Quad_205 2} }
 }
 
 proc create_links_common {links} {
@@ -49,14 +74,14 @@ proc create_links_common {links} {
 	eval $cmd
 }
 
-proc set_link_property {links prop side val {dl 0} } {
+proc set_link_property {links prop side val {delay 0} } {
 	foreach qq $links {
 		set qTX [lindex $qq 0];  set chTX [lindex $qq 1]
 		set qRX [lindex $qq 2];  set chRX [lindex $qq 3]
-		if {$side == "TX"}  { set chPROP $chTX }      else { set chPROP $chRX }
-		if {$dl > 0 }       { set delay "after $dl; " } else { set delay "" }
+		if {$side == "TX"}  { set chPROP $chTX }           else { set chPROP $chRX }
+		if {$delay > 0}     { set dlCmd "after $delay; " } else { set dlCmd "" }
 
-		set cmd "${delay}set_property CH${chPROP}_${prop} \{$val\} \[get_hw_sio_links \{IBERT_0.$qTX.CH_$chTX.TX->IBERT_0.$qRX.CH_$chRX.RX\}\]; commit_hw_sio -non_blocking \[get_hw_sio_links \{IBERT_0.$qTX.CH_$chTX.TX->IBERT_0.$qRX.CH_$chRX.RX\}\]"
+		set cmd "${dlCmd}set_property CH${chPROP}_${prop} \{$val\} \[get_hw_sio_links \{IBERT_0.$qTX.CH_$chTX.TX->IBERT_0.$qRX.CH_$chRX.RX\}\]; commit_hw_sio -non_blocking \[get_hw_sio_links \{IBERT_0.$qTX.CH_$chTX.TX->IBERT_0.$qRX.CH_$chRX.RX\}\]"
 		eval $cmd
 	}
 }
@@ -76,8 +101,8 @@ proc set_link_property {links prop side val {dl 0} } {
 # TX post-Cursor ['User Design', '0 dB', '-0.20 dB', '-0.41 dB', '-0.63 dB', '-0.85 dB', '-1.07 dB', '-1.31 dB', '-1.54 dB', '-1.79 dB', '-2.04 dB', '-2.30 dB', '-2.57 dB', '-2.84 dB', '-3.13 dB', '-3.42 dB', '-3.73 dB',
 #        '-4.04 dB', '-4.37 dB', '-4.71 dB', '-5.07 dB', '-5.43 dB', '-5.82 dB', '-6.22 dB', '-6.65 dB', '-7.09 dB', '-7.56 dB', '-8.06 dB', '-8.59 dB', '-9.15 dB', '-9.75 dB', '-10.39 dB', '-11.09 dB', '-11.84 dB', '-12.67 dB', '-13.58 dB', '-14.61 dB', '-15.77 dB']
 #------------------------------------------------------------------------------------------------
-proc set_link_TX_Pattern {links}     {  set_link_property $links "TX_PATTERN" "TX" "PRBS 15" }
-proc set_link_RX_Pattern {links}     {  set_link_property $links "RX_PATTERN" "RX" "PRBS 15" }
+proc set_link_TX_Pattern {links}     {  set_link_property $links "TX_PATTERN" "TX" "PRBS 31" }
+proc set_link_RX_Pattern {links}     {  set_link_property $links "RX_PATTERN" "RX" "PRBS 31" }
 
 proc set_link_Loopback {links}       {  set_link_property $links "LOOPBACK"   "RX" "None" }
                                     
@@ -114,11 +139,10 @@ proc tuning_ibert_links {cType} {
 	setup_links_$cType set_link_TX_MainCursor
 }
 
-set connType "XConnected"
-set connType "SelfLooped"
 
 create_ibert_links $connType 
 reset_ibert_links  $connType 
+tuning_ibert_links $connType 
 
 
 #------------------------------------------------------------------------------------------------
