@@ -11,7 +11,6 @@ proc setup_links_SelfLooped {f_link_method} {
 		lappend links $qq
 	}
 
-	#puts "Self-looped links contents: [parray $links]"
 	$f_link_method $links
 }
 
@@ -27,12 +26,13 @@ proc setup_links_XConnected {f_link_method} {
 		lappend links $qq
 	}
 
-	#puts "Cross-connected links contents: [parray $links]"
 	$f_link_method $links
 }
 
 proc create_links_common {links} {
-	puts "set xil_newLinks \[list\]"
+	set cmd "set xil_newLinks \[list\]"
+	eval $cmd
+
 	set i 0
 	foreach qq $links {
 		set qTX [lindex $qq 0];  set chTX [lindex $qq 1]
@@ -41,11 +41,12 @@ proc create_links_common {links} {
 		set lnk(TX) "IBERT_0.$qTX.CH_$chTX.TX"
 		set lnk(RX) "IBERT_0.$qRX.CH_$chRX.RX"
 		# DEBUG:: puts "LINK-$i: $qq   q0: [lindex $qq 0]  q1: [lindex $qq 1]  TX: ${lnk(TX)}  RX: ${lnk(RX)}"
-		puts "set xil_newLink \[create_hw_sio_link -description \{Link $i\}  \[lindex \[get_hw_sio_txs ${lnk(TX)}\] 0\] \[lindex \[get_hw_sio_rxs ${lnk(RX)}\] 0\] \]; lappend xil_newLinks \$xil_newLink"
+		set cmd "set xil_newLink \[create_hw_sio_link -description \{Link $i\}  \[lindex \[get_hw_sio_txs ${lnk(TX)}\] 0\] \[lindex \[get_hw_sio_rxs ${lnk(RX)}\] 0\] \]; lappend xil_newLinks \$xil_newLink"
+		eval $cmd
 		incr i
 	}
-	puts "set xil_newLinkGroup \[create_hw_sio_linkgroup -description \{Link Group 0\} \[get_hw_sio_links \$xil_newLinks\]\]"
-	puts "unset xil_newLinks"
+	set cmd "set xil_newLinkGroup \[create_hw_sio_linkgroup -description \{Link Group 0\} \[get_hw_sio_links \$xil_newLinks\]\];  unset xil_newLinks"
+	eval $cmd
 }
 
 proc set_link_property {links prop side val {dl 0} } {
@@ -55,7 +56,8 @@ proc set_link_property {links prop side val {dl 0} } {
 		if {$side == "TX"}  { set chPROP $chTX }      else { set chPROP $chRX }
 		if {$dl > 0 }       { set delay "after $dl; " } else { set delay "" }
 
-		puts "${delay}set_property CH${chPROP}_${prop} \{$val\} \[get_hw_sio_links \{IBERT_0.$qTX.CH_$chTX.TX->IBERT_0.$qRX.CH_$chRX.RX\}\]; commit_hw_sio -non_blocking \[get_hw_sio_links \{IBERT_0.$qTX.CH_$chTX.TX->IBERT_0.$qRX.CH_$chRX.RX\}\]"
+		set cmd "${delay}set_property CH${chPROP}_${prop} \{$val\} \[get_hw_sio_links \{IBERT_0.$qTX.CH_$chTX.TX->IBERT_0.$qRX.CH_$chRX.RX\}\]; commit_hw_sio -non_blocking \[get_hw_sio_links \{IBERT_0.$qTX.CH_$chTX.TX->IBERT_0.$qRX.CH_$chRX.RX\}\]"
+		eval $cmd
 	}
 }
 
