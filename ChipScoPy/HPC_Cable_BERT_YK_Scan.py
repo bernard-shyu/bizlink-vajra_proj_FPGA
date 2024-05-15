@@ -33,18 +33,6 @@
 # - [External loopback](https://www.samtec.com/kits/optics-fpga/hspce-fmcp/)
 # - This example assumes that the device has already been programmed with the example design (ie the debug cores have already been initialized)
 
-#------------------------------------------
-"""
-export ip="10.20.2.146";     export CS_SERVER_URL="TCP:$ip:3042" HW_SERVER_URL="TCP:$ip:3121"
-export HW_PLATFORM="vpk120"; export CREATE_LGROUP=False
-export PLOT_1_RESOL_X=900;   export PLOT_1_RESOL_Y=800;  export PLOT_F_RESOL_X=3840;  export PLOT_F_RESOL_Y=2160
-export PROG_DEVICE=True;     export PDI_FILE="./PDI_Files/VPK120_iBERT_2xQDD_56G.pdi"
-export SHOW_FIG_TITLE=True;  export MAX_SLICES=100;
-export CSV_PATH="./YK_CSV_Files";
-export QUAD_NAME="Quad_202"; export QUAD_CHAN=2;
-export APP_DBG_LEVEL=5;
-"""
-
 #------------------------------------------------------------------------------------------
 # ## 1 - Initialization: Imports
 #
@@ -63,13 +51,14 @@ from chipscopy.api.ibert.aliases import ( PATTERN,
 
 #------------------------------------------
 from PyQt5 import QtWidgets, QtCore, QtGui
-import sys
 import random
 import math
 import re
 import numpy as np
 import pandas as pd
 import os
+import sys
+import argparse
 import datetime
 import time
 from more_itertools import one
@@ -89,26 +78,27 @@ DBG_LEVEL_NOTICE = 2
 DBG_LEVEL_INFO   = 3
 DBG_LEVEL_DEBUG  = 4
 DBG_LEVEL_TRACE  = 5
-APP_DBG_LEVEL    = int(os.getenv("APP_DBG_LEVEL", "3"))
 #--------------------------------
 def BPrint(*args, level=DBG_LEVEL_INFO):
-    if level <= APP_DBG_LEVEL:
+    if level <= sysconfig.DBG_LEVEL:
         print(*args)
 
 app_start_time = datetime.datetime.now()
-BPrint(f"\nChipScoPy APP fro BizLink iBERT HPC-cables testing --- {app_start_time}\n", level=DBG_LEVEL_NOTICE)
+APP_TITLE = "ChipScoPy APP fro BizLink iBERT HPC-cables testing"
 
 #------------------------------------------------------------------------------------------
-# ## 2 - Create a session and connect to the hw_server and cs_server
-#
-# The session is a container that keeps track of devices and debug cores.
-# After this step,
-# - Session is initialized and connected to server(s)
-# - Versions are detected and reported to stdout
-
-# %%
-# Specify locations of the running hw_server and cs_server below.
+# Configuration variables: 1) external EXPORT Environment variables, 2) command-line arguments (higher priority)
 #------------------------------------------------------------------------------------------
+"""
+export ip="10.20.2.146";     export CS_SERVER_URL="TCP:$ip:3042" HW_SERVER_URL="TCP:$ip:3121"
+export HW_PLATFORM="vpk120"; export CREATE_LGROUP=False
+export PLOT_1_RESOL_X=900;   export PLOT_1_RESOL_Y=800;  export PLOT_F_RESOL_X=3840;  export PLOT_F_RESOL_Y=2160
+export PDI_FILE="./PDI_Files/VPK120_iBERT_2xQDD_56G.pdi"
+export SHOW_FIG_TITLE=True;  export MAX_SLICES=100;
+export CSV_PATH="./YK_CSV_Files";
+export QUAD_NAME="Quad_202"; export QUAD_CHAN=2;
+export APP_DBG_LEVEL=5;
+"""
 
 PLOT_1_RESOL_X = int(os.getenv("PLOT_1_RESOL_X", "900"))
 PLOT_1_RESOL_Y = int(os.getenv("PLOT_1_RESOL_Y", "800"))
@@ -124,26 +114,51 @@ HW_URL = os.getenv("HW_SERVER_URL", "TCP:localhost:3121")
 
 # specify hw and if programming is desired
 HW_PLATFORM = os.getenv("HW_PLATFORM", "vpk120")
-PROG_DEVICE = os.getenv("PROG_DEVICE", 'True').lower() in ('true', '1', 't')
 CREATE_LGROUP = os.getenv("CREATE_LGROUP", 'True').lower() in ('true', '1', 't')
 SHOW_FIG_TITLE = os.getenv("SHOW_FIG_TITLE", 'False').lower() in ('true', '1', 't')
-
-# The get_design_files() function tries to find the PDI and LTX files. In non-standard
-# configurations, you can put the path for PROGRAMMING_FILE and PROBES_FILE below.
-# design_files = get_design_files(f"{HW_PLATFORM}/production/chipscopy_ced")
-# PDI_FILE = design_files.programming_file
-PDI_FILE = os.getenv("PDI_FILE", "./PDI_Files/VPK120_iBERT_2xQDD_56G.pdi")
-
-BPrint(f"PROGRAMMING_FILE: {PDI_FILE}", level=DBG_LEVEL_NOTICE)
-BPrint(f"Servers URL: {CS_URL} {HW_URL} HW: {HW_PLATFORM}  Do_Programming: {PROG_DEVICE}\n", level=DBG_LEVEL_NOTICE)
 
 MAX_SLICES   = int(os.getenv("MAX_SLICES", "5"))
 YKSCAN_SLICER_SIZE = 2000
 SLICER_CHUNK_SIZE  = MAX_SLICES * YKSCAN_SLICER_SIZE 
 
 #------------------------------------------------------------------------------------------
+# https://docs.python.org/3/library/argparse.html,  https://docs.python.org/3/howto/argparse.html
+# https://stackoverflow.com/questions/20063/whats-the-best-way-to-parse-command-line-arguments
+#------------------------------------------------------------------------------------------
+parser = argparse.ArgumentParser(description=f"{APP_TITLE} by Bernard Shyu")
+
+# The get_design_files() function tries to find the PDI and LTX files. In non-standard
+# configurations, you can put the path for PROGRAMMING_FILE and PROBES_FILE below.
+# design_files = get_design_files(f"{HW_PLATFORM}/production/chipscopy_ced")
+# PDI_FILE = design_files.programming_file
+PDI_FILE = os.getenv("PDI_FILE", "")
+parser.add_argument('--PDI_FILE', default=PDI_FILE, metavar='filename', help='FPGA image file (*.pdi) Ex. PDI_Files/VPK120_iBERT_2xQDD_56G.pdi')
+
+APP_DBG_LEVEL = int(os.getenv("APP_DBG_LEVEL", "3"))
+parser.add_argument('--DBG_LEVEL', default=APP_DBG_LEVEL, metavar='level', help='debug level (ERR=0 WARN=1 NOTICE=2 INFO=3 DEBUG=4 TRACE=5, default=3)', type=int)
+
+parser.add_argument('--NFIGURE', default=-1, metavar='number', help='number of Matplotlib Figures, default: -1 (auto)')
+
+sysconfig = parser.parse_args()
+
+#------------------------------------------------------------------------------------------
+BPrint(f"\n{APP_TITLE } --- {app_start_time}\n", level=DBG_LEVEL_NOTICE)
+BPrint(f"Servers URL: {CS_URL} {HW_URL}\t\tHW: {HW_PLATFORM}\tPDI: '{sysconfig.PDI_FILE}'\n", level=DBG_LEVEL_NOTICE)
+BPrint(f"SYSCONFIG: {sysconfig.NFIGURE}  {sysconfig.DBG_LEVEL} \n", level=DBG_LEVEL_NOTICE)
+
+#------------------------------------------------------------------------------------------
+# ## 2 - Create a session and connect to the hw_server and cs_server
+#
+# The session is a container that keeps track of devices and debug cores.
+# After this step,
+# - Session is initialized and connected to server(s)
+# - Versions are detected and reported to stdout
+
+# %%
+# Specify locations of the running hw_server and cs_server below.
+#------------------------------------------------------------------------------------------
 session = create_session(cs_server_url=CS_URL, hw_server_url=HW_URL)
-if DBG_LEVEL_INFO <= APP_DBG_LEVEL:
+if DBG_LEVEL_INFO <= sysconfig.DBG_LEVEL:
     report_versions(session)
 
 # %% [markdown]
@@ -154,8 +169,8 @@ if DBG_LEVEL_INFO <= APP_DBG_LEVEL:
 # %%
 # Typical case - one device on the board - get it.
 device = session.devices.filter_by(family="versal").get()
-if PROG_DEVICE:
-    device.program(PDI_FILE)
+if os.path.exists(sysconfig.PDI_FILE):
+    device.program(sysconfig.PDI_FILE)
 else:
     BPrint("skipping programming", level=DBG_LEVEL_NOTICE)
 
@@ -199,7 +214,7 @@ if len(ibert_gtm.gt_groups) == 0:
     exit()
 
 # We also ensure that all the quads instantiated by the ChipScoPy CED design are found by the APIs
-if DBG_LEVEL_DEBUG <= APP_DBG_LEVEL:
+if DBG_LEVEL_DEBUG <= sysconfig.DBG_LEVEL:
     report_hierarchy(ibert_gtm)
 BPrint(f"--> GT Groups available - {ibert_gtm.gt_groups}", level=DBG_LEVEL_NOTICE)
 BPrint(f"==> GT Groups available - {[gt_group_obj.name for gt_group_obj in ibert_gtm.gt_groups]}", level=DBG_LEVEL_DEBUG)
@@ -358,7 +373,7 @@ class MyYKScanLink():
         self.bprint_link(DBG_LEVEL_TRACE)
 
     def update_YKScan_figures(self):
-        BPrint(f"{self.YKName}: samples#{self.YK_samples_count:4d}, {self.LINK_samples_count:<4d}   BER: {self.ber:.2e}  SNR: {self.snr:6.2f}  Elapsed: {self.elapsed}", level=DBG_LEVEL_WIP)
+        BPrint(f"{self.YKName}: samples#{self.YK_samples_count:4d}, {self.LINK_samples_count:<4d}   BER: {self.ber:.2e}  SNR: {self.snr:6.2f}  Elapsed: {self.elapsed}", level=DBG_LEVEL_TRACE)
         self.fig.update_yk_ber(self)
         self.fig.update_yk_scan(self)
         try:
@@ -659,9 +674,9 @@ def create_links_common(RXs, TXs):
     myLinks = create_links(txs=TXs, rxs=RXs)
 
     nID = 0
-    if   DBG_LEVEL_TRACE <= APP_DBG_LEVEL:  dbg_print = True;  dbg_print_all = True; 
-    elif DBG_LEVEL_DEBUG <= APP_DBG_LEVEL:  dbg_print = True;  dbg_print_all = False;
-    else:                                   dbg_print = False; dbg_print_all = False; 
+    if   DBG_LEVEL_TRACE <= sysconfig.DBG_LEVEL:  dbg_print = True;  dbg_print_all = True; 
+    elif DBG_LEVEL_DEBUG <= sysconfig.DBG_LEVEL:  dbg_print = True;  dbg_print_all = False;
+    else:                                         dbg_print = False; dbg_print_all = False; 
     dbg_print = True;  ### __WIP__  ###
 
     for link in myLinks:
@@ -776,12 +791,10 @@ if CREATE_LGROUP:
     create_links_SelfLooped()
 
     # These below RESET aren't necessarily required
-    """
     q202.reset()
     q203.reset()
     q204.reset()
     q205.reset()
-    """
 else:
     myLinks = [ FakeYKScanLink(QUAD_NAME, QUAD_CHAN) ]
 

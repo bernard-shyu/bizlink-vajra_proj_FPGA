@@ -1,9 +1,50 @@
 #--------------------------------------------------------------------------------------------------------------------------------------
+# Environment variables definition in TCL/Vivado or BASH:
 #--------------------------------------------------------------------------------------------------------------------------------------
-set connType "XConnected_X4"
-set connType "SelfLooped_X4"
-set connType "XConnected_X8"
-set connType "SelfLooped_X8"
+#   set BXU_CREATE_ONLY   <bool_val>     # values: 1 (Create link only)  0 (default, will do RESET as well)
+#   set BXU_RESET_DELAY   <delay>        # value:  delay in msec for iBERT TX/RX reset   (default delay: 200)
+#   set BXU_CONN_TYPE     <type>         # values: SLoop_x4  SLoop_x8  XConn_x4  XConn_x8  ||  S4  S8  X4  X8  (default type: SLoop_x8)
+#   (BASH) export MY_CONN=<type>         # 
+#----------------------------------------------------------------------------------------------------------------------------------
+#   set BXU_POST_CURSOR   <dB_val>       # Values: [ User Design, 0 dB, -0.20 dB, -0.41 dB, -0.63 dB, -0.85 dB, -1.07 dB, -1.31 dB, -1.54 dB, -1.79 dB, -2.04 dB, -2.30 dB, -2.57 dB, -2.84 dB,
+#   set BXU_PRE_CURSOR1   <dB_val>       #           -3.13 dB, -3.42 dB, -3.73 dB, -4.04 dB, -4.37 dB, -4.71 dB, -5.07 dB, -5.43 dB, -5.82 dB,
+#                                        #           -6.22 dB, -6.65 dB, -7.09 dB, -7.56 dB, -8.06 dB, -8.59 dB, -9.15 dB, -9.75 dB, -10.39 dB, -11.09 dB, -11.84 dB, -12.67 dB, -13.58 dB, -14.61 dB, -15.77 dB ]
+#----------------------------------------------------------------------------------------------------------------------------------
+#   set BXU_PRE_CURSOR2   <dB_val>       # Values: [ User Design, 0 dB, -0.20 dB, -0.41 dB, -0.63 dB, -0.85 dB, -1.07 dB, -1.31 dB, -1.54 dB, -1.79 dB, -2.04 dB, -2.30 dB, -2.57 dB, -2.84 dB,
+#   set BXU_PRE_CURSOR3   <dB_val>       #           -3.13 dB, -3.42 dB, -3.73 dB, -4.04 dB, -4.37 dB, -4.71 dB, -5.07 dB, -5.43 dB, -5.82 dB ] 
+#----------------------------------------------------------------------------------------------------------------------------------
+#   set BXU_MAIN_CURSOR   <volt_val>     # Values: [ User Design, 0.502 Vdd, 0.514 Vdd, 0.527 Vdd, 0.539 Vdd, 0.552 Vdd, 0.560 Vdd, 0.568 Vdd, 0.577 Vdd, 0.585 Vdd, 0.593 Vdd, 0.602 Vdd, 0.614 Vdd, 0.626 Vdd, 0.638 Vdd,
+#                                        #           0.650 Vdd, 0.661 Vdd, 0.673 Vdd, 0.684 Vdd, 0.696 Vdd, 0.710 Vdd, 0.724 Vdd, 0.738 Vdd, 0.752 Vdd, 0.764 Vdd, 0.777 Vdd, 0.789 Vdd, 0.802 Vdd, 0.814 Vdd, 0.826 Vdd,
+#                                        #           0.838 Vdd, 0.850 Vdd, 0.860 Vdd, 0.870 Vdd, 0.881 Vdd, 0.891 Vdd, 0.902 Vdd, 0.914 Vdd, 0.927 Vdd, 0.939 Vdd, 0.952 Vdd, 0.961 Vdd, 0.970 Vdd, 0.979 Vdd, 0.988 Vdd, 0.998 Vdd ]
+#----------------------------------------------------------------------------------------------------------------------------------
+#   set BXU_LOOPBACK      <mode>         # Values: [ User Design, None, Near-End PCS, Far-End PCS, Near-End PMA, Far-End PMA ]
+#   set BXU_DATA_PATTERN  <pattern>      # Values: [ User Design, PRBS Disabled,   PRBS 7,  PRBS 9,  PRBS 13,  PRBS 15,  PRBS 23,  PRBS 31,   QPRBS 9, QPRBS 13, QPRBS 15, QPRBS 23, QPRBS 31,
+#                                        #           PRBSQ 7, PRBSQ 9, PRBSQ 13, PRBSQ 15, PRBSQ 23, PRBSQ 31,   Configurable data pattern,   Square wave (2 * UI),   Square wave (Int data width * UI)]
+#--------------------------------------------------------------------------------------------------------------------------------------
+if { ![info exists BXU_CONN_TYPE] }  {
+	if { [info exists env(MY_CONN)] }  { set BXU_CONN_TYPE $env(MY_CONN)
+	} else                             { set BXU_CONN_TYPE "SLoop_x8" }
+}
+
+switch -regexp  -- $BXU_CONN_TYPE {
+  "S4" - "SLoop_x4" { set connType "SelfLooped_X4" }
+  "S8" - "SLoop_x8" { set connType "SelfLooped_X8" }
+  "X4" - "XConn_x4" { set connType "XConnected_X4" }
+  "X8" - "XConn_x8" { set connType "XConnected_X8" }
+  default  { puts "unknown Connection type: $BXU_CONN_TYPE"
+             return
+           }
+}
+
+if { ![info exists BXU_CREATE_ONLY]  }  { set BXU_CREATE_ONLY    0              }
+if { ![info exists BXU_PRE_CURSOR1]  }  { set BXU_PRE_CURSOR1    "User Design"  }
+if { ![info exists BXU_PRE_CURSOR2]  }  { set BXU_PRE_CURSOR2    "User Design"  }
+if { ![info exists BXU_PRE_CURSOR3]  }  { set BXU_PRE_CURSOR3    "User Design"  }
+if { ![info exists BXU_POST_CURSOR]  }  { set BXU_POST_CURSOR    "User Design"  }
+if { ![info exists BXU_MAIN_CURSOR]  }  { set BXU_MAIN_CURSOR    "User Design"  }
+if { ![info exists BXU_LOOPBACK   ]  }  { set BXU_LOOPBACK       "None"         }
+if { ![info exists BXU_DATA_PATTERN] }  { set BXU_DATA_PATTERN   "PRBS 31"      }
+if { ![info exists BXU_RESET_DELAY]  }  { set BXU_RESET_DELAY    200            }
 
 #--------------------------------------------------------------------------------------------------------------------------------------
 # Connection Map for QSFP-DD ports: QDD-1 & QDD-2 on 2x VPK120 (SN: 111/112)
@@ -87,38 +128,29 @@ proc set_link_property {links prop side val {delay 0} } {
 }
 
 
-#------------------------------------------------------------------------------------------------
-# Valid property values
-#------------------------------------------------------------------------------------------------
-# TX/RX pattern  ['User Design', 'PRBS Disabled', 'PRBS 7', 'PRBS 9', 'PRBS 13', 'PRBS 15', 'PRBS 23', 'PRBS 31',
-#                 'QPRBS 9', 'QPRBS 13', 'QPRBS 15', 'QPRBS 23', 'QPRBS 31', 'PRBSQ 7', 'PRBSQ 9', 'PRBSQ 13', 'PRBSQ 15', 'PRBSQ 23', 'PRBSQ 31', 'Configurable data pattern', 'Square wave (2 * UI)', 'Square wave (Int data width * UI)']
-#
-# loopback ['User Design', 'None', 'Near-End PCS', 'Far-End PCS', 'Near-End PMA', 'Far-End PMA']
-#
-# TX pre-Cursor ['User Design', '0 dB', '-0.20 dB', '-0.41 dB', '-0.63 dB', '-0.85 dB', '-1.07 dB', '-1.31 dB', '-1.54 dB', '-1.79 dB', '-2.04 dB', '-2.30 dB', '-2.57 dB', '-2.84 dB', '-3.13 dB', '-3.42 dB', '-3.73 dB',
-#        '-4.04 dB', '-4.37 dB', '-4.71 dB', '-5.07 dB', '-5.43 dB', '-5.82 dB', '-6.22 dB', '-6.65 dB', '-7.09 dB', '-7.56 dB', '-8.06 dB', '-8.59 dB', '-9.15 dB', '-9.75 dB', '-10.39 dB', '-11.09 dB', '-11.84 dB', '-12.67 dB', '-13.58 dB', '-14.61 dB', '-15.77 dB']
-#
-# TX post-Cursor ['User Design', '0 dB', '-0.20 dB', '-0.41 dB', '-0.63 dB', '-0.85 dB', '-1.07 dB', '-1.31 dB', '-1.54 dB', '-1.79 dB', '-2.04 dB', '-2.30 dB', '-2.57 dB', '-2.84 dB', '-3.13 dB', '-3.42 dB', '-3.73 dB',
-#        '-4.04 dB', '-4.37 dB', '-4.71 dB', '-5.07 dB', '-5.43 dB', '-5.82 dB', '-6.22 dB', '-6.65 dB', '-7.09 dB', '-7.56 dB', '-8.06 dB', '-8.59 dB', '-9.15 dB', '-9.75 dB', '-10.39 dB', '-11.09 dB', '-11.84 dB', '-12.67 dB', '-13.58 dB', '-14.61 dB', '-15.77 dB']
-#------------------------------------------------------------------------------------------------
-proc set_link_TX_Pattern {links}     {  set_link_property $links "TX_PATTERN" "TX" "PRBS 31" }
-proc set_link_RX_Pattern {links}     {  set_link_property $links "RX_PATTERN" "RX" "PRBS 31" }
-
-proc set_link_Loopback {links}       {  set_link_property $links "LOOPBACK"   "RX" "None" }
+#--------------------------------------------------------------------------------------------------------------------------------------
+proc set_link_TX_Pattern {links}     {  global BXU_DATA_PATTERN; set_link_property $links "TX_PATTERN" "TX" $BXU_DATA_PATTERN }
+proc set_link_RX_Pattern {links}     {  global BXU_DATA_PATTERN; set_link_property $links "RX_PATTERN" "RX" $BXU_DATA_PATTERN }
+proc set_link_Loopback {links}       {  global BXU_LOOPBACK;     set_link_property $links "LOOPBACK"   "RX" $BXU_LOOPBACK }
                                     
-proc set_link_TX_Reset {links}       {  set_link_property $links "TX_RESET"   "TX" "1" 200 }
-proc set_link_RX_Reset {links}       {  set_link_property $links "RX_RESET"   "RX" "1" 200 }
-proc set_link_BER_Reset {links}      {  set_link_property $links "RX_PRBS_RESET.BER" "RX" "1" 200;  set_link_property $links "RX_PRBS_RESET.BER" "RX" "0" 200; }
+proc set_link_TX_Reset {links}       {  global BXU_RESET_DELAY;  set_link_property $links "TX_RESET"   "TX" "1" $BXU_RESET_DELAY }
+proc set_link_RX_Reset {links}       {  global BXU_RESET_DELAY;  set_link_property $links "RX_RESET"   "RX" "1" $BXU_RESET_DELAY }
+proc set_link_BER_Reset {links}      {  global BXU_RESET_DELAY;  set_link_property $links "RX_PRBS_RESET.BER" "RX" "1" $BXU_RESET_DELAY ;  set_link_property $links "RX_PRBS_RESET.BER" "RX" "0" $BXU_RESET_DELAY; }
 
-proc set_link_TX_PreCursor {links}   {  set_link_property $links "TX_PRE_CURSOR"   "TX" "-0.20 dB" }
-proc set_link_TX_PreCursor2 {links}  {  set_link_property $links "TX_PRE_CURSOR2"  "TX" "-0.20 dB" }
-proc set_link_TX_PreCursor3 {links}  {  set_link_property $links "TX_PRE_CURSOR3"  "TX" "-0.20 dB" }
-proc set_link_TX_PostCursor {links}  {  set_link_property $links "TX_POST_CURSOR"  "TX" "-0.20 dB" }
-proc set_link_TX_MainCursor {links}  {  set_link_property $links "TX_MAIN_CURSOR"  "TX" "0.850 Vdd" }
+proc set_link_TX_PreCursor {links}   {  global BXU_PRE_CURSOR1;  set_link_property $links "TX_PRE_CURSOR"   "TX" $BXU_PRE_CURSOR1 }
+proc set_link_TX_PreCursor2 {links}  {  global BXU_PRE_CURSOR2;  set_link_property $links "TX_PRE_CURSOR2"  "TX" $BXU_PRE_CURSOR2 }
+proc set_link_TX_PreCursor3 {links}  {  global BXU_PRE_CURSOR3;  set_link_property $links "TX_PRE_CURSOR3"  "TX" $BXU_PRE_CURSOR3 }
+proc set_link_TX_PostCursor {links}  {  global BXU_POST_CURSOR;  set_link_property $links "TX_POST_CURSOR"  "TX" $BXU_POST_CURSOR }
+proc set_link_TX_MainCursor {links}  {  global BXU_MAIN_CURSOR;  set_link_property $links "TX_MAIN_CURSOR"  "TX" $BXU_MAIN_CURSOR }
 
 
-#------------------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------------------------------------------
 proc create_ibert_links {cType} {
+	set CurrLinks [get_hw_sio_links];         # Check if iBERT links were created or not
+	if { $CurrLinks != "" } {
+		remove_hw_sio_link [get_hw_sio_links]
+	}
+
 	setup_links_$cType create_links_common
 	setup_links_$cType set_link_TX_Pattern
 	setup_links_$cType set_link_RX_Pattern
@@ -141,13 +173,14 @@ proc tuning_ibert_links {cType} {
 
 
 create_ibert_links $connType 
-reset_ibert_links  $connType 
-tuning_ibert_links $connType 
+if { !$BXU_CREATE_ONLY } {
+	reset_ibert_links  $connType 
+	tuning_ibert_links $connType 
+}
 
-
-#------------------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------------------------------------------
 # My learning
-#------------------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------------------------------------------
 proc __learn_create_iBERT_links__1__ {} {
 	global q205 q204 q203 q202
 
@@ -200,4 +233,4 @@ proc __learn_create_iBERT_links__2__ {} {
 	#parray $links
 }
 
-#------------------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------------------------------------------

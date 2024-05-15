@@ -9,6 +9,24 @@ Date   ???
 
 =================================================================================================================================================================================================================================
 commit ???
+Date   Wed May 15
+       [FPGA] environment & config for TCL & SCOPY
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+(venv_SCOPY) bernard@BXUTP-FPGA-Linux:~/SDK_WIP/project/vajra_proj_FPGA/ChipScoPy$ ./HPC_Cable_BERT_YK_Scan.py -h
+usage: HPC_Cable_BERT_YK_Scan.py [-h] [--PDI_FILE filename] [--DBG_LEVEL level] [--NFIGURE number]
+
+ChipScoPy APP fro BizLink iBERT HPC-cables testing by Bernard Shyu
+
+options:
+  -h, --help           show this help message and exit
+  --PDI_FILE filename  FPGA image file (*.pdi) Ex. PDI_Files/VPK120_iBERT_2xQDD_56G.pdi
+  --DBG_LEVEL level    debug level (ERR=0 WARN=1 NOTICE=2 INFO=3 DEBUG=4 TRACE=5, default=3)
+  --NFIGURE number     number of Matplotlib Figures, default: -1 (auto)
+
+
+
+=================================================================================================================================================================================================================================
+commit c6d7b494b3724adfb2f57ee464fd1b1279fb6caf
 Date   Fri May 10
        [SCOPY] iBERT RESET & YK-Scan empty slice data
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
