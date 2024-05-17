@@ -36,7 +36,7 @@ switch -regexp  -- $BXU_CONN_TYPE {
            }
 }
 
-if { ![info exists BXU_CREATE_ONLY]  }  { set BXU_CREATE_ONLY    0              }
+if { ![info exists BXU_CREATE_ONLY]  }  { set BXU_CREATE_ONLY    1              };    ###    0: the default,       1: for experiment now    ###
 if { ![info exists BXU_PRE_CURSOR1]  }  { set BXU_PRE_CURSOR1    "User Design"  }
 if { ![info exists BXU_PRE_CURSOR2]  }  { set BXU_PRE_CURSOR2    "User Design"  }
 if { ![info exists BXU_PRE_CURSOR3]  }  { set BXU_PRE_CURSOR3    "User Design"  }

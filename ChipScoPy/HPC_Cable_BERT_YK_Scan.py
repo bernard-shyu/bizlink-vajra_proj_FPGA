@@ -1,20 +1,5 @@
 #!/usr/bin/env python3
-#------------------------------------------------------------------------------------------
-# ### License
-#------------------------------------------------------------------------------------------
-# Copyright (C) 2022, Xilinx, Inc.
-# Copyright (C) 2022-2023, Advanced Micro Devices, Inc.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");<br>
-# you may not use this file except in compliance with the License.<br><br>
-# You may obtain a copy of the License at <a href="http://www.apache.org/licenses/LICENSE-2.0"?>http://www.apache.org/licenses/LICENSE-2.0</a><br><br>
-# Unless required by applicable law or agreed to in writing, software<br>
-# distributed under the License is distributed on an "AS IS" BASIS,<br>
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.<br>
-# See the License for the specific language governing permissions and<br>
-# limitations under the License.<br>
-#
-#------------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------------------------------------------
 # # IBERT yk scan example
 # ## Description
 # This example shows how to interact with the IBERT (Integrated Bit Error Ratio Tester) debug core service via ChipScoPy APIs.
@@ -30,16 +15,10 @@
 # - ChipScoPy 2023.2 installed
 # - Jupyter notebook support installed - Please do so, using the command `pip install chipscopy[jupyter]`
 # - Plotting support installed - Please do so, using the command `pip install chipscopy[core-addons]`
-# - [External loopback](https://www.samtec.com/kits/optics-fpga/hspce-fmcp/)
-# - This example assumes that the device has already been programmed with the example design (ie the debug cores have already been initialized)
 
-#------------------------------------------------------------------------------------------
-# ## 1 - Initialization: Imports
-#
-# After this step,
-# * Required functions and classes are imported
-# * Paths to server(s) and files are set correctly
-#------------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------------------------------------------
+# ## 1 - Initialization: Imports & environments
+#--------------------------------------------------------------------------------------------------------------------------------------
 from chipscopy import create_session, report_versions, report_hierarchy, get_design_files
 from chipscopy.api.ibert import create_yk_scans
 from chipscopy.api.ibert import delete_link_groups, get_all_links, get_all_link_groups, create_links, create_link_groups
@@ -68,7 +47,7 @@ matplotlib.use("Qt5Agg")      # 表示使用 Qt5
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas, NavigationToolbar2QT as NavigationToolbar
 
-#------------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------------------------------------------
 # Print levels (default: info)
 #--------------------------------
 DBG_LEVEL_WIP    = -1   # working in progress, LEVEL to be defined later
@@ -86,9 +65,9 @@ def BPrint(*args, level=DBG_LEVEL_INFO):
 app_start_time = datetime.datetime.now()
 APP_TITLE = "ChipScoPy APP fro BizLink iBERT HPC-cables testing"
 
-#------------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------------------------------------------
 # Configuration variables: 1) external EXPORT Environment variables, 2) command-line arguments (higher priority)
-#------------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------------------------------------------
 """
 export ip="10.20.2.146";     export CS_SERVER_URL="TCP:$ip:3042" HW_SERVER_URL="TCP:$ip:3121"
 export HW_PLATFORM="vpk120"; export CREATE_LGROUP=False
@@ -96,6 +75,7 @@ export PLOT_1_RESOL_X=900;   export PLOT_1_RESOL_Y=800;  export PLOT_F_RESOL_X=3
 export PDI_FILE="./PDI_Files/VPK120_iBERT_2xQDD_56G.pdi"
 export SHOW_FIG_TITLE=True;  export MAX_SLICES=100;
 export CSV_PATH="./YK_CSV_Files";
+export CONN_TYPE=XConn_x8;
 export QUAD_NAME="Quad_202"; export QUAD_CHAN=2;
 export APP_DBG_LEVEL=5;
 """
@@ -121,10 +101,10 @@ MAX_SLICES   = int(os.getenv("MAX_SLICES", "5"))
 YKSCAN_SLICER_SIZE = 2000
 SLICER_CHUNK_SIZE  = MAX_SLICES * YKSCAN_SLICER_SIZE 
 
-#------------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------------------------------------------
 # https://docs.python.org/3/library/argparse.html,  https://docs.python.org/3/howto/argparse.html
 # https://stackoverflow.com/questions/20063/whats-the-best-way-to-parse-command-line-arguments
-#------------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------------------------------------------
 parser = argparse.ArgumentParser(description=f"{APP_TITLE} by Bernard Shyu")
 
 # The get_design_files() function tries to find the PDI and LTX files. In non-standard
@@ -134,6 +114,9 @@ parser = argparse.ArgumentParser(description=f"{APP_TITLE} by Bernard Shyu")
 PDI_FILE = os.getenv("PDI_FILE", "")
 parser.add_argument('--PDI_FILE', default=PDI_FILE, metavar='filename', help='FPGA image file (*.pdi) Ex. PDI_Files/VPK120_iBERT_2xQDD_56G.pdi')
 
+CONN_TYPE = os.getenv("CONN_TYPE", "SLoop_x8")
+parser.add_argument('--CONN_TYPE', default=CONN_TYPE, metavar='type', help='Connection Type: SLoop_x4 | SLoop_x8 | XConn_x4 | XConn_x8.  Or shorter: S4 | S8 | X4 | X8.  Default: SLoop_x8')
+
 APP_DBG_LEVEL = int(os.getenv("APP_DBG_LEVEL", "3"))
 parser.add_argument('--DBG_LEVEL', default=APP_DBG_LEVEL, metavar='level', help='debug level (ERR=0 WARN=1 NOTICE=2 INFO=3 DEBUG=4 TRACE=5, default=3)', type=int)
 
@@ -141,86 +124,65 @@ parser.add_argument('--NFIGURE', default=-1, metavar='number', help='number of M
 
 sysconfig = parser.parse_args()
 
-#------------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------------------------------------------
 BPrint(f"\n{APP_TITLE } --- {app_start_time}\n", level=DBG_LEVEL_NOTICE)
 BPrint(f"Servers URL: {CS_URL} {HW_URL}\t\tHW: {HW_PLATFORM}\tPDI: '{sysconfig.PDI_FILE}'\n", level=DBG_LEVEL_NOTICE)
-BPrint(f"SYSCONFIG: {sysconfig.NFIGURE}  {sysconfig.DBG_LEVEL} \n", level=DBG_LEVEL_NOTICE)
+BPrint(f"SYSCONFIG: fig={sysconfig.NFIGURE} dbg={sysconfig.DBG_LEVEL} cTyp={sysconfig.CONN_TYPE} \n", level=DBG_LEVEL_NOTICE)
 
-#------------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------------------------------------------
 # ## 2 - Create a session and connect to the hw_server and cs_server
 #
 # The session is a container that keeps track of devices and debug cores.
-# After this step,
 # - Session is initialized and connected to server(s)
 # - Versions are detected and reported to stdout
+#--------------------------------------------------------------------------------------------------------------------------------------
+def create_iBERT_session_device():
+    global ibert_gtm
 
-# %%
-# Specify locations of the running hw_server and cs_server below.
-#------------------------------------------------------------------------------------------
-session = create_session(cs_server_url=CS_URL, hw_server_url=HW_URL)
-if DBG_LEVEL_INFO <= sysconfig.DBG_LEVEL:
-    report_versions(session)
+    # Specify locations of the running hw_server and cs_server below.
+    session = create_session(cs_server_url=CS_URL, hw_server_url=HW_URL)
+    if DBG_LEVEL_INFO <= sysconfig.DBG_LEVEL:
+        report_versions(session)
 
-# %% [markdown]
-# ## 3 - Program the device with the example design
-# After this step,
-# * Device is programmed with the example programming file
+    # ## 3 - Program the device with PDI_FILE programming image file.
+    device = session.devices.filter_by(family="versal").get()
+    if os.path.exists(sysconfig.PDI_FILE):
+        device.program(sysconfig.PDI_FILE)
+    else:
+        BPrint("skipping programming", level=DBG_LEVEL_NOTICE)
 
-# %%
-# Typical case - one device on the board - get it.
-device = session.devices.filter_by(family="versal").get()
-if os.path.exists(sysconfig.PDI_FILE):
-    device.program(sysconfig.PDI_FILE)
-else:
-    BPrint("skipping programming", level=DBG_LEVEL_NOTICE)
+    # ## 4 - Discover and setup the IBERT core. Debug core discovery initializes the chipscope server debug cores.
+    # - The cs_server is initialized and ready for use
+    # - The first ibert found is used
 
-# %% [markdown]
-# ## 4 - Discover and setup the IBERT core
-#
-# Debug core discovery initializes the chipscope server debug cores.
-#
-# After this step,
-#
-# - The cs_server is initialized and ready for use
-# - The first ibert found is used
+    # # Set any params as needed
+    # params_to_set = {"IBERT.internal_mode": True}
+    # session.set_param(params_to_set)
 
-# %%
-# # Set any params as needed
-# params_to_set = {"IBERT.internal_mode": True}
-# session.set_param(params_to_set)
-#device = session.devices.filter_by(family="versal").get()
+    BPrint(f"Discovering debug cores...", level=DBG_LEVEL_NOTICE)
+    device.discover_and_setup_cores(ibert_scan=True)
+    if len(device.ibert_cores) == 0:
+        BPrint("No IBERT core found! Exiting...", level=DBG_LEVEL_ERR)
+        exit()
+    
+    # ## 5 - Print the hierarchy of the IBERT core
+    # We also ensure that all the quads instantiated by the ChipScoPy CED design are found by the APIs
+    
+    # Use the first available IBERT core from the device
+    BPrint(f"--> Found {[f'{ibert.name} ({ibert.handle})' for ibert in device.ibert_cores]}\n", level=DBG_LEVEL_NOTICE)
+    ibert_gtm = one(device.ibert_cores.filter_by(name="IBERT Versal GTM"))
+    if len(ibert_gtm.gt_groups) == 0:
+        BPrint("No GT Groups available for use! Exiting...", level=DBG_LEVEL_WARN)
+        exit()
 
-# Use the first available device and set up its debug cores
-
-BPrint(f"Discovering debug cores...", level=DBG_LEVEL_NOTICE)
-device.discover_and_setup_cores(ibert_scan=True)
-
-if len(device.ibert_cores) == 0:
-    BPrint("No IBERT core found! Exiting...", level=DBG_LEVEL_ERR)
-    exit()
-
-# %% [markdown]
-# ## 5 - Print the hierarchy of the IBERT core
-# We also ensure that all the quads instantiated by the ChipScoPy CED design are found by the APIs
-
-# %%
-# Use the first available IBERT core from the device
-BPrint(f"--> Found {[f'{ibert.name} ({ibert.handle})' for ibert in device.ibert_cores]}\n", level=DBG_LEVEL_NOTICE)
-
-ibert_gtm = one(device.ibert_cores.filter_by(name="IBERT Versal GTM"))
-
-if len(ibert_gtm.gt_groups) == 0:
-    BPrint("No GT Groups available for use! Exiting...", level=DBG_LEVEL_WARN)
-    exit()
-
-# We also ensure that all the quads instantiated by the ChipScoPy CED design are found by the APIs
-if DBG_LEVEL_DEBUG <= sysconfig.DBG_LEVEL:
-    report_hierarchy(ibert_gtm)
-BPrint(f"--> GT Groups available - {ibert_gtm.gt_groups}", level=DBG_LEVEL_NOTICE)
-BPrint(f"==> GT Groups available - {[gt_group_obj.name for gt_group_obj in ibert_gtm.gt_groups]}", level=DBG_LEVEL_DEBUG)
+    # We also ensure that all the quads instantiated by the ChipScoPy CED design are found by the APIs
+    if DBG_LEVEL_DEBUG <= sysconfig.DBG_LEVEL:
+        report_hierarchy(ibert_gtm)
+    BPrint(f"--> GT Groups available - {ibert_gtm.gt_groups}", level=DBG_LEVEL_NOTICE)
+    BPrint(f"==> GT Groups available - {[gt_group_obj.name for gt_group_obj in ibert_gtm.gt_groups]}", level=DBG_LEVEL_DEBUG)
 
 
-#------------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------------------------------------------
 def get_property_value(obj, propName, lv=DBG_LEVEL_DEBUG):
     #-------------------------------------------------------------------
     # other likely methods to get property values:
@@ -258,7 +220,7 @@ def check_link_status(link):
         return ""
 
 
-#------------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------------------------------------------
 # The class correlates to chipscopy.api.ibert.link.Link
 class FakeYKScanLink():
     def __init__(self, qname, ch):
@@ -393,7 +355,7 @@ class MyYKScanLink():
             print(f"YKScan-{self.YKName} Exception (finish): {str(e)}")
 
 
-#------------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------------------------------------------
 class MyYKFigure(matplotlib.figure.Figure):
     # ## 8 - Run YK Scan
     #
@@ -493,7 +455,7 @@ class MyYKFigure(matplotlib.figure.Figure):
             self.ax_BER.plot(myYK.LINK_samples_count, math.log10(myYK.ber), color='violet')
 
 
-#------------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------------------------------------------
 class MplCanvas(FigureCanvas):
     def __init__(self, parent=None, ykobj=None, nID=0):
         super().__init__(ykobj.fig)
@@ -502,7 +464,18 @@ class MplCanvas(FigureCanvas):
         self.nID   = nID
         self.updateTable = parent.updateTable
 
-    def start_timer(self):
+    def close_canvas(self):
+        self.timer_plot.stop()
+        self.timer_table.stop()
+        self.ykobj.finish_object()
+
+    def start_canvas(self):
+        BPrint(f"Start YK-Scan: {self.ykobj.YKName}", level=DBG_LEVEL_INFO)
+        time.sleep(1)
+        #self.draw()
+        self.ykobj.YK.start()
+        self.ykobj.update_link_data()
+
         # Setup a timer to trigger the redraw by calling update_plot.
         self.timer_plot = QtCore.QTimer()
         self.timer_plot.setInterval(10000)
@@ -549,7 +522,7 @@ class MplCanvas(FigureCanvas):
     """
 
 
-#------------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------------------------------------------
 class MyWidget(QtWidgets.QMainWindow):
     def __init__(self, n_links):
         super().__init__()
@@ -585,9 +558,7 @@ class MyWidget(QtWidgets.QMainWindow):
     def closeEvent(self, event):
         BPrint("OnClose: to do YK.stop()", level=DBG_LEVEL_NOTICE)
         for c in self.canvases:
-            c.timer_plot.stop()
-            c.timer_table.stop()
-            c.ykobj.finish_object()
+            c.close_canvas()
         BPrint("Closed YK-Scan", level=DBG_LEVEL_NOTICE)
         event.accept()  # Close the widget
         BPrint("Closed Widget", level=DBG_LEVEL_NOTICE)
@@ -595,12 +566,7 @@ class MyWidget(QtWidgets.QMainWindow):
     def show_figures(self): 
         canvas_time = datetime.datetime.now()
         for c in self.canvases:
-            BPrint(f"Start YK-Scan: {c.ykobj.YKName}", level=DBG_LEVEL_INFO)
-            #c.draw()
-            time.sleep(1)
-            c.ykobj.YK.start()
-            c.ykobj.update_link_data()
-            c.start_timer()
+            c.start_canvas()
         self.show()
         gui_time = datetime.datetime.now()
         BPrint(f"\nChipScoPy loading time: APP={app_start_time}  CANVAS={canvas_time - app_start_time}  GUI={gui_time - app_start_time} \n", level=DBG_LEVEL_NOTICE)
@@ -665,7 +631,7 @@ class MyWidget(QtWidgets.QMainWindow):
     """
 
 
-#------------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------------------------------------------
 def create_links_common(RXs, TXs):
     global myLinks
 
@@ -677,7 +643,6 @@ def create_links_common(RXs, TXs):
     if   DBG_LEVEL_TRACE <= sysconfig.DBG_LEVEL:  dbg_print = True;  dbg_print_all = True; 
     elif DBG_LEVEL_DEBUG <= sysconfig.DBG_LEVEL:  dbg_print = True;  dbg_print_all = False;
     else:                                         dbg_print = False; dbg_print_all = False; 
-    dbg_print = True;  ### __WIP__  ###
 
     for link in myLinks:
         link.nID = nID; nID += 1
@@ -741,14 +706,17 @@ def create_links_common(RXs, TXs):
             link.generate_report()
             dbg_print = dbg_print_all
 
-#------------------------------------------
-"""
-    Self-looped onnection scheme (TCL_scripts/vpk120_ibert_ChMap_SLoop_x8.tcl / x4):
-            VPK120 QDD-1 cage <--------+
-                                       | QSFP-DD cable
-            VPK120 QDD-2 cage <--------+
-"""
-def create_links_SelfLooped():
+#--------------------------------------------------------------------------------------------------------------------------------------
+# Connection Map for QSFP-DD ports: QDD-1 & QDD-2 on 2x VPK120 (SN: 111/112)
+#--------------------------------------------------------------------------------------------------------------------------------------
+#     "XConnected":                                                                   "SelfLooped": 
+#     VPK120 (S/N 111)                        VPK120 (S/N 112)                        VPK120 (S/N 111)  and/or  VPK120 (S/N 112) 
+#     ----------------                        ----------------                        ------------------------------------------
+#     QDD-1 cage <-------------------------------> cage QDD-1                         QDD-1 cage <--------+                    
+#                      2x QSFP-DD cables                                                                  |  1x QSFP-DD cable
+#     QDD-2 cage <-------------------------------> cage QDD-2                         QDD-2 cage <--------+                   
+#--------------------------------------------------------------------------------------------------------------------------------------
+def create_links_SelfLooped_X8():
     global q205, q204, q203, q202
 
     RXs = list(); TXs = list();
@@ -759,17 +727,20 @@ def create_links_SelfLooped():
 
     create_links_common(RXs, TXs)
 
+#------------------------------------------
+def create_links_SelfLooped_X4():
+    global q205, q204, q203, q202
+
+    RXs = list(); TXs = list();
+    for q_TX, ch_TX, q_RX, ch_RX in ( (q202,0, q204,0), (q202,1, q204,2), (q202,2, q205,0), (q202,3, q205,2)
+                                    , (q204,0, q202,0), (q205,0, q202,2), (q204,1, q203,0), (q205,1, q203,2) ):
+        RXs.append(q_RX.gts[ch_RX].rx)
+        TXs.append(q_TX.gts[ch_TX].tx)
+
+    create_links_common(RXs, TXs)
 
 #------------------------------------------
-"""
-    Cross-connected connection scheme (TCL_scripts/vpk120_ibert_ChMap_XConn_x8.tcl / x4):
-    
-            VPK120 (S/N 111)                             VPK120 (S/N 112)
-            QDD-1 cage <-------------------------------> cage QDD-1
-                            2x QSFP-DD 400G cables
-            QDD-2 cage <-------------------------------> cage QDD-2
-"""
-def create_links_XConnected():
+def create_links_XConnected_X8():
     global q202, q203, q204, q205
 
     RXs = list(); TXs = list();
@@ -779,34 +750,56 @@ def create_links_XConnected():
 
     create_links_common(RXs, TXs)
 
+#------------------------------------------
+def create_links_XConnected_X4():
+    global q202, q203, q204, q205
+
+    RXs = list(); TXs = list();
+    for q, ch in ( (q202,0), (q202,2), (q203,0), (q203,2), (q204,0), (q204,2), (q205,0), (q205,2) ):
+        RXs.append(q.gts[ch].rx)
+        TXs.append(q.gts[ch].tx)
+
+    create_links_common(RXs, TXs)
 
 #------------------------------------------
-if CREATE_LGROUP:
-    q205 = one(ibert_gtm.gt_groups.filter_by(name="Quad_205"))
-    q204 = one(ibert_gtm.gt_groups.filter_by(name="Quad_204"))
-    q203 = one(ibert_gtm.gt_groups.filter_by(name="Quad_203"))
-    q202 = one(ibert_gtm.gt_groups.filter_by(name="Quad_202"))
+def create_LinkGroups():
+    global q205, q204, q203, q202
+    global myLinks, all_lnkgrps, all_links
 
-    #create_links_XConnected()
-    create_links_SelfLooped()
+    if CREATE_LGROUP:
+        q205 = one(ibert_gtm.gt_groups.filter_by(name="Quad_205"))
+        q204 = one(ibert_gtm.gt_groups.filter_by(name="Quad_204"))
+        q203 = one(ibert_gtm.gt_groups.filter_by(name="Quad_203"))
+        q202 = one(ibert_gtm.gt_groups.filter_by(name="Quad_202"))
 
-    # These below RESET aren't necessarily required
-    q202.reset()
-    q203.reset()
-    q204.reset()
-    q205.reset()
-else:
-    myLinks = [ FakeYKScanLink(QUAD_NAME, QUAD_CHAN) ]
+        match sysconfig.CONN_TYPE:
+            case "S4" | "SLoop_x4": create_links_SelfLooped_X4()
+            case "S8" | "SLoop_x8": create_links_SelfLooped_X8()
+            case "X4" | "XConn_x4": create_links_XConnected_X4()
+            case "X8" | "XConn_x8": create_links_XConnected_X8()
+            case _:                 raise ValueError(f"Not valid Connection Type: {sysconfig.CONN_TYPE}\n")
 
-all_lnkgrps = get_all_link_groups()
-all_links   = get_all_links()
-BPrint(f"\n--> All Link Groups available - {all_lnkgrps}", level=DBG_LEVEL_DEBUG)
-BPrint(f"\n--> All Links available - {all_links}", level=DBG_LEVEL_DEBUG)
+        # These below RESET aren't necessarily required
+        q202.reset()
+        q203.reset()
+        q204.reset()
+        q205.reset()
+    else:
+        myLinks = [ FakeYKScanLink(QUAD_NAME, QUAD_CHAN) ]
+
+    all_lnkgrps = get_all_link_groups()
+    all_links   = get_all_links()
+    BPrint(f"\n--> All Link Groups available - {all_lnkgrps}", level=DBG_LEVEL_DEBUG)
+    BPrint(f"\n--> All Links available - {all_links}", level=DBG_LEVEL_DEBUG)
 
 
-#------------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------------------------------------------
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
+
+    create_iBERT_session_device()
+    create_LinkGroups()
+
     MainForm = MyWidget(len(all_links))
 
     # ## 7 - Create YK Scan
@@ -819,4 +812,4 @@ if __name__ == '__main__':
 
     sys.exit(app.exec_())
 
-#------------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------------------------------------------
