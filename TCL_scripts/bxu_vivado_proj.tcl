@@ -1,18 +1,18 @@
-#-------------------------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Script execution examples: 
 #	BASH_shell:   export MY_HW_ID=0   MY_PATH=XilinxCEDStore-Learning      MY_PROJ=bxu_vpk120_ChipScoPy_Example_Design;  TCL_Vivado.sh -source ~/fpgaspace/TCL_scripts/bxu_vivado_proj.tcl  -tclargs $HOME/VIVADO_projects/$MY_PATH $MY_PROJ $MY_HW_ID  -B
 #	VIVADO%  set MY_HW_ID 0; set MY_PATH XilinxCEDStore-Learning; set MY_PROJ bxu_vpk120_ChipScoPy_Example_Design;
 #	         set argc 4; set argv [list $env(HOME)/VIVADO_projects/$MY_PATH $MY_PROJ $MY_HW_ID -I];  source $env(HOME)/fpgaspace/TCL_scripts/bxu_vivado_proj.tcl
-#-------------------------------------------------------------------------------------------------------
-#	BASH_shell:   MY_HW_ID=111 MY_RATE=56G MY_LMAP=SLoop_x8 MY_PATH=BZProj_iBERT_Testing; export MY_PROJ=VPK120_iBERT_2xQDD_${MY_RATE};
-#	              TCL_Vivado.sh -source ~/fpgaspace/TCL_scripts/bxu_vivado_proj.tcl -tclargs $HOME/VIVADO_projects/$MY_PATH $MY_PROJ $MY_HW_ID -I vpk120_ibert_ChMap_$MY_LMAP.tcl
-#	VIVADO%  set MY_HW_ID 111; set MY_RATE 56G; set MY_LMAP SLoop_x8;  # set MY_HW_ID 0; set MY_HW_ID 112;   set MY_RATE 56G;  set MY_RATE 112G;  set MY_RATE ETH25G;   set MY_LMAP SLoop_x4;  set MY_LMAP SLoop_x8;  set MY_LMAP XConn_x4;  set MY_LMAP XConn_x8;
+#--------------------------------------------------------------------------------------------------------------------------------------------------------------
+#	BASH_shell:   export MY_HW_ID=111A MY_RATE=56G HWSERVER="-s 10.20.2.145:3121" MY_CONN=SLoop_x8; export MY_PATH=BZProj_iBERT_Testing  MY_PROJ=VPK120_iBERT_2xQDD_${MY_RATE}  MY_LMAP="-S bxu_ibert_set_LinkChannels.tcl"; \
+#	                     TCL_Vivado.sh -source ~/fpgaspace/TCL_scripts/bxu_vivado_proj.tcl -tclargs $HOME/VIVADO_projects/$MY_PATH $MY_PROJ $MY_HW_ID -I $MY_LMAP $HWSERVER
+#	VIVADO%  set MY_HW_ID 111A; set MY_RATE 56G; set MY_LMAP SLoop_x8;  # set MY_HW_ID 0; set MY_HW_ID 112A;   set MY_RATE 56G;  set MY_RATE 112G;  set MY_RATE ETH25G;   set MY_LMAP SLoop_x4;  set MY_LMAP SLoop_x8;  set MY_LMAP XConn_x4;  set MY_LMAP XConn_x8;
 #	         set MY_PATH BZProj_iBERT_Testing; set MY_PROJ VPK120_iBERT_2xQDD_${MY_RATE}; set argc 5; set argv [list $env(HOME)/VIVADO_projects/$MY_PATH $MY_PROJ $MY_HW_ID -S vpk120_ibert_ChMap_$MY_LMAP.tcl];    source $env(HOME)/fpgaspace/TCL_scripts/bxu_vivado_proj.tcl
 #                set MY_PATH BZProj_iBERT_Testing; set MY_PROJ VPK120_iBERT_2xQDD_${MY_RATE}; set argc 6; set argv [list $env(HOME)/VIVADO_projects/$MY_PATH $MY_PROJ $MY_HW_ID -S vpk120_ibert_ChMap_$MY_LMAP.tcl -I]; source $env(HOME)/fpgaspace/TCL_scripts/bxu_vivado_proj.tcl
-#-------------------------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------------------------------------------------------------------
 if { $argc < 3 } {
-	puts "Syntax:  $argv0  <PROJ_PATH>  <PROJ_NAME>  <HW_ID>  \[ -B \] \[ -I \] \[ -S <TCL_script> \]"
-	puts "HW_ID: VPK120 S/N (0 or 111 or 112)"
+	puts "Syntax:  $argv0  <PROJ_PATH>  <PROJ_NAME>  <HW_ID>  \[ -B \] \[ -I \] \[ -S <TCL_script> \] \[ -s <hw_server> \]"
+	puts "HW_ID: VPK120 S/N (0 or 111A or 112A)   hw_server: 'TPLab-Ubuntu-1:3121' or 'HPElite-i7-TP261:3121'"
 	puts "Options: -B (open board file), -I (program Image), -S (extra TCL script)\n\n"
 	puts [exec echo "You've run as ($argc):  $argv0 $argv\n"]
 	puts [exec head -11 "$argv0"]
@@ -28,6 +28,7 @@ if { $argc < 3 } {
 	set BXU_PROG_IMAGE     0
 	set BXU_EXTRA_TCL      0
 	set BXU_EXTRA_TCL_FILE ""
+	set BXU_HW_SERVER      ""
 	for {set i 3} {$i < $argc} {incr i} {
 		set OPTION [lindex $argv $i]
 		append BXU_OPTIONS $OPTION " "
@@ -37,6 +38,9 @@ if { $argc < 3 } {
 		  "-S"  { set BXU_EXTRA_TCL     1;
 		          incr i
 		          set BXU_EXTRA_TCL_FILE  [lindex $argv $i]
+		        }
+		  "-s"  { incr i
+		          set BXU_HW_SERVER [lindex $argv $i]
 		        }
 		}
 	}
@@ -88,24 +92,27 @@ if { $BXU_OPEN_BOARD } {
 #-------------------------------------------------------------------------------------------------------
 open_hw_manager
 
-set CurrHW [current_hw_server];         # daily disconnect / re-connect to FPGA hw_server
-puts "current_hw_server: $CurrHW"
-if { $CurrHW != "" }  { disconnect_hw_server   "$CurrHW" }
+set CurrHWServer [current_hw_server];         # daily disconnect / re-connect to FPGA hw_server
+puts "current_hw_server: $CurrHWServer"
+if { $CurrHWServer != "" }  { disconnect_hw_server   "$CurrHWServer" }
 
 switch $BXU_HW_ID {
-  111 { set CurrHW "TPLab-Ubuntu-1:3121" }
-  112 { set CurrHW "HPElite-i7-TP261:3121" }
-  0   { set CurrHW "" }
+  "111A" { if { $BXU_HW_SERVER == "" }  { set CurrHWServer "TPLab-Ubuntu-1:3121"
+           } else                       { set CurrHWServer $BXU_HW_SERVER } }
+  "112A" { if { $BXU_HW_SERVER == "" }  { set CurrHWServer "HPElite-i7-TP261:3121"
+           } else                       { set CurrHWServer $BXU_HW_SERVER } }
+  "0"    { set CurrHWServer "" }
 }
+set Target_HWID "*/xilinx_tcf/Xilinx/*$BXU_HW_ID"
 
-if { $CurrHW != "" }  {
-	connect_hw_server -url "$CurrHW" -allow_non_jtag
+if { $CurrHWServer != "" }  {
+	connect_hw_server -url "$CurrHWServer" -allow_non_jtag
 
 	#-----------------------------------------------------------------------------------------------
 	# Open Hardware Target / Program Device
 	#-----------------------------------------------------------------------------------------------
-	current_hw_target [get_hw_targets */xilinx_tcf/Xilinx/*]
-	set_property PARAM.FREQUENCY 15000000 [get_hw_targets */xilinx_tcf/Xilinx/*]
+	current_hw_target [get_hw_targets $Target_HWID]
+	set_property PARAM.FREQUENCY 15000000 [get_hw_targets $Target_HWID]
 	open_hw_target
 
 	if { $BXU_PROG_IMAGE } {

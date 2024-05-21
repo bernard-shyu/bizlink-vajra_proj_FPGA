@@ -30,7 +30,6 @@ from chipscopy.api.ibert.aliases import ( PATTERN,
 
 #------------------------------------------
 from PyQt5 import QtWidgets, QtCore, QtGui
-import random
 import math
 import re
 import numpy as np
@@ -65,17 +64,30 @@ def BPrint(*args, level=DBG_LEVEL_INFO):
 app_start_time = datetime.datetime.now()
 APP_TITLE = "ChipScoPy APP fro BizLink iBERT HPC-cables testing"
 
+last_check = app_start_time
+def bprint_loading_time(msg, level=DBG_LEVEL_NOTICE):
+    global last_check
+    now = datetime.datetime.now()
+    elapsed1 = (now - app_start_time).seconds
+    elapsed2 = (now - last_check).seconds
+    last_check = now
+    BPrint("\n----------------------------------------------------------------------------------------------------------------------------------------------------------------\n" + \
+       f"ChipScoPy loading time  APP: {app_start_time}   NOW: {now}   ELAPSED:{elapsed1:>4} / {elapsed2:<4}\t" + \
+       "\n----------------------------------------------------------------------------------------------------------------------------------------------------------------\n\n", level=level)
+
 #--------------------------------------------------------------------------------------------------------------------------------------
 # Configuration variables: 1) external EXPORT Environment variables, 2) command-line arguments (higher priority)
 #--------------------------------------------------------------------------------------------------------------------------------------
-"""
-export ip="10.20.2.146";     export CS_SERVER_URL="TCP:$ip:3042" HW_SERVER_URL="TCP:$ip:3121"
-export HW_PLATFORM="vpk120"; export CREATE_LGROUP=False
-export PLOT_1_RESOL_X=900;   export PLOT_1_RESOL_Y=800;  export PLOT_F_RESOL_X=3840;  export PLOT_F_RESOL_Y=2160
-export PDI_FILE="./PDI_Files/VPK120_iBERT_2xQDD_56G.pdi"
-export SHOW_FIG_TITLE=True;  export MAX_SLICES=100;
+ENV_HELP="""
+EXPORT Environment variables:
+----->
+export ip="10.20.2.146";     export CS_SERVER_URL="TCP:$ip:3042" HW_SERVER_URL="TCP:$ip:3121";
+export HW_PLATFORM="vpk120"; export CREATE_LGROUP=False;
+export PLOT_1_RESOL_X=900;   export PLOT_1_RESOL_Y=800;  export PLOT_F_RESOL_X=3840;  export PLOT_F_RESOL_Y=2160;
+export PDI_FILE="./PDI_Files/VPK120_iBERT_2xQDD_56G.pdi";
+export SHOW_FIG_TITLE=True;  export MAX_SLICES=20;
 export CSV_PATH="./YK_CSV_Files";
-export CONN_TYPE=XConn_x8;
+export CONN_TYPE=XConn_x8;   export DATA_PATTERN="PRBS 9";
 export QUAD_NAME="Quad_202"; export QUAD_CHAN=2;
 export APP_DBG_LEVEL=5;
 """
@@ -105,7 +117,7 @@ SLICER_CHUNK_SIZE  = MAX_SLICES * YKSCAN_SLICER_SIZE
 # https://docs.python.org/3/library/argparse.html,  https://docs.python.org/3/howto/argparse.html
 # https://stackoverflow.com/questions/20063/whats-the-best-way-to-parse-command-line-arguments
 #--------------------------------------------------------------------------------------------------------------------------------------
-parser = argparse.ArgumentParser(description=f"{APP_TITLE} by Bernard Shyu")
+parser = argparse.ArgumentParser(description=f"{APP_TITLE} by Bernard Shyu", epilog=ENV_HELP)
 
 # The get_design_files() function tries to find the PDI and LTX files. In non-standard
 # configurations, you can put the path for PROGRAMMING_FILE and PROBES_FILE below.
@@ -117,6 +129,9 @@ parser.add_argument('--PDI_FILE', default=PDI_FILE, metavar='filename', help='FP
 CONN_TYPE = os.getenv("CONN_TYPE", "SLoop_x8")
 parser.add_argument('--CONN_TYPE', default=CONN_TYPE, metavar='type', help='Connection Type: SLoop_x4 | SLoop_x8 | XConn_x4 | XConn_x8.  Or shorter: S4 | S8 | X4 | X8.  Default: SLoop_x8')
 
+DATA_PATTERN = os.getenv("DATA_PATTERN", "PRBS 31")
+parser.add_argument('--PATTERN', default=DATA_PATTERN, metavar='pattern', help='Bits data pattern: PRBS 7 / PRBS 9 / ...')
+
 APP_DBG_LEVEL = int(os.getenv("APP_DBG_LEVEL", "3"))
 parser.add_argument('--DBG_LEVEL', default=APP_DBG_LEVEL, metavar='level', help='debug level (ERR=0 WARN=1 NOTICE=2 INFO=3 DEBUG=4 TRACE=5, default=3)', type=int)
 
@@ -125,9 +140,11 @@ parser.add_argument('--NFIGURE', default=-1, metavar='number', help='number of M
 sysconfig = parser.parse_args()
 
 #--------------------------------------------------------------------------------------------------------------------------------------
+TEST_DATA_RATE = re.findall(".*VPK120_iBERT_.*_([0-9]+G).pdi", sysconfig.PDI_FILE)[0]
+
 BPrint(f"\n{APP_TITLE } --- {app_start_time}\n", level=DBG_LEVEL_NOTICE)
 BPrint(f"Servers URL: {CS_URL} {HW_URL}\t\tHW: {HW_PLATFORM}\tPDI: '{sysconfig.PDI_FILE}'\n", level=DBG_LEVEL_NOTICE)
-BPrint(f"SYSCONFIG: fig={sysconfig.NFIGURE} dbg={sysconfig.DBG_LEVEL} cTyp={sysconfig.CONN_TYPE} \n", level=DBG_LEVEL_NOTICE)
+BPrint(f"SYSCONFIG: fig={sysconfig.NFIGURE} dbg={sysconfig.DBG_LEVEL} cTyp={sysconfig.CONN_TYPE} pattern={sysconfig.PATTERN} RATE={TEST_DATA_RATE} \n", level=DBG_LEVEL_NOTICE)
 
 #--------------------------------------------------------------------------------------------------------------------------------------
 # ## 2 - Create a session and connect to the hw_server and cs_server
@@ -225,11 +242,11 @@ def check_link_status(link):
 class FakeYKScanLink():
     def __init__(self, qname, ch):
         self.nID         = 0
-        self.status      = "53.109 Gbps"
-        self.line_rate   = "53.121 Gbps"
+        self.status      = f"{TEST_DATA_RATE} Gbps"
+        self.line_rate   = f"{TEST_DATA_RATE} Gbps"
         self.bit_count   = 0
         self.error_count = 0
-        self.ber         = random.random() / 1000000   # BER by random number simulation
+        self.ber         = np.random.rand() / 1000000   # BER by random number simulation
         self.GT_Group    = ibert_gtm.gt_groups.filter_by(name=qname)[0]
         self.channel     = ch
         self.rx          = self.GT_Group.gts[ch].rx
@@ -569,7 +586,7 @@ class MyWidget(QtWidgets.QMainWindow):
             c.start_canvas()
         self.show()
         gui_time = datetime.datetime.now()
-        BPrint(f"\nChipScoPy loading time: APP={app_start_time}  CANVAS={canvas_time - app_start_time}  GUI={gui_time - app_start_time} \n", level=DBG_LEVEL_NOTICE)
+        bprint_loading_time(f"MyWidget::show_figures() finished, CANVAS={canvas_time - app_start_time}  GUI={gui_time - app_start_time}")
 
     def createTable(self): 
         self.tableWidget = QtWidgets.QTableWidget(self.n_links, 10) 
@@ -652,9 +669,9 @@ def create_links_common(RXs, TXs):
         link.GT_Chan   = link.GT_Group.gts[link.channel]
         BPrint(f"\n--- {link.name} :: RX={link.rx} TX={link.tx}  GT={link.gt_name} CH={link.channel} ST={link.status}  -----", level=DBG_LEVEL_INFO)
 
-        set_property_value( link.rx, 'Pattern',  "PRBS 31", DBG_LEVEL_INFO) 
+        set_property_value( link.rx, 'Pattern',  sysconfig.PATTERN, DBG_LEVEL_INFO) 
+        set_property_value( link.tx, 'Pattern',  sysconfig.PATTERN, DBG_LEVEL_DEBUG) 
         set_property_value( link.rx, 'Loopback', "None"   , DBG_LEVEL_DEBUG)
-        set_property_value( link.tx, 'Pattern',  "PRBS 31", DBG_LEVEL_INFO) 
         set_property_value( link.tx, 'Loopback', "None"   , DBG_LEVEL_DEBUG)
 
         """
@@ -798,7 +815,10 @@ if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
 
     create_iBERT_session_device()
+    bprint_loading_time("Xilinx iBERT-core created")
+
     create_LinkGroups()
+    bprint_loading_time("Xilinx Link-Groups created")
 
     MainForm = MyWidget(len(all_links))
 
@@ -807,6 +827,7 @@ if __name__ == '__main__':
     for link in myLinks:
         MainForm.create_YKScan_figure(link)
         link.myLink.reset_iBERT_engine()
+    bprint_loading_time("BizLink iBERT Matplotlib/Figures created")
 
     MainForm.show_figures()
 

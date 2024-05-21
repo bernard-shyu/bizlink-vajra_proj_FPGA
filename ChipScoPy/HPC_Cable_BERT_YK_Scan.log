@@ -9,6 +9,281 @@ Date   ???
 
 =================================================================================================================================================================================================================================
 commit ???
+Date   Tue May 21
+       [FPGA] TCL: 2xFPGA supports & better ScoPy logs
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+(venv_SCOPY) bernard@BXUTP-FPGA-Linux:~/SDK_WIP/project/vajra_proj_FPGA/ChipScoPy$ ./HPC_Cable_BERT_YK_Scan.py -h
+usage: HPC_Cable_BERT_YK_Scan.py [-h] [--PDI_FILE filename] [--CONN_TYPE type] [--PATTERN pattern] [--DBG_LEVEL level] [--NFIGURE number]
+
+ChipScoPy APP fro BizLink iBERT HPC-cables testing by Bernard Shyu
+
+options:
+  -h, --help           show this help message and exit
+  --PDI_FILE filename  FPGA image file (*.pdi) Ex. PDI_Files/VPK120_iBERT_2xQDD_56G.pdi
+  --CONN_TYPE type     Connection Type: SLoop_x4 | SLoop_x8 | XConn_x4 | XConn_x8. Or shorter: S4 | S8 | X4 | X8. Default: SLoop_x8
+  --PATTERN pattern    Bits data pattern: PRBS 7 / PRBS 9 / ...
+  --DBG_LEVEL level    debug level (ERR=0 WARN=1 NOTICE=2 INFO=3 DEBUG=4 TRACE=5, default=3)
+  --NFIGURE number     number of Matplotlib Figures, default: -1 (auto)
+
+EXPORT Environment variables: -----> export ip="10.20.2.146"; export CS_SERVER_URL="TCP:$ip:3042" HW_SERVER_URL="TCP:$ip:3121"; export HW_PLATFORM="vpk120"; export CREATE_LGROUP=False; export PLOT_1_RESOL_X=900; export PLOT_1_RESOL_Y=800; export PLOT_F_RESOL_X=3840;
+export PLOT_F_RESOL_Y=2160; export PDI_FILE="./PDI_Files/VPK120_iBERT_2xQDD_56G.pdi"; export SHOW_FIG_TITLE=True; export MAX_SLICES=20; export CSV_PATH="./YK_CSV_Files"; export CONN_TYPE=XConn_x8; export DATA_PATTERN="PRBS 9"; export QUAD_NAME="Quad_202"; export
+QUAD_CHAN=2; export APP_DBG_LEVEL=5;
+(venv_SCOPY) bernard@BXUTP-FPGA-Linux:~/SDK_WIP/project/vajra_proj_FPGA/ChipScoPy$ 
+(venv_SCOPY) bernard@BXUTP-FPGA-Linux:~/SDK_WIP/project/vajra_proj_FPGA/ChipScoPy$ ./HPC_Cable_BERT_YK_Scan.py --PDI_FILE PDI_Files/VPK120_iBERT_2xQDD_56G.pdi 
+
+ChipScoPy APP fro BizLink iBERT HPC-cables testing --- 2024-05-21 14:58:27.073451
+
+Servers URL: TCP:10.20.2.146:3042 TCP:10.20.2.146:3121		HW: vpk120	PDI: 'PDI_Files/VPK120_iBERT_2xQDD_56G.pdi'
+
+SYSCONFIG: fig=-1 dbg=3 cTyp=SLoop_x8 pattern=PRBS 31 RATE=56G 
+
+Warning: Ignoring XDG_SESSION_TYPE=wayland on Gnome. Use QT_QPA_PLATFORM=wayland to run on Wayland anyway.
+QSocketNotifier: Can only be used with threads started with QThread
+
+
+                       ChipScoPy Version Information                       
+┌──────────────────────────────┬──────────────────────────────────────────┐
+│                       Entity │ Version                                  │
+├──────────────────────────────┼──────────────────────────────────────────┤
+│                    ChipScoPy │ ┌───────────┬──────────────────────┐     │
+│                              │ │ Attribute │ Value                │     │
+│                              │ ├───────────┼──────────────────────┤     │
+│                              │ │     Build │ 2023.2.1715225694    │     │
+│                              │ │ Timestamp │ May 09 2024-11:34:54 │     │
+│                              │ └───────────┴──────────────────────┘     │
+│                              │                                          │
+│ hw_server @ 10.20.2.146:3121 │ ┌───────────┬──────────────────────────┐ │
+│                              │ │ Attribute │ Value                    │ │
+│                              │ ├───────────┼──────────────────────────┤ │
+│                              │ │    Status │ Connected                │ │
+│                              │ │     Build │ 1702581799               │ │
+│                              │ │   Version │ 2023.2.1                 │ │
+│                              │ │ Timestamp │ Thu Dec 14 12:23:19 2023 │ │
+│                              │ └───────────┴──────────────────────────┘ │
+│                              │                                          │
+│ cs_server @ 10.20.2.146:3042 │ ┌───────────────┬──────────────────────┐ │
+│                              │ │     Attribute │ Value                │ │
+│                              │ ├───────────────┼──────────────────────┤ │
+│                              │ │        Status │ Connected            │ │
+│                              │ │         Build │ 1696910516           │ │
+│                              │ │       Version │ 2023.2.0             │ │
+│                              │ │     Timestamp │ Oct 10 2023-12:01:56 │ │
+│                              │ │       Package │ 2023.2.1696910516    │ │
+│                              │ │ Artifact type │ pyinstaller          │ │
+│                              │ └───────────────┴──────────────────────┘ │
+└──────────────────────────────┴──────────────────────────────────────────┘
+
+
+
+--> INFO: Programming device with: /mnt/extDisk/fpga_share/fpgaspace/VIVADO_projects/BZProj_iBERT_Testing/VPK120_iBERT_2xQDD_56G/VPK120_iBERT_2xQDD_56G.runs/impl_1/versal_ibert_wrapper.pdi
+    
+Device program progress ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% Done
+Discovering debug cores...
+--> Found ['IBERT Versal GTM (IBERT_0)', 'IBERT Versal GTYP (IBERT_1)']
+
+--> GT Groups available - [
+    'IBERT_0.Quad_206(GT_Group)',
+    'IBERT_0.Quad_205(GT_Group)',
+    'IBERT_0.Quad_204(GT_Group)',
+    'IBERT_0.Quad_203(GT_Group)',
+    'IBERT_0.Quad_202(GT_Group)'
+]
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ChipScoPy loading time  APP: 2024-05-21 14:58:27.073451   NOW: 2024-05-21 14:58:33.681332   ELAPSED:   6 / 6   	
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+Links_TXs: [IBERT_0.Quad_202.CH_0.TX(TX), IBERT_0.Quad_202.CH_1.TX(TX), IBERT_0.Quad_202.CH_2.TX(TX), IBERT_0.Quad_202.CH_3.TX(TX), IBERT_0.Quad_203.CH_0.TX(TX), IBERT_0.Quad_203.CH_1.TX(TX), IBERT_0.Quad_203.CH_2.TX(TX), IBERT_0.Quad_203.CH_3.TX(TX), IBERT_0.Quad_204.CH_0.TX(TX), IBERT_0.Quad_204.CH_2.TX(TX), IBERT_0.Quad_205.CH_0.TX(TX), IBERT_0.Quad_205.CH_2.TX(TX), IBERT_0.Quad_204.CH_1.TX(TX), IBERT_0.Quad_204.CH_3.TX(TX), IBERT_0.Quad_205.CH_1.TX(TX), IBERT_0.Quad_205.CH_3.TX(TX)]
+Links_RXs: [IBERT_0.Quad_204.CH_0.RX(RX), IBERT_0.Quad_204.CH_2.RX(RX), IBERT_0.Quad_205.CH_0.RX(RX), IBERT_0.Quad_205.CH_2.RX(RX), IBERT_0.Quad_204.CH_1.RX(RX), IBERT_0.Quad_204.CH_3.RX(RX), IBERT_0.Quad_205.CH_1.RX(RX), IBERT_0.Quad_205.CH_3.RX(RX), IBERT_0.Quad_202.CH_0.RX(RX), IBERT_0.Quad_202.CH_1.RX(RX), IBERT_0.Quad_202.CH_2.RX(RX), IBERT_0.Quad_202.CH_3.RX(RX), IBERT_0.Quad_203.CH_0.RX(RX), IBERT_0.Quad_203.CH_1.RX(RX), IBERT_0.Quad_203.CH_2.RX(RX), IBERT_0.Quad_203.CH_3.RX(RX)]
+
+--- Link_0 :: RX=IBERT_0.Quad_204.CH_0.RX(RX) TX=IBERT_0.Quad_202.CH_0.TX(TX)  GT=Quad_204 CH=0 ST=56.414 Gbps  -----
+iBERT object IBERT_0.Quad_204.CH_0.RX(RX) property: Pattern = PRBS 31 
+link.status:'No link'   ==> LinkStatus='No link'   LineRate=56.402 Gbps   Patten Checker: LockStatus='Not locked'  ErrorCount='N/A'  CycleCount='N/A'
+
+--- Link_1 :: RX=IBERT_0.Quad_204.CH_2.RX(RX) TX=IBERT_0.Quad_202.CH_1.TX(TX)  GT=Quad_204 CH=2 ST=56.402 Gbps  -----
+iBERT object IBERT_0.Quad_204.CH_2.RX(RX) property: Pattern = PRBS 31 
+link.status:'No link'   ==> LinkStatus='No link'   LineRate=56.414 Gbps   Patten Checker: LockStatus='Not locked'  ErrorCount='N/A'  CycleCount='N/A'
+
+--- Link_2 :: RX=IBERT_0.Quad_205.CH_0.RX(RX) TX=IBERT_0.Quad_202.CH_2.TX(TX)  GT=Quad_205 CH=0 ST=56.414 Gbps  -----
+iBERT object IBERT_0.Quad_205.CH_0.RX(RX) property: Pattern = PRBS 31 
+link.status:'No link'   ==> LinkStatus='No link'   LineRate=56.402 Gbps   Patten Checker: LockStatus='Not locked'  ErrorCount='N/A'  CycleCount='N/A'
+
+--- Link_3 :: RX=IBERT_0.Quad_205.CH_2.RX(RX) TX=IBERT_0.Quad_202.CH_3.TX(TX)  GT=Quad_205 CH=2 ST=56.402 Gbps  -----
+iBERT object IBERT_0.Quad_205.CH_2.RX(RX) property: Pattern = PRBS 31 
+link.status:'No link'   ==> LinkStatus='No link'   LineRate=56.402 Gbps   Patten Checker: LockStatus='Not locked'  ErrorCount='N/A'  CycleCount='N/A'
+
+--- Link_4 :: RX=IBERT_0.Quad_204.CH_1.RX(RX) TX=IBERT_0.Quad_203.CH_0.TX(TX)  GT=Quad_204 CH=1 ST=56.402 Gbps  -----
+iBERT object IBERT_0.Quad_204.CH_1.RX(RX) property: Pattern = PRBS 31 
+link.status:'No link'   ==> LinkStatus='No link'   LineRate=56.402 Gbps   Patten Checker: LockStatus='Not locked'  ErrorCount='N/A'  CycleCount='N/A'
+
+--- Link_5 :: RX=IBERT_0.Quad_204.CH_3.RX(RX) TX=IBERT_0.Quad_203.CH_1.TX(TX)  GT=Quad_204 CH=3 ST=56.402 Gbps  -----
+iBERT object IBERT_0.Quad_204.CH_3.RX(RX) property: Pattern = PRBS 31 
+link.status:'No link'   ==> LinkStatus='No link'   LineRate=56.414 Gbps   Patten Checker: LockStatus='Not locked'  ErrorCount='N/A'  CycleCount='N/A'
+
+--- Link_6 :: RX=IBERT_0.Quad_205.CH_1.RX(RX) TX=IBERT_0.Quad_203.CH_2.TX(TX)  GT=Quad_205 CH=1 ST=56.414 Gbps  -----
+iBERT object IBERT_0.Quad_205.CH_1.RX(RX) property: Pattern = PRBS 31 
+link.status:'No link'   ==> LinkStatus='No link'   LineRate=56.414 Gbps   Patten Checker: LockStatus='Not locked'  ErrorCount='N/A'  CycleCount='N/A'
+
+--- Link_7 :: RX=IBERT_0.Quad_205.CH_3.RX(RX) TX=IBERT_0.Quad_203.CH_3.TX(TX)  GT=Quad_205 CH=3 ST=56.414 Gbps  -----
+iBERT object IBERT_0.Quad_205.CH_3.RX(RX) property: Pattern = PRBS 31 
+link.status:'No link'   ==> LinkStatus='No link'   LineRate=56.414 Gbps   Patten Checker: LockStatus='Not locked'  ErrorCount='N/A'  CycleCount='N/A'
+
+--- Link_8 :: RX=IBERT_0.Quad_202.CH_0.RX(RX) TX=IBERT_0.Quad_204.CH_0.TX(TX)  GT=Quad_202 CH=0 ST=56.402 Gbps  -----
+iBERT object IBERT_0.Quad_202.CH_0.RX(RX) property: Pattern = PRBS 31 
+link.status:'No link'   ==> LinkStatus='No link'   LineRate=56.414 Gbps   Patten Checker: LockStatus='Not locked'  ErrorCount='N/A'  CycleCount='N/A'
+
+--- Link_9 :: RX=IBERT_0.Quad_202.CH_1.RX(RX) TX=IBERT_0.Quad_204.CH_2.TX(TX)  GT=Quad_202 CH=1 ST=56.414 Gbps  -----
+iBERT object IBERT_0.Quad_202.CH_1.RX(RX) property: Pattern = PRBS 31 
+
+--- Link_10 :: RX=IBERT_0.Quad_202.CH_2.RX(RX) TX=IBERT_0.Quad_205.CH_0.TX(TX)  GT=Quad_202 CH=2 ST=56.414 Gbps  -----
+iBERT object IBERT_0.Quad_202.CH_2.RX(RX) property: Pattern = PRBS 31 
+
+--- Link_11 :: RX=IBERT_0.Quad_202.CH_3.RX(RX) TX=IBERT_0.Quad_205.CH_2.TX(TX)  GT=Quad_202 CH=3 ST=56.402 Gbps  -----
+iBERT object IBERT_0.Quad_202.CH_3.RX(RX) property: Pattern = PRBS 31 
+link.status:'No link'   ==> LinkStatus='No link'   LineRate=56.402 Gbps   Patten Checker: LockStatus='Not locked'  ErrorCount='N/A'  CycleCount='N/A'
+
+--- Link_12 :: RX=IBERT_0.Quad_203.CH_0.RX(RX) TX=IBERT_0.Quad_204.CH_1.TX(TX)  GT=Quad_203 CH=0 ST=56.414 Gbps  -----
+iBERT object IBERT_0.Quad_203.CH_0.RX(RX) property: Pattern = PRBS 31 
+
+--- Link_13 :: RX=IBERT_0.Quad_203.CH_1.RX(RX) TX=IBERT_0.Quad_204.CH_3.TX(TX)  GT=Quad_203 CH=1 ST=56.414 Gbps  -----
+iBERT object IBERT_0.Quad_203.CH_1.RX(RX) property: Pattern = PRBS 31 
+
+--- Link_14 :: RX=IBERT_0.Quad_203.CH_2.RX(RX) TX=IBERT_0.Quad_205.CH_1.TX(TX)  GT=Quad_203 CH=2 ST=56.414 Gbps  -----
+iBERT object IBERT_0.Quad_203.CH_2.RX(RX) property: Pattern = PRBS 31 
+
+--- Link_15 :: RX=IBERT_0.Quad_203.CH_3.RX(RX) TX=IBERT_0.Quad_205.CH_3.TX(TX)  GT=Quad_203 CH=3 ST=56.402 Gbps  -----
+iBERT object IBERT_0.Quad_203.CH_3.RX(RX) property: Pattern = PRBS 31 
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ChipScoPy loading time  APP: 2024-05-21 14:58:27.073451   NOW: 2024-05-21 14:59:01.839869   ELAPSED:  34 / 28  	
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+YK-Quad_204_CH0:: TX='IBERT_0.Quad_202.CH_0.TX(TX)'  TX-pll='IBERT_0.Quad_202.PLL_0(PLL/LCPLL0)'  LINK='Link_0'  YK='YKScan_1' 
+YK-Quad_204_CH0:: RX='IBERT_0.Quad_204.CH_0.RX(RX)'  RX-pll='IBERT_0.Quad_204.PLL_0(PLL/LCPLL0)'  RX-yk_scan='YKScan_1' 
+iBERT object IBERT_0.Quad_204.CH_0.RX(RX) property: RX BER Reset = 0x0 
+YK-Quad_204_CH0:: SELF=<__main__.MyYKScanLink object at 0x7fb3fead0f40> LINK=Link_0               STATUS=56.414 Gbps     BER=4.477269e-11       RATE=56.414 Gbps BITS=1.406249e+10 ERR=0
+
+YK-Quad_204_CH2:: TX='IBERT_0.Quad_202.CH_1.TX(TX)'  TX-pll='IBERT_0.Quad_202.PLL_0(PLL/LCPLL0)'  LINK='Link_1'  YK='YKScan_2' 
+YK-Quad_204_CH2:: RX='IBERT_0.Quad_204.CH_2.RX(RX)'  RX-pll='IBERT_0.Quad_204.PLL_0(PLL/LCPLL0)'  RX-yk_scan='YKScan_2' 
+iBERT object IBERT_0.Quad_204.CH_2.RX(RX) property: RX BER Reset = 0x0 
+YK-Quad_204_CH2:: SELF=<__main__.MyYKScanLink object at 0x7fb3ddfa6470> LINK=Link_1               STATUS=56.414 Gbps     BER=4.564515e-11       RATE=56.402 Gbps BITS=1.411658e+10 ERR=0
+
+YK-Quad_205_CH0:: TX='IBERT_0.Quad_202.CH_2.TX(TX)'  TX-pll='IBERT_0.Quad_202.PLL_0(PLL/LCPLL0)'  LINK='Link_2'  YK='YKScan_3' 
+YK-Quad_205_CH0:: RX='IBERT_0.Quad_205.CH_0.RX(RX)'  RX-pll='IBERT_0.Quad_205.PLL_0(PLL/LCPLL0)'  RX-yk_scan='YKScan_3' 
+iBERT object IBERT_0.Quad_205.CH_0.RX(RX) property: RX BER Reset = 0x0 
+YK-Quad_205_CH0:: SELF=<__main__.MyYKScanLink object at 0x7fb3dd38b280> LINK=Link_2               STATUS=56.414 Gbps     BER=4.483977e-11       RATE=56.414 Gbps BITS=1.444946e+10 ERR=0
+
+YK-Quad_205_CH2:: TX='IBERT_0.Quad_202.CH_3.TX(TX)'  TX-pll='IBERT_0.Quad_202.PLL_0(PLL/LCPLL0)'  LINK='Link_3'  YK='YKScan_4' 
+YK-Quad_205_CH2:: RX='IBERT_0.Quad_205.CH_2.RX(RX)'  RX-pll='IBERT_0.Quad_205.PLL_0(PLL/LCPLL0)'  RX-yk_scan='YKScan_4' 
+iBERT object IBERT_0.Quad_205.CH_2.RX(RX) property: RX BER Reset = 0x0 
+YK-Quad_205_CH2:: SELF=<__main__.MyYKScanLink object at 0x7fb3dcb921a0> LINK=Link_3               STATUS=56.414 Gbps     BER=5.13874e-11        RATE=56.414 Gbps BITS=1.259105e+10 ERR=0
+
+YK-Quad_204_CH1:: TX='IBERT_0.Quad_203.CH_0.TX(TX)'  TX-pll='IBERT_0.Quad_203.PLL_0(PLL/LCPLL0)'  LINK='Link_4'  YK='YKScan_5' 
+YK-Quad_204_CH1:: RX='IBERT_0.Quad_204.CH_1.RX(RX)'  RX-pll='IBERT_0.Quad_204.PLL_0(PLL/LCPLL0)'  RX-yk_scan='YKScan_5' 
+iBERT object IBERT_0.Quad_204.CH_1.RX(RX) property: RX BER Reset = 0x0 
+YK-Quad_204_CH1:: SELF=<__main__.MyYKScanLink object at 0x7fb3dc3eb340> LINK=Link_4               STATUS=56.402 Gbps     BER=4.585066e-11       RATE=56.402 Gbps BITS=1.405102e+10 ERR=0
+
+YK-Quad_204_CH3:: TX='IBERT_0.Quad_203.CH_1.TX(TX)'  TX-pll='IBERT_0.Quad_203.PLL_0(PLL/LCPLL0)'  LINK='Link_5'  YK='YKScan_6' 
+YK-Quad_204_CH3:: RX='IBERT_0.Quad_204.CH_3.RX(RX)'  RX-pll='IBERT_0.Quad_204.PLL_0(PLL/LCPLL0)'  RX-yk_scan='YKScan_6' 
+iBERT object IBERT_0.Quad_204.CH_3.RX(RX) property: RX BER Reset = 0x0 
+YK-Quad_204_CH3:: SELF=<__main__.MyYKScanLink object at 0x7fb3cbfddcc0> LINK=Link_5               STATUS=56.402 Gbps     BER=4.429109e-11       RATE=56.414 Gbps BITS=1.479418e+10 ERR=0
+
+YK-Quad_205_CH1:: TX='IBERT_0.Quad_203.CH_2.TX(TX)'  TX-pll='IBERT_0.Quad_203.PLL_0(PLL/LCPLL0)'  LINK='Link_6'  YK='YKScan_7' 
+YK-Quad_205_CH1:: RX='IBERT_0.Quad_205.CH_1.RX(RX)'  RX-pll='IBERT_0.Quad_205.PLL_0(PLL/LCPLL0)'  RX-yk_scan='YKScan_7' 
+iBERT object IBERT_0.Quad_205.CH_1.RX(RX) property: RX BER Reset = 0x0 
+YK-Quad_205_CH1:: SELF=<__main__.MyYKScanLink object at 0x7fb3c8f3afe0> LINK=Link_6               STATUS=56.414 Gbps     BER=4.439087e-11       RATE=56.414 Gbps BITS=1.482916e+10 ERR=0
+
+YK-Quad_205_CH3:: TX='IBERT_0.Quad_203.CH_3.TX(TX)'  TX-pll='IBERT_0.Quad_203.PLL_0(PLL/LCPLL0)'  LINK='Link_7'  YK='YKScan_8' 
+YK-Quad_205_CH3:: RX='IBERT_0.Quad_205.CH_3.RX(RX)'  RX-pll='IBERT_0.Quad_205.PLL_0(PLL/LCPLL0)'  RX-yk_scan='YKScan_8' 
+iBERT object IBERT_0.Quad_205.CH_3.RX(RX) property: RX BER Reset = 0x0 
+YK-Quad_205_CH3:: SELF=<__main__.MyYKScanLink object at 0x7fb3c8e3e980> LINK=Link_7               STATUS=56.414 Gbps     BER=4.425278e-11       RATE=56.414 Gbps BITS=1.462822e+10 ERR=0
+
+YK-Quad_202_CH0:: TX='IBERT_0.Quad_204.CH_0.TX(TX)'  TX-pll='IBERT_0.Quad_204.PLL_0(PLL/LCPLL0)'  LINK='Link_8'  YK='YKScan_9' 
+YK-Quad_202_CH0:: RX='IBERT_0.Quad_202.CH_0.RX(RX)'  RX-pll='IBERT_0.Quad_202.PLL_0(PLL/LCPLL0)'  RX-yk_scan='YKScan_9' 
+iBERT object IBERT_0.Quad_202.CH_0.RX(RX) property: RX BER Reset = 0x0 
+YK-Quad_202_CH0:: SELF=<__main__.MyYKScanLink object at 0x7fb3feab6830> LINK=Link_8               STATUS=56.414 Gbps     BER=3.886527e-11       RATE=56.402 Gbps BITS=1.826695e+10 ERR=0
+
+YK-Quad_202_CH1:: TX='IBERT_0.Quad_204.CH_2.TX(TX)'  TX-pll='IBERT_0.Quad_204.PLL_0(PLL/LCPLL0)'  LINK='Link_9'  YK='YKScan_10' 
+YK-Quad_202_CH1:: RX='IBERT_0.Quad_202.CH_1.RX(RX)'  RX-pll='IBERT_0.Quad_202.PLL_0(PLL/LCPLL0)'  RX-yk_scan='YKScan_10' 
+iBERT object IBERT_0.Quad_202.CH_1.RX(RX) property: RX BER Reset = 0x0 
+YK-Quad_202_CH1:: SELF=<__main__.MyYKScanLink object at 0x7fb3c87705e0> LINK=Link_9               STATUS=56.402 Gbps     BER=4.520602e-11       RATE=56.402 Gbps BITS=1.435271e+10 ERR=0
+
+YK-Quad_202_CH2:: TX='IBERT_0.Quad_205.CH_0.TX(TX)'  TX-pll='IBERT_0.Quad_205.PLL_0(PLL/LCPLL0)'  LINK='Link_10'  YK='YKScan_11' 
+YK-Quad_202_CH2:: RX='IBERT_0.Quad_202.CH_2.RX(RX)'  RX-pll='IBERT_0.Quad_202.PLL_0(PLL/LCPLL0)'  RX-yk_scan='YKScan_11' 
+iBERT object IBERT_0.Quad_202.CH_2.RX(RX) property: RX BER Reset = 0x0 
+YK-Quad_202_CH2:: SELF=<__main__.MyYKScanLink object at 0x7fb3c84fd780> LINK=Link_10              STATUS=56.402 Gbps     BER=4.791265e-11       RATE=56.414 Gbps BITS=1.350895e+10 ERR=0
+
+YK-Quad_202_CH3:: TX='IBERT_0.Quad_205.CH_2.TX(TX)'  TX-pll='IBERT_0.Quad_205.PLL_0(PLL/LCPLL0)'  LINK='Link_11'  YK='YKScan_12' 
+YK-Quad_202_CH3:: RX='IBERT_0.Quad_202.CH_3.RX(RX)'  RX-pll='IBERT_0.Quad_202.PLL_0(PLL/LCPLL0)'  RX-yk_scan='YKScan_12' 
+iBERT object IBERT_0.Quad_202.CH_3.RX(RX) property: RX BER Reset = 0x0 
+YK-Quad_202_CH3:: SELF=<__main__.MyYKScanLink object at 0x7fb3c8282aa0> LINK=Link_11              STATUS=56.414 Gbps     BER=4.482402e-11       RATE=56.414 Gbps BITS=1.450510e+10 ERR=0
+
+YK-Quad_203_CH0:: TX='IBERT_0.Quad_204.CH_1.TX(TX)'  TX-pll='IBERT_0.Quad_204.PLL_0(PLL/LCPLL0)'  LINK='Link_12'  YK='YKScan_13' 
+YK-Quad_203_CH0:: RX='IBERT_0.Quad_203.CH_0.RX(RX)'  RX-pll='IBERT_0.Quad_203.PLL_0(PLL/LCPLL0)'  RX-yk_scan='YKScan_13' 
+iBERT object IBERT_0.Quad_203.CH_0.RX(RX) property: RX BER Reset = 0x0 
+YK-Quad_203_CH0:: SELF=<__main__.MyYKScanLink object at 0x7fb3c80e3730> LINK=Link_12              STATUS=56.402 Gbps     BER=4.362086e-11       RATE=56.414 Gbps BITS=1.493198e+10 ERR=0
+
+YK-Quad_203_CH1:: TX='IBERT_0.Quad_204.CH_3.TX(TX)'  TX-pll='IBERT_0.Quad_204.PLL_0(PLL/LCPLL0)'  LINK='Link_13'  YK='YKScan_14' 
+YK-Quad_203_CH1:: RX='IBERT_0.Quad_203.CH_1.RX(RX)'  RX-pll='IBERT_0.Quad_203.PLL_0(PLL/LCPLL0)'  RX-yk_scan='YKScan_14' 
+iBERT object IBERT_0.Quad_203.CH_1.RX(RX) property: RX BER Reset = 0x0 
+YK-Quad_203_CH1:: SELF=<__main__.MyYKScanLink object at 0x7fb3c37a7970> LINK=Link_13              STATUS=56.414 Gbps     BER=4.540756e-11       RATE=56.402 Gbps BITS=1.411508e+10 ERR=0
+
+YK-Quad_203_CH2:: TX='IBERT_0.Quad_205.CH_1.TX(TX)'  TX-pll='IBERT_0.Quad_205.PLL_0(PLL/LCPLL0)'  LINK='Link_14'  YK='YKScan_15' 
+YK-Quad_203_CH2:: RX='IBERT_0.Quad_203.CH_2.RX(RX)'  RX-pll='IBERT_0.Quad_203.PLL_0(PLL/LCPLL0)'  RX-yk_scan='YKScan_15' 
+iBERT object IBERT_0.Quad_203.CH_2.RX(RX) property: RX BER Reset = 0x0 
+YK-Quad_203_CH2:: SELF=<__main__.MyYKScanLink object at 0x7fb3c36b9360> LINK=Link_14              STATUS=56.414 Gbps     BER=5.307046e-11       RATE=56.402 Gbps BITS=1.204603e+10 ERR=0
+
+YK-Quad_203_CH3:: TX='IBERT_0.Quad_205.CH_3.TX(TX)'  TX-pll='IBERT_0.Quad_205.PLL_0(PLL/LCPLL0)'  LINK='Link_15'  YK='YKScan_16' 
+YK-Quad_203_CH3:: RX='IBERT_0.Quad_203.CH_3.RX(RX)'  RX-pll='IBERT_0.Quad_203.PLL_0(PLL/LCPLL0)'  RX-yk_scan='YKScan_16' 
+iBERT object IBERT_0.Quad_203.CH_3.RX(RX) property: RX BER Reset = 0x0 
+YK-Quad_203_CH3:: SELF=<__main__.MyYKScanLink object at 0x7fb3c879c250> LINK=Link_15              STATUS=56.402 Gbps     BER=4.479703e-11       RATE=56.402 Gbps BITS=1.490774e+10 ERR=0
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ChipScoPy loading time  APP: 2024-05-21 14:58:27.073451   NOW: 2024-05-21 14:59:20.746247   ELAPSED:  53 / 18  	
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+Start YK-Scan: YK-Quad_204_CH0
+Start YK-Scan: YK-Quad_204_CH2
+Start YK-Scan: YK-Quad_205_CH0
+Start YK-Scan: YK-Quad_205_CH2
+Start YK-Scan: YK-Quad_204_CH1
+Start YK-Scan: YK-Quad_204_CH3
+Start YK-Scan: YK-Quad_205_CH1
+YK-Quad_204_CH0: samples#   14  ERROR slicer: 0
+Start YK-Scan: YK-Quad_205_CH3
+Start YK-Scan: YK-Quad_202_CH0
+YK-Quad_205_CH0: samples#   12  ERROR slicer: 0
+Start YK-Scan: YK-Quad_202_CH1
+Start YK-Scan: YK-Quad_202_CH2
+Start YK-Scan: YK-Quad_202_CH3
+Start YK-Scan: YK-Quad_203_CH0
+YK-Quad_202_CH0: samples#    7  ERROR slicer: 0
+Start YK-Scan: YK-Quad_203_CH1
+Start YK-Scan: YK-Quad_203_CH2
+Start YK-Scan: YK-Quad_203_CH3
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ChipScoPy loading time  APP: 2024-05-21 14:58:27.073451   NOW: 2024-05-21 15:00:15.018351   ELAPSED: 107 / 54  	
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+YK-Quad_203_CH0: samples#    5  ERROR slicer: 0
+YKScan-YK-Quad_204_CH0 Exception (restart): TCF Error: IBERT start_yk_scan: ChipScope Service IBERT start_yk_scan: Failed to start YK scan. Cleanup done.
+YKScan-YK-Quad_205_CH0 Exception (restart): TCF Error: IBERT start_yk_scan: ChipScope Service IBERT start_yk_scan: A test is already running in the MB!
+YKScan-YK-Quad_202_CH0 Exception (restart): TCF Error: IBERT start_yk_scan: ChipScope Service IBERT start_yk_scan: Failed to start YK scan. Cleanup done.
+YKScan-YK-Quad_203_CH0 Exception (restart): TCF Error: IBERT start_yk_scan: ChipScope Service IBERT start_yk_scan: A test is already running in the MB!
+OnClose: to do YK.stop()
+Closed YK-Scan
+Closed Widget
+
+
+
+=================================================================================================================================================================================================================================
+commit 83c9894b7d49ef72f1dafb36263f4351d26e1be9
 Date   Wed May 15
        [FPGA] environment & config for TCL & SCOPY
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
