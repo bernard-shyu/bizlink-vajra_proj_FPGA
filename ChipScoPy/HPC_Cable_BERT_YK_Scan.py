@@ -135,24 +135,27 @@ sysconfig = parser.parse_args()
 
 #--------------------------------------------------------------------------------------------------------------------------------------
 TEST_DATA_RATE = int(re.findall(".*VPK120_iBERT_.*_([0-9]+)G.pdi", sysconfig.PDI_FILE)[0])
+
+match sysconfig.CONN_TYPE:
+    case "S4" | "SLoop_x4" | "X4" | "XConn_x4": global_N_links = 8;   global_grid_rows = 2;  global_grid_cols = 4;
+    case "S8" | "SLoop_x8" | "X8" | "XConn_x8": global_N_links = 16;  global_grid_rows = 2;  global_grid_cols = 8;
+    case _:   raise ValueError(f"Not valid Connection Type: {sysconfig.CONN_TYPE}\n")
+
 PLOT_RESOL_X   = int(re.findall("([0-9]+)x[0-9]+", sysconfig.RESOLUTION)[0])
 PLOT_RESOL_Y   = int(re.findall("[0-9]+x([0-9]+)", sysconfig.RESOLUTION)[0])
-match PLOT_RESOL_X:   # default 8 for 3200
-    case PLOT_RESOL_X if PLOT_RESOL_X >= 3000:  FIG_SIZE_X = 8
-    case PLOT_RESOL_X if PLOT_RESOL_X >= 2400:  FIG_SIZE_X = 7
-    case PLOT_RESOL_X if PLOT_RESOL_X >= 1900:  FIG_SIZE_X = 6
-    case PLOT_RESOL_X if PLOT_RESOL_X >= 1000:  FIG_SIZE_X = 5
-    case _:                                     FIG_SIZE_X = 4
-match PLOT_RESOL_Y:   # default 6 for 1800
-    case PLOT_RESOL_Y if PLOT_RESOL_Y >= 1800:  FIG_SIZE_Y = 6
-    case PLOT_RESOL_Y if PLOT_RESOL_Y >= 1500:  FIG_SIZE_Y = 5
-    case PLOT_RESOL_Y if PLOT_RESOL_Y >= 1000:  FIG_SIZE_Y = 4
-    case _:                                     FIG_SIZE_Y = 3
+
+MWIN_OVERHEAD  = 60    # overhead for Main-Windows, including Windows Title, borders, Tool-bar area
+TB_CELL_HEIGHT = 30    # height of each table cell
+MATPLOTLIB_DPI = 100
+FIG_SIZE_X     = (PLOT_RESOL_X - 10) / global_grid_cols / MATPLOTLIB_DPI
+FIG_SIZE_Y     = (PLOT_RESOL_Y - MWIN_OVERHEAD - TB_CELL_HEIGHT * (global_N_links + 1)) / global_grid_rows / MATPLOTLIB_DPI
 
 BPrint(f"\n{APP_TITLE } --- {app_start_time}\n", level=DBG_LEVEL_NOTICE)
 BPrint(f"Servers URL: {CS_URL} {HW_URL}\t\tHW: {HW_PLATFORM}\tPDI: '{sysconfig.PDI_FILE}'\n", level=DBG_LEVEL_NOTICE)
 BPrint(f"SYSCONFIG: dbg={sysconfig.DBG_LEVEL} cTyp={sysconfig.CONN_TYPE} pattern={sysconfig.PATTERN} RATE={TEST_DATA_RATE}G " +
        f"SIM={sysconfig.SIMULATE} nFig={sysconfig.NFIGURE} resolution={sysconfig.RESOLUTION} FIG={FIG_SIZE_X},{FIG_SIZE_Y} \n", level=DBG_LEVEL_NOTICE)
+
+assert FIG_SIZE_Y > 0
 
 #--------------------------------------------------------------------------------------------------------------------------------------
 # ## 2 - Create a session and connect to the hw_server and cs_server
@@ -742,9 +745,7 @@ class HPC_Test_MainWidget(QtWidgets.QMainWindow):
         self.grid_row = 0
         self.grid_col = 0
         self.n_links  = n_links
-        if   n_links > 8:  self.layout_grid_rows = 2; self.layout_grid_cols = 8;  self.setGeometry(0, 0, PLOT_RESOL_X, PLOT_RESOL_Y)
-        elif n_links > 1:  self.layout_grid_rows = 2; self.layout_grid_cols = 4;  self.setGeometry(0, 0, PLOT_RESOL_X, PLOT_RESOL_Y)
-        else:              self.layout_grid_rows = 1; self.layout_grid_cols = 1;  self.resize(PLOT_RESOL_X, PLOT_RESOL_Y)
+        self.setGeometry(0, 0, PLOT_RESOL_X, PLOT_RESOL_Y)
 
         # Create a central widget
         central_widget = QtWidgets.QWidget(self)
@@ -772,6 +773,9 @@ class HPC_Test_MainWidget(QtWidgets.QMainWindow):
         BPrint("Closed YK-Scan", level=DBG_LEVEL_NOTICE)
         event.accept()  # Close the widget
         BPrint("Closed Widget", level=DBG_LEVEL_NOTICE)
+
+    def resizeEvent(self, event):
+        BPrint(f"OnResize: {event.oldSize()} => {event.size()}\t\tmain={self.size()}  tbl={self.tableWidget.size()}  fig={self.canvases[0].get_width_height()} ", level=DBG_LEVEL_WIP)
 
     def show_figures(self): 
         canvas_time = datetime.datetime.now()
@@ -808,7 +812,7 @@ class HPC_Test_MainWidget(QtWidgets.QMainWindow):
         self.updateTable( link.nID, 4, "{:^20}".format(str(link.status)) )
 
         self.grid_col += 1
-        if  self.grid_col >= self.layout_grid_cols:
+        if  self.grid_col >= global_grid_cols:
             self.grid_col = 0
             self.grid_row += 1
 
@@ -981,13 +985,8 @@ class FakeLink:
 def create_fake_links():
     global myLinks, all_lnkgrps, all_links
 
-    nLinks = 1
-    match sysconfig.CONN_TYPE:
-        case "S4" | "SLoop_x4" | "X4" | "XConn_x4": nLinks = 8
-        case "S8" | "SLoop_x8" | "X8" | "XConn_x8": nLinks = 16
-
     myLinks = []
-    for nID in range(nLinks):
+    for nID in range(global_N_links):
         link = FakeLink(nID)
         link.gt_name  = f"Quad_90{int(nID/4)}"
         link.channel  = nID % 4
