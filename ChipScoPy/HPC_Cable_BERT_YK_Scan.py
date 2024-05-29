@@ -80,7 +80,7 @@ export ip="10.20.2.146";     export CS_SERVER_URL="TCP:$ip:3042" HW_SERVER_URL="
 export HW_PLATFORM="vpk120";
 export WIN_RESOLUTION="3840x2160";
 export PDI_FILE="./PDI_Files/VPK120_iBERT_2xQDD_56G.pdi";
-export SHOW_FIG_TITLE=True;  export MAX_SLICES=20;
+export SHOW_FIG_TITLE=True;  export MAX_SLICES=20;  export HIST_BINS=100;
 export CSV_PATH="./YK_CSV_Files";
 export CONN_TYPE=XConn_x8;   export DATA_PATTERN="PRBS 9";
 export QUAD_NAME="Quad_202"; export QUAD_CHAN=2;
@@ -99,6 +99,7 @@ HW_PLATFORM = os.getenv("HW_PLATFORM", "vpk120")
 SHOW_FIG_TITLE = os.getenv("SHOW_FIG_TITLE", 'False').lower() in ('true', '1', 't')
 
 MAX_SLICES    = int(os.getenv("MAX_SLICES", "12"))
+HIST_BINS     = int(os.getenv("HIST_BINS",  "50"))
 VIVADO_SLICES = 4    # Vivado always shows 8000 samples
 YKSCAN_SLICER_SIZE = 2000
 
@@ -127,13 +128,19 @@ parser.add_argument('--DBG_LEVEL', default=APP_DBG_LEVEL, metavar='level', help=
 WIN_RESOLUTION = os.getenv("WIN_RESOLUTION", "3200x1800")    # 3200x1800 /  3840x2160 / 900x800
 parser.add_argument('--RESOLUTION', default=WIN_RESOLUTION, metavar='resol', help='App Window Resolution: 3200x1800 /  3840x2160 / 900x800')
 
-parser.add_argument('--NFIGURE', default=-1, metavar='number', help='number of Matplotlib Figures, default: -1 (auto)')
-
 parser.add_argument('--SIMULATE', action='store_true', help='Whether to SIMULATE by random data or by real iBERT data source. default: False')
 
 sysconfig = parser.parse_args()
 
 #--------------------------------------------------------------------------------------------------------------------------------------
+def calculate_plotFigure_size(res_X, res_Y):
+    MWIN_OVERHEAD  = 60    # overhead for Main-Windows, including Windows Title, borders, Tool-bar area
+    TB_CELL_HEIGHT = 30    # height of each table cell
+    MATPLOTLIB_DPI = 100   # density (or dots) per inch, default: 100.0
+    fig_size_x     = (res_X - 10) / global_grid_cols / MATPLOTLIB_DPI
+    fig_size_y     = (res_Y - MWIN_OVERHEAD - TB_CELL_HEIGHT * (global_N_links + 1)) / global_grid_rows / MATPLOTLIB_DPI
+    return (fig_size_x, fig_size_y)
+
 TEST_DATA_RATE = int(re.findall(".*VPK120_iBERT_.*_([0-9]+)G.pdi", sysconfig.PDI_FILE)[0])
 
 match sysconfig.CONN_TYPE:
@@ -143,17 +150,12 @@ match sysconfig.CONN_TYPE:
 
 PLOT_RESOL_X   = int(re.findall("([0-9]+)x[0-9]+", sysconfig.RESOLUTION)[0])
 PLOT_RESOL_Y   = int(re.findall("[0-9]+x([0-9]+)", sysconfig.RESOLUTION)[0])
-
-MWIN_OVERHEAD  = 60    # overhead for Main-Windows, including Windows Title, borders, Tool-bar area
-TB_CELL_HEIGHT = 30    # height of each table cell
-MATPLOTLIB_DPI = 100
-FIG_SIZE_X     = (PLOT_RESOL_X - 10) / global_grid_cols / MATPLOTLIB_DPI
-FIG_SIZE_Y     = (PLOT_RESOL_Y - MWIN_OVERHEAD - TB_CELL_HEIGHT * (global_N_links + 1)) / global_grid_rows / MATPLOTLIB_DPI
+FIG_SIZE_X, FIG_SIZE_Y = calculate_plotFigure_size( PLOT_RESOL_X, PLOT_RESOL_Y )
 
 BPrint(f"\n{APP_TITLE } --- {app_start_time}\n", level=DBG_LEVEL_NOTICE)
 BPrint(f"Servers URL: {CS_URL} {HW_URL}\t\tHW: {HW_PLATFORM}\tPDI: '{sysconfig.PDI_FILE}'\n", level=DBG_LEVEL_NOTICE)
 BPrint(f"SYSCONFIG: dbg={sysconfig.DBG_LEVEL} cTyp={sysconfig.CONN_TYPE} pattern={sysconfig.PATTERN} RATE={TEST_DATA_RATE}G " +
-       f"SIM={sysconfig.SIMULATE} nFig={sysconfig.NFIGURE} resolution={sysconfig.RESOLUTION} FIG={FIG_SIZE_X},{FIG_SIZE_Y} \n", level=DBG_LEVEL_NOTICE)
+       f"SIM={sysconfig.SIMULATE} resolution={sysconfig.RESOLUTION} FIG={FIG_SIZE_X},{FIG_SIZE_Y} \n", level=DBG_LEVEL_NOTICE)
 
 assert FIG_SIZE_Y > 0
 
@@ -467,9 +469,9 @@ class Fake_YKScanLink(Base_YKScanLink):
         self.__refresh_common_data__()
         self.bit_count_N += self.bits_increment
         self.bit_count    = f"{self.bit_count_N:.3e}"
-        self.error_count += np.random.randint(10)                  # random int between 0 and 9
+        self.error_count += np.random.randint(100)                 # random int between 0 and 100
         self.ber          = self.error_count / self.bit_count_N;   #  np.random.random() / 1000000   # BER by random number simulation
-        self.snr          = 20 + np.random.rand()                  # random float between 0 and 1
+        self.snr          = 18 + np.random.rand() * 4              # random float between 0 and 4
 
 
 # The class correlates to chipscopy.api.ibert.link.Link
@@ -636,26 +638,25 @@ class MyYKFigure(matplotlib.figure.Figure):
         self.ax_HIST = plt.subplot2grid((3,2), (0,1), rowspan=2)
         self.ax_HIST.set_xlabel("Count")
         self.ax_HIST.set_ylabel("Amplitude (%)")
-        self.ax_HIST.set_xlim(0,500)
         self.ax_HIST.set_ylim(0,100)
         self.ax_HIST.set_yticks(range(0, 100, 20))
         if SHOW_FIG_TITLE: self.ax_HIST.set_title("Histogram")
         else:              self.ax_HIST.set_xlabel("Histogram")
 
         # axis of SNR diagram
+        self.ax_SNR_data = []
         self.ax_SNR = plt.subplot(3,2,5)
         self.ax_SNR.set_xlabel("SNR Sample")
         self.ax_SNR.set_ylabel("SNR (dB)")
-        self.ax_SNR.set_xlim(0,10)
         self.ax_SNR.set_ylim(-10,50)
         if SHOW_FIG_TITLE: self.ax_SNR.set_title("Signal-to-Noise Ratio")
         else:              self.ax_SNR.set_xlabel("SNR")
 
         # axis of BER diagram
+        self.ax_BER_data = []
         self.ax_BER = plt.subplot(3,2,6)
         self.ax_BER.set_xlabel("BER Sample")
         self.ax_BER.set_ylabel("log10")
-        self.ax_BER.set_xlim(0,10)
         self.ax_BER.set_ylim(-1,-20)
         if SHOW_FIG_TITLE: self.ax_BER.set_title("Bit-Error-Rate")
         else:              self.ax_BER.set_xlabel("BER")
@@ -667,7 +668,12 @@ class MyYKFigure(matplotlib.figure.Figure):
         self.scatter_plot_EYE.set_offsets( np.column_stack((self.scatter_X_data, myYK.YKScan_slicer_viewBuffer)) )  # Set new data points
 
         # Update the histogram plot     ## color: blue / green / teal / brown / charcoal / black / gray / silver / cyan / violet
-        #hist, edges, _ = self.ax_HIST.hist(list(myYK.YKScan_slicer_buf[0]), 100, orientation = 'horizontal', color='cyan', range=(0,100))
+        self.ax_HIST.cla()              ## NOTE: Histogram must be cleared regularly, otherwise, it will be unresponsive, with messagebox of <<"python3" is not responding>> 
+        hist, edges, _ = self.ax_HIST.hist(list(myYK.YKScan_slicer_buf.flatten()), bins=HIST_BINS, orientation='horizontal', color='cyan', range=(0,100))
+
+        self.ax_SNR_data.append(myYK.snr)
+        self.ax_SNR.plot(self.ax_SNR_data, color='teal')
+        """
         if self.ax_HIST.lines:
             for line2 in self.ax_HIST.lines:
                 self.ax_HIST.set_xlim(0, self.ax_HIST.get_xlim()[1] + YKSCAN_SLICER_SIZE)
@@ -686,8 +692,12 @@ class MyYKFigure(matplotlib.figure.Figure):
                 line3.set_ydata(list(line3.get_ydata()) + [myYK.snr])
         else:
             self.ax_SNR.plot(myYK.ASYN_samples_count, myYK.snr)
+        """
 
     def update_yk_ber(self, myYK):
+        self.ax_BER_data.append(math.log10(myYK.ber))
+        self.ax_BER.plot(self.ax_BER_data, color='violet')
+        """
         if self.ax_BER.lines:
             for line4 in self.ax_BER.lines:
                 if myYK.SYNC_samples_count  > self.ax_BER.get_xlim()[1]:
@@ -696,6 +706,7 @@ class MyYKFigure(matplotlib.figure.Figure):
                 line4.set_ydata(list(line4.get_ydata()) + [math.log10(myYK.ber)])
         else:
             self.ax_BER.plot(myYK.SYNC_samples_count, math.log10(myYK.ber), color='violet')
+        """
 
 
 #--------------------------------------------------------------------------------------------------------------------------------------
@@ -742,6 +753,7 @@ class HPC_Test_MainWidget(QtWidgets.QMainWindow):
         self.setWindowTitle(f"<b><font color='black' size='8'>BizLink HPC Cable Test: </font><font color='blue' size='8'>{HW_URL}</font></b>")
 
         self.canvases = []
+        self.resizing_windows = False
         self.grid_row = 0
         self.grid_col = 0
         self.n_links  = n_links
@@ -775,7 +787,24 @@ class HPC_Test_MainWidget(QtWidgets.QMainWindow):
         BPrint("Closed Widget", level=DBG_LEVEL_NOTICE)
 
     def resizeEvent(self, event):
-        BPrint(f"OnResize: {event.oldSize()} => {event.size()}\t\tmain={self.size()}  tbl={self.tableWidget.size()}  fig={self.canvases[0].get_width_height()} ", level=DBG_LEVEL_WIP)
+        BPrint(f"resizeEvent: {event.oldSize()} => {event.size()}\t\tmain={self.size()}  tbl={self.tableWidget.size()}  fig={self.canvases[0].get_width_height()} ", level=DBG_LEVEL_TRACE)
+        self.resizing_windows = True
+
+    def leaveEvent(self, event):
+        if  self.resizing_windows:
+            self.resizing_windows = False
+            BPrint(f"resizeEvent: main={self.size()}  tbl={self.tableWidget.size()}  fig={self.canvases[0].get_width_height()} ", level=DBG_LEVEL_INFO)
+            """
+            ## To adjust dynamically the Canvas size, but it didn't work ###
+            figX, figY = self.canvases[0].get_width_height()
+            resX, resY = self.size().width(), self.size().height()
+            tblX, tblY = self.tableWidget.size().width(), self.tableWidget.size().height()
+            FIG_SIZE_X, FIG_SIZE_Y = calculate_plotFigure_size( resX, resY )
+            for c in self.canvases:
+                c.ykobj.fig.set_size_inches( FIG_SIZE_X, FIG_SIZE_Y )
+            plt.draw() # Redraw the updated plot
+            BPrint(f"leaveEvent: main=({PLOT_RESOL_X},{PLOT_RESOL_Y}) => ({resX:>4},{resY:<4}) tbl=({tblX:<3},{tblX:<3}) fig=({figX:<3},{figX:<3}) ", level=DBG_LEVEL_INFO)
+            """
 
     def show_figures(self): 
         canvas_time = datetime.datetime.now()
