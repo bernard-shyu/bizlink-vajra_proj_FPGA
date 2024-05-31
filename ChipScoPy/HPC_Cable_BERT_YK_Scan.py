@@ -283,6 +283,8 @@ class BaseDataSource(QtCore.QObject):
 
         self.snr  = 0
         self.ber  = 0
+        self.eye  = 0
+        self.hist = ""
 
         #------------------------------------------------------------------------------
         # Initialize circular buffer
@@ -413,6 +415,109 @@ class Base_YKScanLink(BaseDataSource):
         self.sync_refresh_plotYK()
         self.canvas.draw()    # self.canvas.draw_idle()
 
+    #  ----------- 00 -------------------------------------------------------------------- 100 ---------
+    #  peaks:                   Peak0                                Peak1
+    #  valeys:                                   Valey0
+    #---------------------------------------------------------------------------------------------------
+    def find_NRZ_peaks_and_valleys(self, hist, bins):
+        half_BINS = int(HIST_BINS / 2)
+
+        #-----------------------------------------------------------------------------------------------
+        # find the highest peak in [0:50], Peak0
+        Peak0 = hist[0:half_BINS].max()
+        i_P0  = hist[0:half_BINS].argmax()
+
+        #-----------------------------------------------------------------------------------------------
+        # find the highest peak in [50:100], Peak1
+        Peak1 = hist[half_BINS:HIST_BINS].max()
+        i_P1  = hist[half_BINS:HIST_BINS].argmax() + half_BINS
+
+        #---------------------------------------------------------------------------------------------------
+        # find the valeys
+        Valey0 = hist[i_P0:i_P1].min();
+        i_V0   = hist[i_P0:i_P1].argmin() + i_P0
+
+        #---------------------------------------------------------------------------------------------------
+        # self.hist: Histogram statistics
+        # self.eye : EYE opening. i.e average of Peaks distance
+        #---------------------------------------------------------------------------------------------------
+        self.hist = f"Peaks: ({i_P0}={Peak0:n}, {i_P1}={Peak1:n})   Valeys: {Valey0:n}"
+        self.eye  = i_P1 - i_P0
+
+
+    #  ----------- 00 -------------------------------- 50 -------------------------------- 100 ---------
+    #  peaks:              Peak0           Peak1                  Peak2           Peak3
+    #  valeys:                    Valey0             Valey1               Valey2
+    #---------------------------------------------------------------------------------------------------
+    def find_PAM4_peaks_and_valleys(self, hist, bins):
+        HILL_MIN_WIDTH = 3   # The hill peak should have sufficient width
+        half_BINS = int(HIST_BINS / 2)
+
+        #-----------------------------------------------------------------------------------------------
+        # find the highest peak in [0:50], it can be Peak0 or Peak1
+        p  = hist[0:half_BINS].max()
+        i  = hist[0:half_BINS].argmax()
+        # find the 2nd peak in [0:50] to the LEFT or RIGHT side
+        L = hist[0:i-HILL_MIN_WIDTH].max()
+        R = hist[i+HILL_MIN_WIDTH:half_BINS].max()
+        if L < R:
+            # 2nd peak is RIGHT side
+            Peak0 = p;  i_P0 = i
+            Peak1 = R;  i_P1 = hist[i+HILL_MIN_WIDTH:half_BINS].argmax() + i + HILL_MIN_WIDTH
+        else:
+            # 2nd peak is LEFT  side
+            Peak1 = p;  i_P1 = i
+            Peak0 = L;  i_P0 = hist[0:i-HILL_MIN_WIDTH].argmax()
+
+        #-----------------------------------------------------------------------------------------------
+        # find the highest peak in [50:100], it can be Peak2 or Peak3
+        P  = hist[half_BINS:HIST_BINS].max()
+        i  = hist[half_BINS:HIST_BINS].argmax() + half_BINS
+        # find the 2nd peak in [50:100] to the LEFT or RIGHT side
+        L = hist[half_BINS:i-HILL_MIN_WIDTH].max()
+        R = hist[i+HILL_MIN_WIDTH:HIST_BINS].max()
+        if L < R:
+            # 2nd peak is RIGHT side
+            Peak2 = p;  i_P2 = i
+            Peak3 = R;  i_P3 = hist[i+HILL_MIN_WIDTH:HIST_BINS].argmax() + i + HILL_MIN_WIDTH
+        else:
+            # 2nd peak is LEFT  side
+            Peak3 = p;  i_P3 = i
+            Peak2 = L;  i_P2 = hist[half_BINS:i-HILL_MIN_WIDTH].argmax() + half_BINS
+
+        #-----------------------------------------------------------------------------------------------
+        # find the valeys
+        Valey0 = hist[i_P0:i_P1].min();   i_V0 = hist[i_P0:i_P1].argmin() + i_P0
+        Valey1 = hist[i_P1:i_P2].min();   i_V1 = hist[i_P1:i_P2].argmin() + i_P1
+        Valey2 = hist[i_P2:i_P3].min();   i_V2 = hist[i_P2:i_P3].argmin() + i_P2
+
+        """
+        # find the standard-deviation
+        stdvar0 = np.std(hist[0:i_V0])
+        stdvar1 = np.std(hist[i_V0:i_V1])
+        stdvar2 = np.std(hist[i_V1:i_V2])
+        stdvar3 = np.std(hist[i_V2:HIST_BINS])
+        BPrint(self.BPrt_HEAD_WATER() + f"std:   {stdvar0:9.3f}    {stdvar1:9.3f}    {stdvar2:9.3f}    {stdvar3:9.3f} ", level = DBG_LEVEL_TRACE)
+        """
+
+        #-----------------------------------------------------------------------------------------------
+        # self.hist: Histogram statistics
+        # self.eye : EYE opening. i.e average of Peaks distance
+        #-----------------------------------------------------------------------------------------------
+        #self.hist = f"Peaks: ({i_P0}={Peak0}, {i_P1}={Peak1}, {i_P2}={Peak2}, {i_P3}={Peak3})   Valeys: ({i_V0}={Valey0}, {i_V1}={Valey1}, {i_V2}={Valey2})"
+        self.hist = f"Peaks: ({i_P0}={Peak0:n}, {i_P1}={Peak1:n}, {i_P2}={Peak2:n}, {i_P3}={Peak3:n})   Valeys: ({Valey0:n}, {Valey1:n}, {Valey2:n})"
+        self.eye  = ((i_P3 - i_P2) + (i_P2 - i_P1) + (i_P1 - i_P0)) / 3
+
+    def find_peaks_and_valleys(self, hist, bins):
+        if len(hist) != HIST_BINS:
+            BPrint(self.BPrt_HEAD_WATER() + f"find Histogram-Peaks: {len(hist)} / {len(bins)} ", level = DBG_LEVEL_INFO)
+            return
+        if TEST_DATA_RATE > 50:
+            self.find_PAM4_peaks_and_valleys(hist, bins)
+        else:
+            self.find_NRZ_peaks_and_valleys(hist, bins)
+        BPrint(self.BPrt_HEAD_WATER() + f"Histogram-EYE: {self.eye:.3f}  statistic: {self.hist}", level = DBG_LEVEL_TRACE)
+
 
 class Fake_YKScanLink(Base_YKScanLink):
     #s_update_YKScan = QtCore.pyqtSignal(int)
@@ -514,7 +619,7 @@ class IBert_YKScanLink(Base_YKScanLink):
 
         #------------------------------------------------------------------------------
         # Pandas table to keep data for CSV file
-        self.pd_data = pd.DataFrame(columns=["Samples", "Elapsed Time", "Status", "Line Rate", "Bits Count", "Errors Count", "BER", "SNR", "comments"])
+        self.pd_data = pd.DataFrame(columns=["Samples", "Elapsed Time", "Status", "Line Rate", "Bits Count", "Errors Count", "BER", "SNR", "EYE-Opening", "Histogram", "comments"])
 
     #----------------------------------------------------------------------------------
     def fsmFunc_reset(self):
@@ -609,7 +714,7 @@ class IBert_YKScanLink(Base_YKScanLink):
             snr_series = self.pd_data['SNR']
             self.comments = "BER: ({:.2e}, {:.2e}) mean={:.2e} std={:.2e}    SNR: ({:.2e}, {:.2e}) mean={:.2e} std={:.2e}".format( 
                ber_series.min(), ber_series.max(), ber_series.mean(), ber_series.std(),  snr_series.min(), snr_series.max(), snr_series.mean(), snr_series.std() )
-        self.pd_data.loc[len(self.pd_data)] = [ self.SYNC_samples_count, self.elapsed, self.status, self.line_rate, self.bit_count, self.error_count, self.ber, self.snr, self.comments ]
+        self.pd_data.loc[len(self.pd_data)] = [ self.SYNC_samples_count, self.elapsed, self.status, self.line_rate, self.bit_count, self.error_count, self.ber, self.snr, self.eye, self.hist, self.comments ]
 
     #----------------------------------------------------------------------------------
     def finish_object(self):
@@ -693,6 +798,7 @@ class MyYKFigure(matplotlib.figure.Figure):
         # Update the histogram plot     ## color: blue / green / teal / brown / charcoal / black / gray / silver / cyan / violet
         self.ax_HIST.cla()              ## NOTE: Histogram must be cleared regularly, otherwise, it will be unresponsive, with messagebox of <<"python3" is not responding>> 
         hist, edges, _ = self.ax_HIST.hist(list(myYK.YKScan_slicer_buf.flatten()), bins=HIST_BINS, orientation='horizontal', color='cyan', range=(0,100))
+        myYK.find_peaks_and_valleys(hist, edges) 
 
         self.ax_SNR_data.append(myYK.snr)
         self.ax_SNR.plot(self.ax_SNR_data, color='teal')
@@ -757,14 +863,16 @@ class MplCanvas(FigureCanvas):
         self.s_start_FSM_Worker.emit()
 
     def update_table(self):
-        self.updateTable( self.nID, 0, f"{self.ykobj.ASYN_samples_count:^16}" )
-        self.updateTable( self.nID, 1, f"{self.ykobj.SYNC_samples_count:^16}" )
-        self.updateTable( self.nID, 4, f"{self.ykobj.status:^30}", QtGui.QColor(255,128,128) if self.ykobj.status == "No link" else QtGui.QColor(128,255,128) )
-        self.updateTable( self.nID, 5, f"{self.ykobj.bit_count:^30}" )                     # type: string
-        self.updateTable( self.nID, 6, "{:^30}".format(f"{self.ykobj.error_count:.3e}") )  # type: int
-        self.updateTable( self.nID, 7, "{:^30}".format(f"{self.ykobj.ber:.3e}") )          # type: float
-        self.updateTable( self.nID, 8, "{:^30}".format(f"{self.ykobj.snr:.3f}") )          # type: float
-        self.updateTable( self.nID, 9, self.ykobj.comments )
+        self.updateTable( self.nID, 0, f"{self.ykobj.ASYN_samples_count:^10}" )
+        self.updateTable( self.nID, 1, f"{self.ykobj.SYNC_samples_count:^10}" )
+        self.updateTable( self.nID, 4, f"{self.ykobj.status:^20}", QtGui.QColor(255,128,128) if self.ykobj.status == "No link" else QtGui.QColor(128,255,128) )
+        self.updateTable( self.nID, 5, f"{self.ykobj.bit_count:^24}" )                     # type: string
+        self.updateTable( self.nID, 6, "{:^24}".format(f"{self.ykobj.error_count:.3e}") )  # type: int
+        self.updateTable( self.nID, 7, "{:^20}".format(f"{self.ykobj.ber:.3e}") )          # type: float
+        self.updateTable( self.nID, 8, "{:^20}".format(f"{self.ykobj.snr:.3f}") )          # type: float
+        self.updateTable( self.nID, 9, "{:^20}".format(f"{self.ykobj.eye:.3f}") )          # type: float
+        self.updateTable( self.nID,10, self.ykobj.hist )
+        self.updateTable( self.nID,11, self.ykobj.comments )
         #BPrint("QTable_TYP: bits={}, err={}, ber={}, snr={}".format(type(self.ykobj.bit_count), type(self.ykobj.error_count), type(self.ykobj.ber), type(self.ykobj.snr)), level=DBG_LEVEL_WIP)
         #BPrint("QTable_VAL: bits={}, err={}, ber={}, snr={}".format(     self.ykobj.bit_count,       self.ykobj.error_count,       self.ykobj.ber,       self.ykobj.snr),  level=DBG_LEVEL_WIP)
 
@@ -773,7 +881,9 @@ class MplCanvas(FigureCanvas):
 class HPC_Test_MainWidget(QtWidgets.QMainWindow):
     def __init__(self, n_links):
         super().__init__()
-        self.setWindowTitle(f"<b><font color='black' size='{WIN_TITLE_FONT}'>BizLink HPC Cable Test: </font><font color='blue' size='{WIN_TITLE_FONT}'>{HW_URL}</font></b>")
+        titleText = HW_URL if sysconfig.HWID == "0" else f"{HW_URL} / {sysconfig.HWID}"
+        if sysconfig.SIMULATE: titleText = "SIMULATION"
+        self.setWindowTitle(f"<b><font color='black' size='{WIN_TITLE_FONT}'>BizLink HPC Cable Test: </font><font color='blue' size='{WIN_TITLE_FONT}'>{titleText}</font></b>")
 
         self.canvases = []
         self.resizing_windows = False
@@ -838,10 +948,10 @@ class HPC_Test_MainWidget(QtWidgets.QMainWindow):
         bprint_loading_time(f"HPC_Test_MainWidget::show_figures() finished, CANVAS={canvas_time - app_start_time}  GUI={gui_time - app_start_time}")
 
     def createTable(self): 
-        self.tableWidget = QtWidgets.QTableWidget(self.n_links, 10) 
+        self.tableWidget = QtWidgets.QTableWidget(self.n_links, 12) 
 
         # Table will fit the screen horizontally 
-        self.tableWidget.setHorizontalHeaderLabels( ("YK-Samples", "Link-Samples", "TX", "RX", "Status", "Bits", "Errors", "BER", "SNR", "comments") )
+        self.tableWidget.setHorizontalHeaderLabels( ("YKcount", "LinkCount", "TX", "RX", "Status", "Bits", "Errors", "BER", "SNR", "EYE", "Histogram", "comments") )
         header = self.tableWidget.horizontalHeader()
         header.setStretchLastSection(True) 
         header.setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)    # header.setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
@@ -859,8 +969,8 @@ class HPC_Test_MainWidget(QtWidgets.QMainWindow):
         self.canvases.append(canvas)
         canvas.draw()
 
-        self.updateTable( link.nID, 2, "{:^30}".format(re.findall(".*(Quad_.*\.[RT]X).*", str(link.tx))[0]) )
-        self.updateTable( link.nID, 3, "{:^30}".format(re.findall(".*(Quad_.*\.[RT]X).*", str(link.rx))[0]) )
+        self.updateTable( link.nID, 2, "{:^20}".format(re.findall(".*(Quad_.*\.[RT]X).*", str(link.tx))[0]) )
+        self.updateTable( link.nID, 3, "{:^20}".format(re.findall(".*(Quad_.*\.[RT]X).*", str(link.rx))[0]) )
         self.updateTable( link.nID, 4, "{:^20}".format(str(link.status)) )
 
         self.grid_col += 1
