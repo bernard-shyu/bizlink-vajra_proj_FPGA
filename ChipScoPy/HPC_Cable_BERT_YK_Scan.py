@@ -77,11 +77,11 @@ ENV_HELP="""
 EXPORT Environment variables:
 ----->
 export ip="10.20.2.146";     export CS_SERVER_URL="TCP:$ip:3042" HW_SERVER_URL="TCP:$ip:3121";
-export HW_PLATFORM="vpk120";
+export HW_PLATFORM="vpk120"; export VERSAL_HWID="112A"
 export WIN_RESOLUTION="3840x2160";
-export PDI_FILE="./PDI_Files/VPK120_iBERT_2xQDD_56G.pdi";
-export SHOW_FIG_TITLE=True;  export MAX_SLICES=20;  export HIST_BINS=100;
-export CSV_PATH="./YK_CSV_Files";
+export PDI_FILE="./PDI_Files/VPK120_iBERT_2xQDD_56G.pdi";      export CSV_PATH="./YK_CSV_Files";
+export SHOW_FIG_TITLE=True;  export WIN_TITLE_FONT=8;
+export MAX_SLICES=20;        export YKSCAN_SLICER_SIZE=200;    export HIST_BINS=40;      
 export CONN_TYPE=XConn_x8;   export DATA_PATTERN="PRBS 9";
 export QUAD_NAME="Quad_202"; export QUAD_CHAN=2;
 export APP_DBG_LEVEL=5;
@@ -97,11 +97,12 @@ HW_URL = os.getenv("HW_SERVER_URL", "TCP:localhost:3121")
 # specify hw and if programming is desired
 HW_PLATFORM = os.getenv("HW_PLATFORM", "vpk120")
 SHOW_FIG_TITLE = os.getenv("SHOW_FIG_TITLE", 'False').lower() in ('true', '1', 't')
+WIN_TITLE_FONT = os.getenv("WIN_TITLE_FONT", '8')
 
 MAX_SLICES    = int(os.getenv("MAX_SLICES", "12"))
-HIST_BINS     = int(os.getenv("HIST_BINS",  "50"))
+HIST_BINS     = int(os.getenv("HIST_BINS",  "100"))
 VIVADO_SLICES = 4    # Vivado always shows 8000 samples
-YKSCAN_SLICER_SIZE = 2000
+YKSCAN_SLICER_SIZE = int(os.getenv("YKSCAN_SLICER_SIZE",  "2000"))   # for simulation purpose, we may choose smaller value
 
 #--------------------------------------------------------------------------------------------------------------------------------------
 # https://docs.python.org/3/library/argparse.html,  https://docs.python.org/3/howto/argparse.html
@@ -115,6 +116,9 @@ parser = argparse.ArgumentParser(description=f"{APP_TITLE} by Bernard Shyu", epi
 # PDI_FILE = design_files.programming_file
 PDI_FILE = os.getenv("PDI_FILE", "")
 parser.add_argument('--PDI_FILE', default=PDI_FILE, metavar='filename', help='FPGA image file (*.pdi) Ex. PDI_Files/VPK120_iBERT_2xQDD_56G.pdi')
+
+VERSAL_HWID = os.getenv("VERSAL_HWID", "0")     # default: NOT specified, auto-detection
+parser.add_argument('--HWID', default=VERSAL_HWID, metavar='hwID', help='VPK120 HWID: S/N (0 or 111A or 112A)')
 
 CONN_TYPE = os.getenv("CONN_TYPE", "SLoop_x8")
 parser.add_argument('--CONN_TYPE', default=CONN_TYPE, metavar='type', help='Connection Type: SLoop_x4 | SLoop_x8 | XConn_x4 | XConn_x8.  Or shorter: S4 | S8 | X4 | X8.  Default: SLoop_x8')
@@ -153,7 +157,7 @@ PLOT_RESOL_Y   = int(re.findall("[0-9]+x([0-9]+)", sysconfig.RESOLUTION)[0])
 FIG_SIZE_X, FIG_SIZE_Y = calculate_plotFigure_size( PLOT_RESOL_X, PLOT_RESOL_Y )
 
 BPrint(f"\n{APP_TITLE } --- {app_start_time}\n", level=DBG_LEVEL_NOTICE)
-BPrint(f"Servers URL: {CS_URL} {HW_URL}\t\tHW: {HW_PLATFORM}\tPDI: '{sysconfig.PDI_FILE}'\n", level=DBG_LEVEL_NOTICE)
+BPrint(f"Servers URL: {CS_URL} {HW_URL}\t\tFPGA_HW: {HW_PLATFORM}  HWID: {sysconfig.HWID}\tPDI: '{sysconfig.PDI_FILE}' \n", level=DBG_LEVEL_NOTICE)
 BPrint(f"SYSCONFIG: dbg={sysconfig.DBG_LEVEL} cTyp={sysconfig.CONN_TYPE} pattern={sysconfig.PATTERN} RATE={TEST_DATA_RATE}G " +
        f"SIM={sysconfig.SIMULATE} resolution={sysconfig.RESOLUTION} FIG={FIG_SIZE_X},{FIG_SIZE_Y} \n", level=DBG_LEVEL_NOTICE)
 
@@ -174,8 +178,24 @@ def create_iBERT_session_device():
     if DBG_LEVEL_INFO <= sysconfig.DBG_LEVEL:
         report_versions(session)
 
+    # Versal devices: [ 'xcvp1202:255211775190703847597631284360770503682:jsn-VPK120 FT4232H-872311160112A-14d00093-0',
+    #                   'xcvp1202:255211775190703847597631284360770495362:jsn-VPK120 FT4232H-872311160111A-14d00093-0' ]
+    BPrint(f"Versal devices: {session.devices}", level=DBG_LEVEL_NOTICE)
+
     # ## 3 - Program the device with PDI_FILE programming image file.
-    device = session.devices.filter_by(family="versal").get()
+    if sysconfig.HWID == "0": 
+        device = session.devices.filter_by(family="versal").get()
+    else:
+        device = None
+        for d in session.devices:
+            context = d['cable_context']
+            if len( re.findall(f"jsn.*{sysconfig.HWID}", context) ) > 0:
+                BPrint(f"Found Versal devices for {sysconfig.HWID}: {context}", level=DBG_LEVEL_NOTICE)
+                device = d
+                break
+            else:
+                BPrint(f"Versal devices: {context}", level=DBG_LEVEL_NOTICE)
+
     if os.path.exists(sysconfig.PDI_FILE):
         device.program(sysconfig.PDI_FILE)
     else:
@@ -240,7 +260,7 @@ def set_property_value(obj, propName, val, lv=DBG_LEVEL_DEBUG):
 
 
 def check_link_status(link):
-    if link.status == "No link" or link.ber > 1e-6:
+    if link.status == "No link" or link.ber > 1e-5:
         lr = get_property_value( link.rx, 'Line Rate'                  )
         ls = get_property_value( link.rx, 'Pattern Checker Lock Status')
         ec = get_property_value( link.rx, 'Pattern Checker Error Count')
@@ -295,7 +315,7 @@ class BaseDataSource(QtCore.QObject):
         return "{}: #{:<4d}/{:<4d} T:{:<4d}\t".format(self.dsrcName, self.ASYN_samples_count, self.SYNC_samples_count, (datetime.datetime.now() - app_start_time).seconds)
 
     def BPrt_HEAD_WATER(self):
-        return self.BPrt_HEAD_COMMON() + f"WATER:{self.YKScan_slicer_buf.shape[0]:>2}/{self.YK_is_started} FSM:{self.fsm_state}\t"
+        return self.BPrt_HEAD_COMMON() + f"WATER:{self.YKScan_slicer_buf.shape[0]:>2}/{str(self.YK_is_started):<5} FSM:{self.fsm_state}\t"
 
     def __refresh_common_data__(self):
         self.SYNC_samples_count +=1
@@ -356,6 +376,15 @@ class Base_YKScanLink(BaseDataSource):
 
     def sync_update_LinkData(self):  pass    # Abstract method: to update data from ource engine, asynchronously by call-back
 
+    ## FSM-RESET state, fetching YKScan for 4 slices (VIVADO_SLICES), and filling up to 12 (MAX_SLICES)
+    def fill_up_slicer_buf(self):
+        while self.ASYN_samples_count < VIVADO_SLICES: # MAX_SLICES:
+            self.sync_refresh_plotBER()
+            time.sleep(2)
+
+        for i in range(VIVADO_SLICES, MAX_SLICES):
+            self.YKScan_slicer_buf = np.append(self.YKScan_slicer_buf, [self.YKScan_slicer_buf[i % VIVADO_SLICES]], axis=0)
+
     def sync_refresh_plotBER(self):
         self.sync_update_LinkData()
         self.fig.update_yk_ber(self)
@@ -382,7 +411,7 @@ class Base_YKScanLink(BaseDataSource):
     def fsmFunc_refresh_plots(self):
         self.sync_refresh_plotBER()
         self.sync_refresh_plotYK()
-        self.canvas.draw_idle()
+        self.canvas.draw()    # self.canvas.draw_idle()
 
 
 class Fake_YKScanLink(Base_YKScanLink):
@@ -413,10 +442,7 @@ class Fake_YKScanLink(Base_YKScanLink):
                 self.sync_refresh_plotBER()
                 return False
             case 2:
-                #while self.ASYN_samples_count < VIVADO_SLICES:
-                while self.ASYN_samples_count < MAX_SLICES:
-                    self.sync_refresh_plotBER()
-                    time.sleep(2)
+                self.fill_up_slicer_buf()
                 return True
 
     def fsmFunc_watchdog(self):
@@ -501,14 +527,11 @@ class IBert_YKScanLink(Base_YKScanLink):
                 return False
             case 1:
                 self.sync_refresh_plotBER()
-                #time.sleep(self.link.nID * 2)
+                time.sleep(self.link.nID * 1)      # interleaving to prevent overwhelming of data traffic from simultaneous YKScan on all Quad/CH
                 self.__YKEngine_manage__(True, 0)  # launch YK.start(), to start the YKScan engine
                 return False
             case 2:
-                ## initial fetching of YKScan data
-                while self.ASYN_samples_count < MAX_SLICES:
-                    self.sync_refresh_plotBER()
-                    time.sleep(2)
+                self.fill_up_slicer_buf()
                 return True
 
     def fsmFunc_watchdog(self):
@@ -750,7 +773,7 @@ class MplCanvas(FigureCanvas):
 class HPC_Test_MainWidget(QtWidgets.QMainWindow):
     def __init__(self, n_links):
         super().__init__()
-        self.setWindowTitle(f"<b><font color='black' size='8'>BizLink HPC Cable Test: </font><font color='blue' size='8'>{HW_URL}</font></b>")
+        self.setWindowTitle(f"<b><font color='black' size='{WIN_TITLE_FONT}'>BizLink HPC Cable Test: </font><font color='blue' size='{WIN_TITLE_FONT}'>{HW_URL}</font></b>")
 
         self.canvases = []
         self.resizing_windows = False
