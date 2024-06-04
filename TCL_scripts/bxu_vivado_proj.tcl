@@ -28,7 +28,8 @@ if { $argc < 3 } {
 	set BXU_PROG_IMAGE     0
 	set BXU_EXTRA_TCL      0
 	set BXU_EXTRA_TCL_FILE ""
-	set BXU_HW_SERVER      ""
+	if { [info exists HW_SERVER] }  { set BXU_HW_SERVER $HW_SERVER 
+	} else                          { set BXU_HW_SERVER "" }
 	for {set i 3} {$i < $argc} {incr i} {
 		set OPTION [lindex $argv $i]
 		append BXU_OPTIONS $OPTION " "
@@ -52,11 +53,9 @@ set BXU_IMAGE_FILE [ exec find ${BXU_PROJ_PATH}/${BXU_PROJ_NAME}/${BXU_PROJ_NAME
 set BXU_BOARD_FILE [ exec find ${BXU_PROJ_PATH}/${BXU_PROJ_NAME}/${BXU_PROJ_NAME}.srcs -name \*.bd ]
 
 puts "Run as: $argv0 $BXU_PROJ_PATH $BXU_PROJ_NAME $BXU_HW_ID $BXU_OPTIONS"
-puts "open_Board:     $BXU_OPEN_BOARD,   program_Image: $BXU_PROG_IMAGE,   EXTRA_TCL: $BXU_EXTRA_TCL"
-puts "Vivado Project: $BXU_PROJ_FILE"
-puts "Vivado Image:   $BXU_IMAGE_FILE"
-puts "Vivado Board:   $BXU_BOARD_FILE"
-puts "Extra TCL File: $BXU_EXTRA_TCL_FILE"
+puts "open_Board: $BXU_OPEN_BOARD     program_Image: $BXU_PROG_IMAGE     EXTRA_TCL: $BXU_EXTRA_TCL"
+puts "Vivado Project: $BXU_PROJ_FILE     Vivado Image: $BXU_IMAGE_FILE     Vivado Board: $BXU_BOARD_FILE"
+puts "Extra TCL File: $BXU_EXTRA_TCL_FILE     HW Server: $BXU_HW_SERVER"
 
 #-------------------------------------------------------------------------------------------------------
 # Open Vivado Project file

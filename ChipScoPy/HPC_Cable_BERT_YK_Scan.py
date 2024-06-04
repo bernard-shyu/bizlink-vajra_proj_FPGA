@@ -16,9 +16,9 @@
 # - Jupyter notebook support installed - Please do so, using the command `pip install chipscopy[jupyter]`
 # - Plotting support installed - Please do so, using the command `pip install chipscopy[core-addons]`
 
-#--------------------------------------------------------------------------------------------------------------------------------------
+#======================================================================================================================================
 # ## 1 - Initialization: Imports & environments
-#--------------------------------------------------------------------------------------------------------------------------------------
+#======================================================================================================================================
 from chipscopy import create_session, report_versions, report_hierarchy, get_design_files
 from chipscopy.api.ibert import create_yk_scans
 from chipscopy.api.ibert import delete_link_groups, get_all_links, get_all_link_groups, create_links, create_link_groups
@@ -163,13 +163,13 @@ BPrint(f"SYSCONFIG: dbg={sysconfig.DBG_LEVEL} cTyp={sysconfig.CONN_TYPE} pattern
 
 assert FIG_SIZE_Y > 0
 
-#--------------------------------------------------------------------------------------------------------------------------------------
+#======================================================================================================================================
 # ## 2 - Create a session and connect to the hw_server and cs_server
 #
 # The session is a container that keeps track of devices and debug cores.
 # - Session is initialized and connected to server(s)
 # - Versions are detected and reported to stdout
-#--------------------------------------------------------------------------------------------------------------------------------------
+#======================================================================================================================================
 def create_iBERT_session_device():
     global ibert_gtm
 
@@ -270,16 +270,16 @@ def check_link_status(link):
         return ""
 
 
-#--------------------------------------------------------------------------------------------------------------------------------------
+#======================================================================================================================================
 # Data source classes: iBERT-Link data, YK-Scan data, radom number simulattion
-#-------------------------------------------------------------------------
-class BaseDataSource(QtCore.QObject):
+#======================================================================================================================================
+class Base_DataSource(QtCore.QObject):
     WATCHDOG_INTERVAL = 10 * 1000
 
-    def __init__(self, canvas, name):
+    def __init__(self, dView):
         super().__init__()
-        self.dsrcName = name
-        self.canvas = canvas
+        self.dsrcName = dView.myName
+        self.dataView = dView
 
         self.snr  = 0
         self.ber  = 0
@@ -296,10 +296,6 @@ class BaseDataSource(QtCore.QObject):
 
         self.DBG_TRACE_ASYN_COUNT = 0        # set non-ZERO for tracing data traffic for initial counts
         self.DBG_TRACE_SYNC_COUNT = 0        # set non-ZERO for tracing data traffic for initial counts
-
-        #------------------------------------------------------------------------------
-        self.fig = plt.figure(FigureClass=MyYKFigure, num=self.dsrcName, layout='constrained', edgecolor='black', linewidth=3, figsize=[FIG_SIZE_X, FIG_SIZE_Y])   # facecolor='yellow', dpi=100
-        self.fig.init_YK_axes(self.dsrcName)
 
         #------------------------------------------------------------------------------
         self.fsm_state   = 0
@@ -360,11 +356,12 @@ class BaseDataSource(QtCore.QObject):
         self.watchdog_timer.stop()
 
 
-class Base_YKScanLink(BaseDataSource):
+#----------------------------------------------------------------------------------------------------------------------------
+class Base_YKScanLink_DataSrc(Base_DataSource):
     s_update_YKScan = QtCore.pyqtSignal(int)
 
-    def __init__(self, canvas, link):
-        super().__init__(canvas, f"YK-{link.gt_name}_CH{link.channel}")
+    def __init__(self, dView, link):
+        super().__init__(dView)
         self.link = link
         link.myLink = self
 
@@ -389,8 +386,8 @@ class Base_YKScanLink(BaseDataSource):
 
     def sync_refresh_plotBER(self):
         self.sync_update_LinkData()
-        self.fig.update_yk_ber(self)
-        self.canvas.update_table()
+        self.dataView.myFigure.update_yk_ber(self)
+        self.dataView.update_table()
         lvl = DBG_LEVEL_INFO  if self.SYNC_samples_count < self.DBG_TRACE_SYNC_COUNT  else DBG_LEVEL_TRACE
         BPrint(self.bprint_link(), level=lvl)
 
@@ -405,7 +402,7 @@ class Base_YKScanLink(BaseDataSource):
             self.YKScan_slicer_viewPointer = 0;
 
         # refresh the matplotlib figures
-        self.fig.update_yk_scan(self)
+        self.dataView.myFigure.update_yk_scan(self)
 
         lvl = DBG_LEVEL_INFO  if self.ASYN_samples_count < self.DBG_TRACE_ASYN_COUNT  else DBG_LEVEL_TRACE
         BPrint(self.BPrt_HEAD_WATER() + f"refresh_plotYK.{v}.{self.YKScan_slicer_viewPointer}: BER: {self.ber:.2e}  SNR: {self.snr:6.2f}  WATER:{self.YKScan_slicer_buf.shape[0]} Elapsed:{self.elapsed}", level=lvl)
@@ -413,7 +410,7 @@ class Base_YKScanLink(BaseDataSource):
     def fsmFunc_refresh_plots(self):
         self.sync_refresh_plotBER()
         self.sync_refresh_plotYK()
-        self.canvas.draw()    # self.canvas.draw_idle()
+        self.dataView.myCanvas.draw_idle()
 
     #  ----------- 00 -------------------------------------------------------------------- 100 ---------
     #  peaks:                   Peak0                                Peak1
@@ -519,12 +516,13 @@ class Base_YKScanLink(BaseDataSource):
         BPrint(self.BPrt_HEAD_WATER() + f"Histogram-EYE: {self.eye:.3f}  statistic: {self.hist}", level = DBG_LEVEL_TRACE)
 
 
-class Fake_YKScanLink(Base_YKScanLink):
+#----------------------------------------------------------------------------------------------------------------------------
+class Fake_YKScanLink_DataSrc(Base_YKScanLink_DataSrc):
     #s_update_YKScan = QtCore.pyqtSignal(int)
     WATCHDOG_INTERVAL = 5 * 1000
 
-    def __init__(self, canvas, link):
-        super().__init__(canvas, link)
+    def __init__(self, dView, link):
+        super().__init__(dView, link)
         np.random.seed(42)
         self.peaks_rand_mode   = True
         self.std_dev = 1.5
@@ -606,11 +604,12 @@ class Fake_YKScanLink(Base_YKScanLink):
 
 
 # The class correlates to chipscopy.api.ibert.link.Link
-class IBert_YKScanLink(Base_YKScanLink):
+#----------------------------------------------------------------------------------------------------------------------------
+class IBert_YKScanLink_DataSrc(Base_YKScanLink_DataSrc):
     WATCHDOG_INTERVAL = 120 * 1000
 
-    def __init__(self, canvas, link):
-        super().__init__(canvas, link)
+    def __init__(self, dView, link):
+        super().__init__(dView, link)
 
         #------------------------------------------------------------------------------
         self.YK   = create_yk_scans(target_objs=link.rx)[0]                # returns: chipscopy.api.ibert.yk_scan.YKScan object
@@ -720,14 +719,16 @@ class IBert_YKScanLink(Base_YKScanLink):
     def finish_object(self):
         super().finish_object()
         self.fsm_running = False
-        path = f"{CSV_PATH}/YK_{app_start_time.year}-{app_start_time.month:02}{app_start_time.day:02}"
+        path = f"{CSV_PATH}/YK_{sysconfig.HWID}.{app_start_time.year}-{app_start_time.month:02}{app_start_time.day:02}"
         os.makedirs(path, exist_ok=True)
         self.pd_data.to_csv(f"{path}/{self.dsrcName}-{app_start_time.hour:02}{app_start_time.minute:02}.csv")
         self.__YKEngine_manage__(False, 11)  # launch YK.stop(), to stop the YKScan engine from running.
 
 
-#--------------------------------------------------------------------------------------------------------------------------------------
-class MyYKFigure(matplotlib.figure.Figure):
+#======================================================================================================================================
+# Data View classes: to present the source data to Matplotlib figures / canvas, and rendering to QT-Windows
+#======================================================================================================================================
+class MyYK_Figure(matplotlib.figure.Figure):
     # ## 8 - Run YK Scan
     #
     # Initialize the plots and start the YK Scan to begin updating the plots. 
@@ -838,114 +839,83 @@ class MyYKFigure(matplotlib.figure.Figure):
         """
 
 
-#--------------------------------------------------------------------------------------------------------------------------------------
-class MplCanvas(FigureCanvas):
+#----------------------------------------------------------------------------------------------------------------------------
+class MyLink_TableEntry:
+    def __init__(self, canvas, name):
+        pass
+
+
+#----------------------------------------------------------------------------------------------------------------------------
+class Base_DataView(QtCore.QObject):
+    def __init__(self):
+        super().__init__()
+
+#----------------------------------------------------------------------------------------------------------------------------
+class YKScan_DataView(Base_DataView):
     s_start_FSM_Worker = QtCore.pyqtSignal()
 
-    # def __init__(self, parent=None, ykobj=None, nID=0):
-    def __init__(self, link, parent=None):
-        self.myParent = parent
-        self.nID      = link.nID
-        if sysconfig.SIMULATE:   self.ykobj = Fake_YKScanLink(self, link)
-        else:                    self.ykobj = IBert_YKScanLink(self, link)
+    def __init__(self, link, parent):
+        super().__init__()
+        self.link    = link
+        self.nID     = link.nID
+        self.myName  = f"YK-{link.gt_name}_CH{link.channel}"
+        self.myArena = parent
         self.updateTable = parent.updateTable
-        super().__init__(self.ykobj.fig)
 
+        #------------------------------------------------------------------------------
+        if sysconfig.SIMULATE:   self.myDataSrc = Fake_YKScanLink_DataSrc(self, link)
+        else:                    self.myDataSrc = IBert_YKScanLink_DataSrc(self, link)
         self.worker_thread = QtCore.QThread()
-        self.ykobj.moveToThread(self.worker_thread)                           # move worker to the worker thread
-        self.s_start_FSM_Worker.connect(self.ykobj.fsmFunc_worker_thread)
-        self.worker_thread.start()                                            # start the thread
+        self.myDataSrc.moveToThread(self.worker_thread)                           # move worker to the worker thread
+        self.s_start_FSM_Worker.connect(self.myDataSrc.fsmFunc_worker_thread)
+        self.worker_thread.start()                                                # start the thread
 
-    def close_canvas(self):
-        self.ykobj.finish_object()
-
-    def start_canvas(self):
-        self.s_start_FSM_Worker.emit()
+        #------------------------------------------------------------------------------
+        self.myFigure = plt.figure(FigureClass=MyYK_Figure, num=self.myName, layout='constrained', edgecolor='black', linewidth=3, figsize=[FIG_SIZE_X, FIG_SIZE_Y])   # facecolor='yellow', dpi=100
+        self.myFigure.init_YK_axes(self.myName)
+        self.myCanvas = FigureCanvas(self.myFigure)
+        #self.mytable  = MyLink_TableEntry()
 
     def update_table(self):
-        self.updateTable( self.nID, 0, f"{self.ykobj.ASYN_samples_count:^10}" )
-        self.updateTable( self.nID, 1, f"{self.ykobj.SYNC_samples_count:^10}" )
-        self.updateTable( self.nID, 4, f"{self.ykobj.status:^20}", QtGui.QColor(255,128,128) if self.ykobj.status == "No link" else QtGui.QColor(128,255,128) )
-        self.updateTable( self.nID, 5, f"{self.ykobj.bit_count:^24}" )                     # type: string
-        self.updateTable( self.nID, 6, "{:^24}".format(f"{self.ykobj.error_count:.3e}") )  # type: int
-        self.updateTable( self.nID, 7, "{:^20}".format(f"{self.ykobj.ber:.3e}") )          # type: float
-        self.updateTable( self.nID, 8, "{:^20}".format(f"{self.ykobj.snr:.3f}") )          # type: float
-        self.updateTable( self.nID, 9, "{:^20}".format(f"{self.ykobj.eye:.3f}") )          # type: float
-        self.updateTable( self.nID,10, self.ykobj.hist )
-        self.updateTable( self.nID,11, self.ykobj.comments )
-        #BPrint("QTable_TYP: bits={}, err={}, ber={}, snr={}".format(type(self.ykobj.bit_count), type(self.ykobj.error_count), type(self.ykobj.ber), type(self.ykobj.snr)), level=DBG_LEVEL_WIP)
-        #BPrint("QTable_VAL: bits={}, err={}, ber={}, snr={}".format(     self.ykobj.bit_count,       self.ykobj.error_count,       self.ykobj.ber,       self.ykobj.snr),  level=DBG_LEVEL_WIP)
+        self.updateTable( self.nID, 0, f"{self.myDataSrc.ASYN_samples_count:^10}" )
+        self.updateTable( self.nID, 1, f"{self.myDataSrc.SYNC_samples_count:^10}" )
+        self.updateTable( self.nID, 4, f"{self.myDataSrc.status:^20}", QtGui.QColor(255,128,128) if self.myDataSrc.status == "No link" else QtGui.QColor(128,255,128) )
+        self.updateTable( self.nID, 5, f"{self.myDataSrc.bit_count:^24}" )                     # type: string
+        self.updateTable( self.nID, 6, "{:^24}".format(f"{self.myDataSrc.error_count:.3e}") )  # type: int
+        self.updateTable( self.nID, 7, "{:^20}".format(f"{self.myDataSrc.ber:.3e}") )          # type: float
+        self.updateTable( self.nID, 8, "{:^20}".format(f"{self.myDataSrc.snr:.3f}") )          # type: float
+        self.updateTable( self.nID, 9, "{:^20}".format(f"{self.myDataSrc.eye:.3f}") )          # type: float
+        self.updateTable( self.nID,10, self.myDataSrc.hist )
+        self.updateTable( self.nID,11, self.myDataSrc.comments )
+        #BPrint("QTable_TYP: bits={}, err={}, ber={}, snr={}".format(type(self.myDataSrc.bit_count), type(self.myDataSrc.error_count), type(self.myDataSrc.ber), type(self.myDataSrc.snr)), level=DBG_LEVEL_WIP)
+        #BPrint("QTable_VAL: bits={}, err={}, ber={}, snr={}".format(     self.myDataSrc.bit_count,       self.myDataSrc.error_count,       self.myDataSrc.ber,       self.myDataSrc.snr),  level=DBG_LEVEL_WIP)
+
+    def start_object(self):
+        self.s_start_FSM_Worker.emit()
+
+    def finish_object(self):
+        self.myDataSrc.finish_object()
 
 
-#--------------------------------------------------------------------------------------------------------------------------------------
-class HPC_Test_MainWidget(QtWidgets.QMainWindow):
-    def __init__(self, n_links):
+#----------------------------------------------------------------------------------------------------------------------------
+class HPCTest_ViewArena(QtCore.QObject):
+    #def __init__(self, wgCanvas, wgTable, N_Links, N_CavasRows, N_CanvasCols):
+    def __init__(self, qwin, qlayout, n_links):
         super().__init__()
-        titleText = HW_URL if sysconfig.HWID == "0" else f"{HW_URL} / {sysconfig.HWID}"
-        if sysconfig.SIMULATE: titleText = "SIMULATION"
-        self.setWindowTitle(f"<b><font color='black' size='{WIN_TITLE_FONT}'>BizLink HPC Cable Test: </font><font color='blue' size='{WIN_TITLE_FONT}'>{titleText}</font></b>")
-
-        self.canvases = []
-        self.resizing_windows = False
+        self.dataViews = []
         self.grid_row = 0
         self.grid_col = 0
         self.n_links  = n_links
-        self.setGeometry(0, 0, PLOT_RESOL_X, PLOT_RESOL_Y)
+        self.myLayout = qlayout
+        self.myWidget = qwin
 
-        # Create a central widget
-        central_widget = QtWidgets.QWidget(self)
-        self.setCentralWidget(central_widget)
-
-        # Create a vertical layout for the central widget
-        self.layout_main = QtWidgets.QVBoxLayout(central_widget)
-
-        # Create a horizontal layout for the toobar
-        self.layout_TBar = QtWidgets.QHBoxLayout()
-        self.layout_main.addLayout(self.layout_TBar)
-
-        # Create a grid layout for the canvases
+        # Create a grid layout for the dataViews
         self.layout_grid = QtWidgets.QGridLayout()
-        self.layout_main.addLayout(self.layout_grid)
+        self.myLayout.addLayout(self.layout_grid)
 
         # Create iBERT multiple channels table 
         self.createTable() 
-        self.layout_main.addWidget(self.tableWidget)
-
-    def closeEvent(self, event):
-        BPrint("OnClose: to do YK.stop()", level=DBG_LEVEL_NOTICE)
-        for c in self.canvases:
-            c.close_canvas()
-        BPrint("Closed YK-Scan", level=DBG_LEVEL_NOTICE)
-        event.accept()  # Close the widget
-        BPrint("Closed Widget", level=DBG_LEVEL_NOTICE)
-
-    def resizeEvent(self, event):
-        BPrint(f"resizeEvent: {event.oldSize()} => {event.size()}\t\tmain={self.size()}  tbl={self.tableWidget.size()}  fig={self.canvases[0].get_width_height()} ", level=DBG_LEVEL_TRACE)
-        self.resizing_windows = True
-
-    def leaveEvent(self, event):
-        if  self.resizing_windows:
-            self.resizing_windows = False
-            BPrint(f"resizeEvent: main={self.size()}  tbl={self.tableWidget.size()}  fig={self.canvases[0].get_width_height()} ", level=DBG_LEVEL_INFO)
-            """
-            ## To adjust dynamically the Canvas size, but it didn't work ###
-            figX, figY = self.canvases[0].get_width_height()
-            resX, resY = self.size().width(), self.size().height()
-            tblX, tblY = self.tableWidget.size().width(), self.tableWidget.size().height()
-            FIG_SIZE_X, FIG_SIZE_Y = calculate_plotFigure_size( resX, resY )
-            for c in self.canvases:
-                c.ykobj.fig.set_size_inches( FIG_SIZE_X, FIG_SIZE_Y )
-            plt.draw() # Redraw the updated plot
-            BPrint(f"leaveEvent: main=({PLOT_RESOL_X},{PLOT_RESOL_Y}) => ({resX:>4},{resY:<4}) tbl=({tblX:<3},{tblX:<3}) fig=({figX:<3},{figX:<3}) ", level=DBG_LEVEL_INFO)
-            """
-
-    def show_figures(self): 
-        canvas_time = datetime.datetime.now()
-        for c in self.canvases:
-            c.start_canvas()
-        self.show()
-        gui_time = datetime.datetime.now()
-        bprint_loading_time(f"HPC_Test_MainWidget::show_figures() finished, CANVAS={canvas_time - app_start_time}  GUI={gui_time - app_start_time}")
+        self.myLayout.addWidget(self.tableWidget)
 
     def createTable(self): 
         self.tableWidget = QtWidgets.QTableWidget(self.n_links, 12) 
@@ -962,12 +932,11 @@ class HPC_Test_MainWidget(QtWidgets.QMainWindow):
         if color is not None:
             self.tableWidget.item(row, col).setBackground(color)
 
-    def create_YKScan_figure(self, link):
-        #canvas = MplCanvas(self, MyYKScanLink(link), link.nID)
-        canvas = MplCanvas(link, self)
-        self.layout_grid.addWidget(canvas, self.grid_row, self.grid_col)
-        self.canvases.append(canvas)
-        canvas.draw()
+    def create_dataView_objects(self, link):
+        dview = YKScan_DataView(link, self)
+        self.layout_grid.addWidget(dview.myCanvas, self.grid_row, self.grid_col)
+        self.dataViews.append(dview)
+        dview.myCanvas.draw()
 
         self.updateTable( link.nID, 2, "{:^20}".format(re.findall(".*(Quad_.*\.[RT]X).*", str(link.tx))[0]) )
         self.updateTable( link.nID, 3, "{:^20}".format(re.findall(".*(Quad_.*\.[RT]X).*", str(link.rx))[0]) )
@@ -977,6 +946,93 @@ class HPC_Test_MainWidget(QtWidgets.QMainWindow):
         if  self.grid_col >= global_grid_cols:
             self.grid_col = 0
             self.grid_row += 1
+
+    def show_dataView(self):
+        canvas_time = datetime.datetime.now()
+        for c in self.dataViews:
+            c.start_object()
+        self.myWidget.show()
+        gui_time = datetime.datetime.now()
+        bprint_loading_time(f"HPC_Test_MainWidget::show_figures() finished, CANVAS={canvas_time - app_start_time}  GUI={gui_time - app_start_time}")
+
+    def finish_object(self):
+        for c in self.dataViews:
+            c.finish_object()
+
+
+#======================================================================================================================================
+class HPC_Test_MainWidget(QtWidgets.QMainWindow):
+    def __init__(self, n_links):
+        super().__init__()
+        titleText = HW_URL if sysconfig.HWID == "0" else f"{HW_URL} / {sysconfig.HWID}"
+        if sysconfig.SIMULATE: titleText = "SIMULATION"
+        self.setWindowTitle(f"<b><font color='black' size='{WIN_TITLE_FONT}'>BizLink HPC Cable Test: </font><font color='blue' size='{WIN_TITLE_FONT}'>{titleText}</font></b>")
+
+        self.resizing_windows = False
+        self.setGeometry(0, 0, PLOT_RESOL_X, PLOT_RESOL_Y)
+
+        # Create a central widget
+        central_widget = QtWidgets.QWidget(self)
+        self.setCentralWidget(central_widget)
+
+        # Create a vertical layout for the central widget
+        self.layout_main = QtWidgets.QVBoxLayout(central_widget)
+        self.create_ToolBar()
+        self.my_viewArena = HPCTest_ViewArena(self, self.layout_main, n_links)
+
+    def create_ToolBar(self):
+        # Create a horizontal layout for the toobar
+        self.layout_toolbar = QtWidgets.QHBoxLayout()
+
+        label = QtWidgets.QLabel(self)
+        label.setText('Bernard Label')
+        self.layout_toolbar.addWidget(label)
+
+        btn = QtWidgets.QPushButton(self)
+        btn.setText('Bernard Button')
+        self.layout_toolbar.addWidget(btn)
+
+        box = QtWidgets.QComboBox(self)
+        box.addItems(['A','B','C','D'])
+        box.setGeometry(10,10,200,30)
+        self.layout_toolbar.addWidget(box)
+
+        self.layout_main.addLayout(self.layout_toolbar)
+
+    def closeEvent(self, event):
+        BPrint("OnClose: to do YK.stop()", level=DBG_LEVEL_NOTICE)
+        self.my_viewArena.finish_object()
+        event.accept()  # Close the widget
+        BPrint("Closed Widget", level=DBG_LEVEL_NOTICE)
+
+    def resizeEvent(self, event):
+        # BPrint(f"resizeEvent: {event.oldSize()} => {event.size()}\t\tmain={self.size()}  tbl={self.tableWidget.size()}  fig={self.my_viewArena.dataViews[0].get_width_height()} ", level=DBG_LEVEL_TRACE)
+        BPrint(f"resizeEvent: {event.oldSize()} => {event.size()}\t\tmain={self.size()} ", level=DBG_LEVEL_TRACE)
+        self.resizing_windows = True
+
+    def leaveEvent(self, event):
+        if  self.resizing_windows:
+            self.resizing_windows = False
+            #BPrint(f"resizeEvent: main={self.size()}  tbl={self.tableWidget.size()}  fig={self.my_viewArena.dataViews[0].get_width_height()} ", level=DBG_LEVEL_INFO)
+            BPrint(f"resizeEvent: main={self.size()}  fig={self.my_viewArena.dataViews[0].get_width_height()} ", level=DBG_LEVEL_INFO)
+            """
+            ## To adjust dynamically the Canvas size, but it didn't work ###
+            figX, figY = self.my_viewArena.dataViews[0].get_width_height()
+            resX, resY = self.size().width(), self.size().height()
+            tblX, tblY = self.tableWidget.size().width(), self.tableWidget.size().height()
+            FIG_SIZE_X, FIG_SIZE_Y = calculate_plotFigure_size( resX, resY )
+            for c in self.my_viewArena.dataViews:
+                c.myDataSrc.fig.set_size_inches( FIG_SIZE_X, FIG_SIZE_Y )
+            plt.draw() # Redraw the updated plot
+            BPrint(f"leaveEvent: main=({PLOT_RESOL_X},{PLOT_RESOL_Y}) => ({resX:>4},{resY:<4}) tbl=({tblX:<3},{tblX:<3}) fig=({figX:<3},{figX:<3}) ", level=DBG_LEVEL_INFO)
+            """
+
+    def show_figures(self): 
+        self.my_viewArena.show_dataView()
+
+    def create_YKScanLink_objects(self, link):
+        self.my_viewArena.create_dataView_objects(link)
+
 
     """
     def ui(self, fig):
@@ -1008,7 +1064,7 @@ class HPC_Test_MainWidget(QtWidgets.QMainWindow):
     """
 
 
-#--------------------------------------------------------------------------------------------------------------------------------------
+#======================================================================================================================================
 def create_links_common(RXs, TXs):
     global myLinks
 
@@ -1189,7 +1245,7 @@ def create_LinkGroups():
     BPrint(f"\n--> All Links available - {all_links}", level=DBG_LEVEL_DEBUG)
 
 
-#--------------------------------------------------------------------------------------------------------------------------------------
+#======================================================================================================================================
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
 
@@ -1207,7 +1263,7 @@ if __name__ == '__main__':
     # ## 7 - Create YK Scan
     # This step initializes the YK scan, setting its update method to the method we defined in the last step. 
     for link in myLinks:
-        MainForm.create_YKScan_figure(link)
+        MainForm.create_YKScanLink_objects(link)
         #link.myLink.reset_iBERT_engine()
     bprint_loading_time("BizLink iBERT Matplotlib/Figures created")
 
