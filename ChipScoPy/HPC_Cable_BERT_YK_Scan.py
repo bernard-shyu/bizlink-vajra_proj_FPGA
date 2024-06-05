@@ -67,7 +67,7 @@ def bprint_loading_time(msg, level=DBG_LEVEL_NOTICE):
     elapsed2 = (now - last_check).seconds
     last_check = now
     BPrint("\n----------------------------------------------------------------------------------------------------------------------------------------------------------------\n" + \
-       f"ChipScoPy loading time  APP: {app_start_time}   NOW: {now}   ELAPSED:{elapsed1:>4} / {elapsed2:<4}\t" + \
+       f"ChipScoPy loading time  APP: {app_start_time}   NOW: {now}   ELAPSED:{elapsed1:>4} / {elapsed2:<4}\t THREAD: {threading.current_thread().name}" +  \
        "\n----------------------------------------------------------------------------------------------------------------------------------------------------------------\n\n", level=level)
 
 #--------------------------------------------------------------------------------------------------------------------------------------
@@ -128,6 +128,10 @@ parser.add_argument('--PATTERN', default=DATA_PATTERN, metavar='pattern', help='
 
 APP_DBG_LEVEL = int(os.getenv("APP_DBG_LEVEL", "3"))
 parser.add_argument('--DBG_LEVEL', default=APP_DBG_LEVEL, metavar='level', help='debug level (ERR=0 WARN=1 NOTICE=2 INFO=3 DEBUG=4 TRACE=5, default=3)', type=int)
+parser.add_argument('--DBG_SRCNAME',  default="", metavar='name',  help='DataSource name for trace (YK-Quad_204_CH0), default: ""')
+parser.add_argument('--DBG_LVADJ',    default=2,  metavar='level', help='For the traced DataSource, the adjustment of debug level escalation, default: 2')
+parser.add_argument('--DBG_ASYCOUNT', default=0,  metavar='count', help='For all DataSources, the initial count of TRACE level async-messages to be shown, default: 0')
+parser.add_argument('--DBG_SYNCOUNT', default=0,  metavar='count', help='For all DataSources, the initial count of TRACE level sync-messages  to be shown, default: 0')
 
 WIN_RESOLUTION = os.getenv("WIN_RESOLUTION", "3200x1800")    # 3200x1800 /  3840x2160 / 900x800
 parser.add_argument('--RESOLUTION', default=WIN_RESOLUTION, metavar='resol', help='App Window Resolution: 3200x1800 /  3840x2160 / 900x800')
@@ -138,7 +142,7 @@ sysconfig = parser.parse_args()
 
 #--------------------------------------------------------------------------------------------------------------------------------------
 def calculate_plotFigure_size(res_X, res_Y):
-    MWIN_OVERHEAD  = 60    # overhead for Main-Windows, including Windows Title, borders, Tool-bar area
+    MWIN_OVERHEAD  = 65    # overhead for Main-Windows, including Windows Title, borders, Tool-bar area
     TB_CELL_HEIGHT = 30    # height of each table cell
     MATPLOTLIB_DPI = 100   # density (or dots) per inch, default: 100.0
     fig_size_x     = (res_X - 10) / global_grid_cols / MATPLOTLIB_DPI
@@ -158,8 +162,9 @@ FIG_SIZE_X, FIG_SIZE_Y = calculate_plotFigure_size( PLOT_RESOL_X, PLOT_RESOL_Y )
 
 BPrint(f"\n{APP_TITLE } --- {app_start_time}\n", level=DBG_LEVEL_NOTICE)
 BPrint(f"Servers URL: {CS_URL} {HW_URL}\t\tFPGA_HW: {HW_PLATFORM}  HWID: {sysconfig.HWID}\tPDI: '{sysconfig.PDI_FILE}' \n", level=DBG_LEVEL_NOTICE)
-BPrint(f"SYSCONFIG: dbg={sysconfig.DBG_LEVEL} cTyp={sysconfig.CONN_TYPE} pattern={sysconfig.PATTERN} RATE={TEST_DATA_RATE}G " +
-       f"SIM={sysconfig.SIMULATE} resolution={sysconfig.RESOLUTION} FIG={FIG_SIZE_X},{FIG_SIZE_Y} \n", level=DBG_LEVEL_NOTICE)
+BPrint(f"SYSCONFIG: cTyp={sysconfig.CONN_TYPE} pattern={sysconfig.PATTERN} RATE={TEST_DATA_RATE}G " +
+       f"resolution={sysconfig.RESOLUTION} FIG={FIG_SIZE_X},{FIG_SIZE_Y}", level=DBG_LEVEL_NOTICE)
+BPrint(f"DEBUG: level={sysconfig.DBG_LEVEL} srcName={sysconfig.DBG_SRCNAME} lvAdj={sysconfig.DBG_LVADJ} AsynCnt={sysconfig.DBG_ASYCOUNT} SynCnt={sysconfig.DBG_SYNCOUNT} SIM={sysconfig.SIMULATE} \n", level=DBG_LEVEL_NOTICE)
 
 assert FIG_SIZE_Y > 0
 
@@ -292,10 +297,8 @@ class Base_DataSource(QtCore.QObject):
         self.YK_is_started = False
 
         self.ASYN_samples_count = 0    # YK-Scan samples
+        self.ASYN_samples_calc  = 0    # YK-Scan samples, TAIL pointer for calculation of histogram statistics
         self.SYNC_samples_count = 0    # Channel-Link samples
-
-        self.DBG_TRACE_ASYN_COUNT = 0        # set non-ZERO for tracing data traffic for initial counts
-        self.DBG_TRACE_SYNC_COUNT = 0        # set non-ZERO for tracing data traffic for initial counts
 
         #------------------------------------------------------------------------------
         self.fsm_state   = 0
@@ -309,8 +312,9 @@ class Base_DataSource(QtCore.QObject):
 
 
     def BPrt_HEAD_COMMON(self):
-        # return "{}: #{:<4d}/{:<4d}\t ".format(self.dsrcName, self.ASYN_samples_count, self.SYNC_samples_count)
-        return "{}: #{:<4d}/{:<4d} T:{:<4d}\t".format(self.dsrcName, self.ASYN_samples_count, self.SYNC_samples_count, (datetime.datetime.now() - app_start_time).seconds)
+        h1 = "t:{:<4d}".format((datetime.datetime.now() - app_start_time).seconds)
+        h2 = f"T:{threading.current_thread().name:<10}"
+        return f"{self.dsrcName}: #{self.ASYN_samples_count:<3d}/{self.SYNC_samples_count:<3d} {h1} {h2}\t  "
 
     def BPrt_HEAD_WATER(self):
         return self.BPrt_HEAD_COMMON() + f"WATER:{self.YKScan_slicer_buf.shape[0]:>2}/{str(self.YK_is_started):<5} FSM:{self.fsm_state}\t"
@@ -325,14 +329,14 @@ class Base_DataSource(QtCore.QObject):
         while self.fsm_running:
             match self.fsm_state:
                 case self.fsm_state if self.fsm_state < 10:  # reset && initial fetch
-                    lvl = DBG_LEVEL_INFO
+                    lvl = self.dataView.mydbg_INFO
                     if not self.fsmFunc_reset(): 
                         self.fsm_state += 1
                     else:
                         self.fsm_state = 10
 
                 case 10: # main state, main-loop for polling, sporadically fetching or stopping
-                    lvl = DBG_LEVEL_TRACE
+                    lvl = self.dataView.mydbg_TRACE
                     self.fsmFunc_refresh_plots()
 
                 #case 2: # inital stop
@@ -340,8 +344,8 @@ class Base_DataSource(QtCore.QObject):
                 #case 4: # sporadically stop 
                 case _: raise ValueError(f"Not valid BaseDataSource.fsm_state : {self.fsm_state}\n")
 
-            BPrint(self.BPrt_HEAD_WATER() + f"FSM-WorkerThread.{QtCore.QThread.currentThread()} / {threading.current_thread().name}", level=lvl)
-            time.sleep(2)
+            BPrint(self.BPrt_HEAD_WATER() + f"FSM-WorkerThread.{QtCore.QThread.currentThread()} ", level=lvl)
+            time.sleep(1)    #QtCore.QTimer.singleShot(2000, lambda:self.fsmFunc_worker_thread())
 
     #----------------------------------------------------------------------------------
     #def start_data(self):             pass    # Abstract method: to start data-source engine, like YK.start()
@@ -368,7 +372,7 @@ class Base_YKScanLink_DataSrc(Base_DataSource):
         #------------------------------------------------------------------------------
         self.s_update_YKScan.connect(self.asynFunc_update_YKScan, QtCore.Qt.QueuedConnection)
         self.YKScan_slicer_viewPointer = 0
-        self.YKScan_slicer_viewBuffer  = np.zeros(MAX_SLICES * YKSCAN_SLICER_SIZE)
+        self.YKScan_slicer_viewBuffer  = np.zeros(VIVADO_SLICES * YKSCAN_SLICER_SIZE)
 
     def bprint_link(self):
         return self.BPrt_HEAD_COMMON() + f"SELF={self} LINK={str(self.link):<8}  STATUS={self.status:<12} BER={self.ber:<15} RATE={self.line_rate:<12} BITS={self.bit_count:<18} ERR={self.error_count}"
@@ -388,15 +392,13 @@ class Base_YKScanLink_DataSrc(Base_DataSource):
         self.sync_update_LinkData()
         self.dataView.myFigure.update_yk_ber(self)
         self.dataView.update_table()
-        lvl = DBG_LEVEL_INFO  if self.SYNC_samples_count < self.DBG_TRACE_SYNC_COUNT  else DBG_LEVEL_TRACE
+        lvl = self.dataView.mydbg_INFO  if self.SYNC_samples_count < sysconfig.DBG_SYNCOUNT  else self.dataView.mydbg_TRACE
         BPrint(self.bprint_link(), level=lvl)
 
     def sync_refresh_plotYK(self):
         # rotate VIVADO_SLICES(=4) slicers of view-buffer from self.YKScan_slicer_buf[MAX_SLICES(=12)]
         v = self.YKScan_slicer_viewPointer
-        self.YKScan_slicer_viewBuffer = self.YKScan_slicer_buf[v]
-        for i in range(1,VIVADO_SLICES):
-            self.YKScan_slicer_viewBuffer = np.concatenate(( self.YKScan_slicer_viewBuffer, self.YKScan_slicer_buf[v + i] ))
+        self.YKScan_slicer_viewBuffer = self.YKScan_slicer_buf[v:(v + VIVADO_SLICES)]
         self.YKScan_slicer_viewPointer += VIVADO_SLICES
         if  self.YKScan_slicer_viewPointer >= MAX_SLICES:
             self.YKScan_slicer_viewPointer = 0;
@@ -404,7 +406,7 @@ class Base_YKScanLink_DataSrc(Base_DataSource):
         # refresh the matplotlib figures
         self.dataView.myFigure.update_yk_scan(self)
 
-        lvl = DBG_LEVEL_INFO  if self.ASYN_samples_count < self.DBG_TRACE_ASYN_COUNT  else DBG_LEVEL_TRACE
+        lvl = self.dataView.mydbg_INFO  if self.ASYN_samples_count < sysconfig.DBG_ASYCOUNT  else self.dataView.mydbg_TRACE
         BPrint(self.BPrt_HEAD_WATER() + f"refresh_plotYK.{v}.{self.YKScan_slicer_viewPointer}: BER: {self.ber:.2e}  SNR: {self.snr:6.2f}  WATER:{self.YKScan_slicer_buf.shape[0]} Elapsed:{self.elapsed}", level=lvl)
 
     def fsmFunc_refresh_plots(self):
@@ -494,7 +496,7 @@ class Base_YKScanLink_DataSrc(Base_DataSource):
         stdvar1 = np.std(hist[i_V0:i_V1])
         stdvar2 = np.std(hist[i_V1:i_V2])
         stdvar3 = np.std(hist[i_V2:HIST_BINS])
-        BPrint(self.BPrt_HEAD_WATER() + f"std:   {stdvar0:9.3f}    {stdvar1:9.3f}    {stdvar2:9.3f}    {stdvar3:9.3f} ", level = DBG_LEVEL_TRACE)
+        BPrint(self.BPrt_HEAD_WATER() + f"std:   {stdvar0:9.3f}    {stdvar1:9.3f}    {stdvar2:9.3f}    {stdvar3:9.3f} ", level = self.dataView.mydbg_TRACE)
         """
 
         #-----------------------------------------------------------------------------------------------
@@ -507,13 +509,13 @@ class Base_YKScanLink_DataSrc(Base_DataSource):
 
     def find_peaks_and_valleys(self, hist, bins):
         if len(hist) != HIST_BINS:
-            BPrint(self.BPrt_HEAD_WATER() + f"find Histogram-Peaks: {len(hist)} / {len(bins)} ", level = DBG_LEVEL_INFO)
+            BPrint(self.BPrt_HEAD_WATER() + f"find Histogram-Peaks: {len(hist)} / {len(bins)} ", level = self.dataView.mydbg_INFO)
             return
         if TEST_DATA_RATE > 50:
             self.find_PAM4_peaks_and_valleys(hist, bins)
         else:
             self.find_NRZ_peaks_and_valleys(hist, bins)
-        BPrint(self.BPrt_HEAD_WATER() + f"Histogram-EYE: {self.eye:.3f}  statistic: {self.hist}", level = DBG_LEVEL_TRACE)
+        BPrint(self.BPrt_HEAD_WATER() + f"Histogram-EYE: {self.eye:.3f}  statistic: {self.hist}", level = self.dataView.mydbg_TRACE)
 
 
 #----------------------------------------------------------------------------------------------------------------------------
@@ -530,7 +532,7 @@ class Fake_YKScanLink_DataSrc(Base_YKScanLink_DataSrc):
 
     #----------------------------------------------------------------------------------
     def fsmFunc_reset(self):
-        BPrint(self.BPrt_HEAD_WATER() + f"fsmFunc_reset", level=DBG_LEVEL_INFO)
+        BPrint(self.BPrt_HEAD_WATER() + f"fsmFunc_reset", level=self.dataView.mydbg_INFO)
         match self.fsm_state:
             case 0:
                 self.bits_increment = 2 * TEST_DATA_RATE * 1.0E9    # incremented by every 2 seconds
@@ -572,19 +574,16 @@ class Fake_YKScanLink_DataSrc(Base_YKScanLink_DataSrc):
             # All 4 peaks will have the same randomness
             peak_positions = np.array([20, 40, 60, 80]) + 4*(np.random.rand() - 0.5)     #  Adding randomness to PEAK position by +2/-2
 
-        slice_buf = []
-        #for _ in range(0, YKSCAN_SLICER_SIZE, 10):
-        for _ in range(YKSCAN_SLICER_SIZE):
-            peak_pos = peak_positions[np.random.randint(4)]  # Randomly select a peak position
-            #slice_data = np.random.normal(loc=peak_pos, scale=self.std_dev, size=10)
-            slice_data = np.random.normal(loc=peak_pos, scale=self.std_dev)
-            slice_buf.append(slice_data)
+        slice_data = []
+        for peak_pos in peak_positions:
+            slice_data.append( np.random.normal(loc=peak_pos, scale=self.std_dev, size=int(YKSCAN_SLICER_SIZE/4)) )
+        slice_buf = np.column_stack(( slice_data[0], slice_data[1], slice_data[2], slice_data[3] ))
 
-        self.YKScan_slicer_buf = np.append(self.YKScan_slicer_buf, [slice_buf], axis=0)          # append new data
+        self.YKScan_slicer_buf = np.append(self.YKScan_slicer_buf, [slice_buf.flatten('c')], axis=0)          # append new data
         waterlevel = self.YKScan_slicer_buf.shape[0]
         if waterlevel > MAX_SLICES:
             self.YKScan_slicer_buf = np.delete(self.YKScan_slicer_buf, 0, axis=0)                                     # remove oldest slice data
-            BPrint(self.BPrt_HEAD_WATER() + f"buffer FULL", level=DBG_LEVEL_INFO)
+            BPrint(self.BPrt_HEAD_WATER() + f"buffer FULL", level=self.dataView.mydbg_DEBUG)
         self.s_update_YKScan.emit(waterlevel)    # ==> invoke asynFunc_update_YKScan() for PyQT's thread context
 
         """
@@ -614,7 +613,7 @@ class IBert_YKScanLink_DataSrc(Base_YKScanLink_DataSrc):
         #------------------------------------------------------------------------------
         self.YK   = create_yk_scans(target_objs=link.rx)[0]                # returns: chipscopy.api.ibert.yk_scan.YKScan object
         self.YK.updates_callback = lambda obj: self.asynCB_update_YKScanData(obj)
-        BPrint(f"{self.dsrcName}:: TX={link.tx}  RX={link.rx}  LINK={str(link):<8}  YK={self.YK.name:<10}  RX.yk_scan={link.rx.yk_scan}", level=DBG_LEVEL_INFO)
+        BPrint(f"{self.dsrcName}:: TX={link.tx}  RX={link.rx}  LINK={str(link):<8}  YK={self.YK.name:<10}  RX.yk_scan={link.rx.yk_scan}", level=self.dataView.mydbg_INFO)
 
         #------------------------------------------------------------------------------
         # Pandas table to keep data for CSV file
@@ -622,7 +621,7 @@ class IBert_YKScanLink_DataSrc(Base_YKScanLink_DataSrc):
 
     #----------------------------------------------------------------------------------
     def fsmFunc_reset(self):
-        BPrint(self.BPrt_HEAD_WATER() + f"fsmFunc_reset", level=DBG_LEVEL_INFO)
+        BPrint(self.BPrt_HEAD_WATER() + f"fsmFunc_reset", level=self.dataView.mydbg_INFO)
         match self.fsm_state:
             case 0:
                 self.link.tx.reset(); 
@@ -639,20 +638,20 @@ class IBert_YKScanLink_DataSrc(Base_YKScanLink_DataSrc):
                 return True
 
     def fsmFunc_watchdog(self):
-        self.__YKEngine_manage__(True, 1)  # relaunch YK.start(), likely it is stopped by throttling of flow control
+        BPrint(self.BPrt_HEAD_WATER() + f"Watchdog", level=self.dataView.mydbg_DEBUG)
+        if self.fsm_state >= 10:  # Normal FSM-state
+            self.__YKEngine_manage__(True, 1)  # relaunch YK.start(), likely it is stopped by throttling of flow control
 
     #----------------------------------------------------------------------------------
     def __YKEngine_manage__(self, to_start_YK, _where_):
         try:
-            BPrint(self.BPrt_HEAD_WATER() + f"__YKEngine_manage__({_where_}, {to_start_YK})", level=DBG_LEVEL_TRACE)
+            BPrint(self.BPrt_HEAD_WATER() + f"__YKEngine_manage__({_where_:2},  do_YK_Start={to_start_YK})", level=self.dataView.mydbg_DEBUG)
             if to_start_YK:
                 if not self.YK_is_started:
-                    BPrint(self.BPrt_HEAD_WATER() + f"__YKEngine_manage__({_where_}) do YK.start()", level=DBG_LEVEL_INFO)
                     self.YK.start()
                 self.YK_is_started = True
             else:
                 if self.YK_is_started:
-                    BPrint(self.BPrt_HEAD_WATER() + f"__YKEngine_manage__({_where_}) do YK.stop()", level=DBG_LEVEL_INFO)
                     self.YK.stop()
                 self.YK_is_started = False
         except Exception as e:
@@ -675,6 +674,7 @@ class IBert_YKScanLink_DataSrc(Base_YKScanLink_DataSrc):
             BPrint(self.BPrt_HEAD_COMMON() + f"ERROR slicer: {len(obj.scan_data[-1].slicer)}", level=DBG_LEVEL_ERR)
             if len(obj.scan_data[-1].slicer) != 0:
                 obj.scan_data.pop(0)
+            self.s_update_YKScan.emit(VIVADO_SLICES + 1)    # ==> to launch YK.stop() to rejuvenate the YK-engine
             return
 
         #------------------------------------------------------------------------------
@@ -683,14 +683,14 @@ class IBert_YKScanLink_DataSrc(Base_YKScanLink_DataSrc):
         waterlevel = self.YKScan_slicer_buf.shape[0]
         if waterlevel > MAX_SLICES:
             self.YKScan_slicer_buf = np.delete(self.YKScan_slicer_buf, 0, axis=0)                                     # remove oldest slice data
-            BPrint(self.BPrt_HEAD_WATER() + f"buffer FULL", level=DBG_LEVEL_INFO)
+            BPrint(self.BPrt_HEAD_WATER() + f"buffer FULL", level=self.dataView.mydbg_DEBUG)
         self.s_update_YKScan.emit(waterlevel)    # ==> invoke asynFunc_update_YKScan() for PyQT's thread context
 
         if len(obj.scan_data) > 2:   # only keep a few samples
             obj.scan_data.pop(0)
 
         #------------------------------------------------------------------------------
-        lvl = DBG_LEVEL_INFO  if self.ASYN_samples_count < self.DBG_TRACE_ASYN_COUNT  else DBG_LEVEL_TRACE
+        lvl = self.dataView.mydbg_INFO  if self.ASYN_samples_count < sysconfig.DBG_ASYCOUNT  else self.dataView.mydbg_TRACE
         BPrint(self.BPrt_HEAD_COMMON() + f"BUF_SHAPE:{self.YKScan_slicer_buf.shape}   SNR:{self.snr:.2f}   DATA:" +
            f"({self.YKScan_slicer_buf[0][-1]:.1f}, {self.YKScan_slicer_buf[0][-2]:.1f}, {self.YKScan_slicer_buf[0][-3]:.1f}, {self.YKScan_slicer_buf[0][-4]:.1f})", level=lvl)
 
@@ -739,10 +739,11 @@ class MyYK_Figure(matplotlib.figure.Figure):
         # Custom initialization logic (if needed)
         super().__init__(*args, **kwargs)
 
-    def init_YK_axes(self, fig_name):
+    def init_YK_axes(self, dView):
         # Each figure corresponds to a QUAD channel
-        self.fig_name = fig_name
-        self.suptitle(fig_name)
+        self.dataView = dView
+        self.fig_name = dView.myName
+        self.suptitle(dView.myName)
 
         SLICER_CHUNK_SIZE  = VIVADO_SLICES * YKSCAN_SLICER_SIZE 
 
@@ -794,7 +795,12 @@ class MyYK_Figure(matplotlib.figure.Figure):
     # This method will be called each time the yk scan updates, allowing it to update its graphs in real time. 
     def update_yk_scan(self, myYK):
         # Update the scatter plot with data from the buffer.
-        self.scatter_plot_EYE.set_offsets( np.column_stack((self.scatter_X_data, myYK.YKScan_slicer_viewBuffer)) )  # Set new data points
+        self.scatter_plot_EYE.set_offsets( np.column_stack((self.scatter_X_data, myYK.YKScan_slicer_viewBuffer.flatten())) )  # Set new data points
+
+        # Check if it's rotating the YKScan_slicer_buf on OLD data, then we won't need to do HISTOGRAM
+        if myYK.ASYN_samples_calc == myYK.ASYN_samples_count:
+            return
+        myYK.ASYN_samples_calc = myYK.ASYN_samples_count
 
         # Update the histogram plot     ## color: blue / green / teal / brown / charcoal / black / gray / silver / cyan / violet
         self.ax_HIST.cla()              ## NOTE: Histogram must be cleared regularly, otherwise, it will be unresponsive, with messagebox of <<"python3" is not responding>> 
@@ -863,6 +869,16 @@ class YKScan_DataView(Base_DataView):
         self.updateTable = parent.updateTable
 
         #------------------------------------------------------------------------------
+        if self.myName == sysconfig.DBG_SRCNAME:
+            self.mydbg_INFO  = DBG_LEVEL_INFO  - sysconfig.DBG_LVADJ
+            self.mydbg_DEBUG = DBG_LEVEL_DEBUG - sysconfig.DBG_LVADJ
+            self.mydbg_TRACE = DBG_LEVEL_TRACE - sysconfig.DBG_LVADJ
+        else:
+            self.mydbg_INFO  = DBG_LEVEL_INFO
+            self.mydbg_DEBUG = DBG_LEVEL_DEBUG
+            self.mydbg_TRACE = DBG_LEVEL_TRACE
+
+        #------------------------------------------------------------------------------
         if sysconfig.SIMULATE:   self.myDataSrc = Fake_YKScanLink_DataSrc(self, link)
         else:                    self.myDataSrc = IBert_YKScanLink_DataSrc(self, link)
         self.worker_thread = QtCore.QThread()
@@ -872,7 +888,7 @@ class YKScan_DataView(Base_DataView):
 
         #------------------------------------------------------------------------------
         self.myFigure = plt.figure(FigureClass=MyYK_Figure, num=self.myName, layout='constrained', edgecolor='black', linewidth=3, figsize=[FIG_SIZE_X, FIG_SIZE_Y])   # facecolor='yellow', dpi=100
-        self.myFigure.init_YK_axes(self.myName)
+        self.myFigure.init_YK_axes(self)
         self.myCanvas = FigureCanvas(self.myFigure)
         #self.mytable  = MyLink_TableEntry()
 
@@ -1006,18 +1022,16 @@ class HPC_Test_MainWidget(QtWidgets.QMainWindow):
         BPrint("Closed Widget", level=DBG_LEVEL_NOTICE)
 
     def resizeEvent(self, event):
-        # BPrint(f"resizeEvent: {event.oldSize()} => {event.size()}\t\tmain={self.size()}  tbl={self.tableWidget.size()}  fig={self.my_viewArena.dataViews[0].get_width_height()} ", level=DBG_LEVEL_TRACE)
-        BPrint(f"resizeEvent: {event.oldSize()} => {event.size()}\t\tmain={self.size()} ", level=DBG_LEVEL_TRACE)
+        BPrint(f"resizeEvent: {event.oldSize()} => {event.size()}\t\tmain={self.size()}  tbl={self.my_viewArena.tableWidget.size()}  fig={self.my_viewArena.dataViews[0].myCanvas.get_width_height()} ", level=DBG_LEVEL_TRACE)
         self.resizing_windows = True
 
     def leaveEvent(self, event):
         if  self.resizing_windows:
             self.resizing_windows = False
-            #BPrint(f"resizeEvent: main={self.size()}  tbl={self.tableWidget.size()}  fig={self.my_viewArena.dataViews[0].get_width_height()} ", level=DBG_LEVEL_INFO)
-            BPrint(f"resizeEvent: main={self.size()}  fig={self.my_viewArena.dataViews[0].get_width_height()} ", level=DBG_LEVEL_INFO)
+            BPrint(f"resizeEvent: main={self.size()}  tbl={self.my_viewArena.tableWidget.size()}  fig={self.my_viewArena.dataViews[0].myCanvas.get_width_height()} ", level=DBG_LEVEL_INFO)
             """
             ## To adjust dynamically the Canvas size, but it didn't work ###
-            figX, figY = self.my_viewArena.dataViews[0].get_width_height()
+            figX, figY = self.my_viewArena.dataViews[0].myCanvas .get_width_height()
             resX, resY = self.size().width(), self.size().height()
             tblX, tblY = self.tableWidget.size().width(), self.tableWidget.size().height()
             FIG_SIZE_X, FIG_SIZE_Y = calculate_plotFigure_size( resX, resY )
