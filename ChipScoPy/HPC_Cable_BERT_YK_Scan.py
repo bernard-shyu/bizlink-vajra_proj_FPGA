@@ -412,7 +412,7 @@ class Base_YKScanLink_DataSrc(Base_DataSource):
     def fsmFunc_refresh_plots(self):
         self.sync_refresh_plotBER()
         self.sync_refresh_plotYK()
-        self.dataView.myCanvas.draw_idle()
+        self.dataView.myCanvas.draw()       # myCanvas.draw_idle(): not good, easier with lagging, non-responsive
 
     #  ----------- 00 -------------------------------------------------------------------- 100 ---------
     #  peaks:                   Peak0                                Peak1
@@ -456,33 +456,46 @@ class Base_YKScanLink_DataSrc(Base_DataSource):
         # find the highest peak in [0:50], it can be Peak0 or Peak1
         p  = hist[0:half_BINS].max()
         i  = hist[0:half_BINS].argmax()
+
         # find the 2nd peak in [0:50] to the LEFT or RIGHT side
-        L = hist[0:i-HILL_MIN_WIDTH].max()
-        R = hist[i+HILL_MIN_WIDTH:half_BINS].max()
-        if L < R:
-            # 2nd peak is RIGHT side
-            Peak0 = p;  i_P0 = i
-            Peak1 = R;  i_P1 = hist[i+HILL_MIN_WIDTH:half_BINS].argmax() + i + HILL_MIN_WIDTH
-        else:
-            # 2nd peak is LEFT  side
+        if (i + HILL_MIN_WIDTH) >= half_BINS:
+            # DEBUG >> (0:50): SHAPE=(100,) P=10373.0 I=48      Exception: zero-size array to reduction operation maximum which has no identity
+            BPrint(self.BPrt_HEAD_WATER() + f"Peaks too NARROW on (0:50):   P={p} I={i}", level = self.dataView.mydbg_INFO)
+            Peak0 = p;  i_P0 = i - 1
             Peak1 = p;  i_P1 = i
-            Peak0 = L;  i_P0 = hist[0:i-HILL_MIN_WIDTH].argmax()
+        else:
+            L = hist[0:i-HILL_MIN_WIDTH].max()
+            R = hist[i+HILL_MIN_WIDTH:half_BINS].max()
+            if L < R:
+                # 2nd peak is RIGHT side
+                Peak0 = p;  i_P0 = i
+                Peak1 = R;  i_P1 = hist[i+HILL_MIN_WIDTH:half_BINS].argmax() + i + HILL_MIN_WIDTH
+            else:
+                # 2nd peak is LEFT  side
+                Peak1 = p;  i_P1 = i
+                Peak0 = L;  i_P0 = hist[0:i-HILL_MIN_WIDTH].argmax()
 
         #-----------------------------------------------------------------------------------------------
         # find the highest peak in [50:100], it can be Peak2 or Peak3
         P  = hist[half_BINS:HIST_BINS].max()
         i  = hist[half_BINS:HIST_BINS].argmax() + half_BINS
+
         # find the 2nd peak in [50:100] to the LEFT or RIGHT side
-        L = hist[half_BINS:i-HILL_MIN_WIDTH].max()
-        R = hist[i+HILL_MIN_WIDTH:HIST_BINS].max()
-        if L < R:
-            # 2nd peak is RIGHT side
+        if (i - HILL_MIN_WIDTH) <= half_BINS:
+            BPrint(self.BPrt_HEAD_WATER() + f"Peaks too NARROW on (50:100): P={p} I={i}", level = self.dataView.mydbg_INFO)
             Peak2 = p;  i_P2 = i
-            Peak3 = R;  i_P3 = hist[i+HILL_MIN_WIDTH:HIST_BINS].argmax() + i + HILL_MIN_WIDTH
+            Peak3 = p;  i_P3 = i + 1
         else:
-            # 2nd peak is LEFT  side
-            Peak3 = p;  i_P3 = i
-            Peak2 = L;  i_P2 = hist[half_BINS:i-HILL_MIN_WIDTH].argmax() + half_BINS
+            L = hist[half_BINS:i-HILL_MIN_WIDTH].max()
+            R = hist[i+HILL_MIN_WIDTH:HIST_BINS].max()
+            if L < R:
+                # 2nd peak is RIGHT side
+                Peak2 = p;  i_P2 = i
+                Peak3 = R;  i_P3 = hist[i+HILL_MIN_WIDTH:HIST_BINS].argmax() + i + HILL_MIN_WIDTH
+            else:
+                # 2nd peak is LEFT  side
+                Peak3 = p;  i_P3 = i
+                Peak2 = L;  i_P2 = hist[half_BINS:i-HILL_MIN_WIDTH].argmax() + half_BINS
 
         #-----------------------------------------------------------------------------------------------
         # find the valeys
@@ -624,9 +637,7 @@ class IBert_YKScanLink_DataSrc(Base_YKScanLink_DataSrc):
         BPrint(self.BPrt_HEAD_WATER() + f"fsmFunc_reset", level=self.dataView.mydbg_INFO)
         match self.fsm_state:
             case 0:
-                self.link.tx.reset(); 
-                self.link.rx.reset();
-                set_property_value( self.link.rx, 'RX BER Reset', 1, DBG_LEVEL_INFO);
+                self.__YKEngine_reset__();
                 return False
             case 1:
                 self.sync_refresh_plotBER()
@@ -643,6 +654,15 @@ class IBert_YKScanLink_DataSrc(Base_YKScanLink_DataSrc):
             self.__YKEngine_manage__(True, 1)  # relaunch YK.start(), likely it is stopped by throttling of flow control
 
     #----------------------------------------------------------------------------------
+    def __YKEngine_reset__(self):
+        self.link.tx.reset(); 
+        self.link.rx.reset();
+        set_property_value( self.link.rx, 'RX BER Reset', 1, self.dataView.mydbg_INFO);
+        """
+        set_property_value( self.link.tx, 'Reset', 1, self.dataView.mydbg_INFO);
+        set_property_value( self.link.rx, 'Reset', 1, self.dataView.mydbg_INFO);
+        """
+        
     def __YKEngine_manage__(self, to_start_YK, _where_):
         try:
             BPrint(self.BPrt_HEAD_WATER() + f"__YKEngine_manage__({_where_:2},  do_YK_Start={to_start_YK})", level=self.dataView.mydbg_DEBUG)
@@ -656,6 +676,7 @@ class IBert_YKScanLink_DataSrc(Base_YKScanLink_DataSrc):
                 self.YK_is_started = False
         except Exception as e:
             print(f"YKScan-{self.dsrcName} Exception: {str(e)}")
+            # self.__YKEngine_reset__();
 
     def asynFunc_update_YKScan(self, waterlevel):
         # throttle the YKScan engine in advance to prevent overflow of the slicer buffer
