@@ -9,6 +9,442 @@ Date   ???
 
 =================================================================================================================================================================================================================================
 commit ???
+Date   Fri Jun 7
+       [SCOPY] Unified environment. TESTID for whoami
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+(venv_SCOPY) bernard@BXUTP-FPGA-Linux:~/SDK_WIP/project/vajra_proj_FPGA/ChipScoPy$ ./HPC_Cable_BERT_YK_Scan.py -h
+usage: HPC_Cable_BERT_YK_Scan.py [-h] [--PDI_FILE filename] [--FPGA_HWID hwID] [--CONN_TYPE type] [--TESTID TID] [--DPATTERN pattern] [--DBG_LEVEL level] [--DBG_SRCNAME name] [--DBG_LVADJ level] [--DBG_ASYCOUNT count] [--DBG_SYNCOUNT count] [--RESOLUTION resol] [--SIMULATE]
+
+ChipScoPy APP fro BizLink iBERT HPC-cables testing by Bernard Shyu
+
+options:
+  -h, --help            show this help message and exit
+  --PDI_FILE filename   FPGA image file (*.pdi) Ex. PDI_Files/VPK120_iBERT_2xQDD_56G.pdi
+  --FPGA_HWID hwID      FPGA-board HWID: S/N (0 or 111A or 112A). Default: 0 (NOT specified, auto-detection)
+  --CONN_TYPE type      Connection Type: SLoop_x4 | SLoop_x8 | XConn_x4 | XConn_x8. Or shorter: S4 | S8 | X4 | X8. Default: SLoop_x8
+  --TESTID TID          Specify the TID-name of testing configuration, Ex. "B5.sn111_B1.sn112", means cable B5 on VPK120-sn111 && cable B1 on sn112. Default: ""
+  --DPATTERN pattern    Bits data pattern: PRBS 7 / PRBS 9 / ...
+  --DBG_LEVEL level     debug level (ERR=0 WARN=1 NOTICE=2 INFO=3 DEBUG=4 TRACE=5, default=3)
+  --DBG_SRCNAME name    DataSource name for trace (YK-Quad_204_CH0), default: ""
+  --DBG_LVADJ level     For the traced DataSource, the adjustment of debug level escalation, default: 2
+  --DBG_ASYCOUNT count  For all DataSources, the initial count of TRACE level async-messages to be shown, default: 0
+  --DBG_SYNCOUNT count  For all DataSources, the initial count of TRACE level sync-messages to be shown, default: 0
+  --RESOLUTION resol    App Window Resolution: 3840x2160 / 3200x1800 / 2600x1400 / 1600x990 / 900x800
+  --SIMULATE            Whether to SIMULATE by random data or by real iBERT data source. default: False
+
+EXPORT Environment variables: -----> export ip="10.20.2.146"; export CS_SERVER_URL="TCP:$ip:3042" HW_SERVER_URL="TCP:$ip:3121"; export HW_PLATFORM="vpk120"; export FPGA_HWID="112A"; export RESOLUTION="3840x2160"; export PDI_FILE="./PDI_Files/VPK120_iBERT_2xQDD_56G.pdi"; export
+CSV_PATH="./YK_CSV_Files"; export SHOW_FIG_TITLE=True; export WIN_TITLE_FONT=8; export MAX_SLICES=20; export YKSCAN_SLICER_SIZE=200; export HIST_BINS=40; export CONN_TYPE=XConn_x8; export DPATTERN="PRBS 9"; export QUAD_NAME="Quad_202"; export QUAD_CHAN=2; export DBG_LEVEL=5; export
+CONFIG_FILE="config.ini"
+
+
+(venv_SCOPY) bernard@BXUTP-FPGA-Linux:~/SDK_WIP/project/vajra_proj_FPGA/ChipScoPy$ HWID=112A; PCMD="./HPC_Cable_BERT_YK_Scan.py --FPGA_HWID $HWID --RESOLUTION 2600x1400 --TESTID B4.sn111_B5.sn112 --CONN_TYPE SLoop_x8";
+(venv_SCOPY) bernard@BXUTP-FPGA-Linux:~/SDK_WIP/project/vajra_proj_FPGA/ChipScoPy$ PRUN="python -m cProfile -o /tmp/pyProf_`date +%H%M`.log $PCMD";  FOUT="./LOG_ChipScoPy.__BXU_ignore/scopy_${HWID}_`date +%m%d-%H%M`.txt";  $PRUN --PDI_FILE PDI_Files/VPK120_iBERT_2xQDD_51G.pdi |tee $FOUT
+Warning: Ignoring XDG_SESSION_TYPE=wayland on Gnome. Use QT_QPA_PLATFORM=wayland to run on Wayland anyway.
+QSocketNotifier: Can only be used with threads started with QThread
+
+ChipScoPy APP fro BizLink iBERT HPC-cables testing --- 2024-06-07 17:47:02.705800
+
+Servers URL: TCP:10.20.2.8:3042 TCP:10.20.2.8:3121		FPGA_HW: vpk120  HWID: 112A	PDI: 'PDI_Files/VPK120_iBERT_2xQDD_51G.pdi' 
+
+SYSCONFIG: cTyp=SLoop_x8 pattern=PRBS 31 TID=B4.sn111_B5.sn112 RATE=51G resolution=2600x1400 FIG=3.2375,4.125
+DEBUG: level=3 srcName= lvAdj=2 AsynCnt=0 SynCnt=0 SIM=False 
+
+
+
+                      ChipScoPy Version Information                      
+┌────────────────────────────┬──────────────────────────────────────────┐
+│                     Entity │ Version                                  │
+├────────────────────────────┼──────────────────────────────────────────┤
+│                  ChipScoPy │ ┌───────────┬──────────────────────┐     │
+│                            │ │ Attribute │ Value                │     │
+│                            │ ├───────────┼──────────────────────┤     │
+│                            │ │     Build │ 2023.2.1715225694    │     │
+│                            │ │ Timestamp │ May 09 2024-11:34:54 │     │
+│                            │ └───────────┴──────────────────────┘     │
+│                            │                                          │
+│ hw_server @ 10.20.2.8:3121 │ ┌───────────┬──────────────────────────┐ │
+│                            │ │ Attribute │ Value                    │ │
+│                            │ ├───────────┼──────────────────────────┤ │
+│                            │ │    Status │ Connected                │ │
+│                            │ │     Build │ 1702581799               │ │
+│                            │ │   Version │ 2023.2.1                 │ │
+│                            │ │ Timestamp │ Thu Dec 14 12:23:19 2023 │ │
+│                            │ └───────────┴──────────────────────────┘ │
+│                            │                                          │
+│ cs_server @ 10.20.2.8:3042 │ ┌───────────────┬──────────────────────┐ │
+│                            │ │     Attribute │ Value                │ │
+│                            │ ├───────────────┼──────────────────────┤ │
+│                            │ │        Status │ Connected            │ │
+│                            │ │         Build │ 1696910516           │ │
+│                            │ │       Version │ 2023.2.0             │ │
+│                            │ │     Timestamp │ Oct 10 2023-12:01:56 │ │
+│                            │ │       Package │ 2023.2.1696910516    │ │
+│                            │ │ Artifact type │ pyinstaller          │ │
+│                            │ └───────────────┴──────────────────────┘ │
+└────────────────────────────┴──────────────────────────────────────────┘
+
+
+Versal devices: [
+    'xcvp1202:255211775190703847597631284360770503682:jsn-VPK120 FT4232H-872311160112A-14d00093-0',
+    'xcvp1202:255211775190703847597631284360770495362:jsn-VPK120 FT4232H-872311160111A-14d00093-0'
+]
+Found Versal devices for 112A: jsn-VPK120 FT4232H-872311160112A
+
+--> INFO: Programming device with: /mnt/extDisk/fpga_share/fpgaspace/VIVADO_projects/BZProj_iBERT_Testing/VPK120_iBERT_2xQDD_51G/VPK120_iBERT_2xQDD_51G.runs/impl_1/versal_ibert_wrapper.pdi
+    
+Device program progress ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% Done
+Discovering debug cores...
+--> Found ['IBERT Versal GTM (IBERT_2)', 'IBERT Versal GTYP (IBERT_3)']
+
+--> GT Groups available - [
+    'IBERT_2.Quad_206(GT_Group)',
+    'IBERT_2.Quad_205(GT_Group)',
+    'IBERT_2.Quad_204(GT_Group)',
+    'IBERT_2.Quad_203(GT_Group)',
+    'IBERT_2.Quad_202(GT_Group)'
+]
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ChipScoPy loading time  APP: 2024-06-07 17:47:02.705800   NOW: 2024-06-07 17:47:15.319686   ELAPSED:  12 / 12  	 THREAD: MainThread
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+Links_TXs: [IBERT_2.Quad_202.CH_0.TX(TX), IBERT_2.Quad_202.CH_1.TX(TX), IBERT_2.Quad_202.CH_2.TX(TX), IBERT_2.Quad_202.CH_3.TX(TX), IBERT_2.Quad_203.CH_0.TX(TX), IBERT_2.Quad_203.CH_1.TX(TX), IBERT_2.Quad_203.CH_2.TX(TX), IBERT_2.Quad_203.CH_3.TX(TX), IBERT_2.Quad_204.CH_0.TX(TX), IBERT_2.Quad_204.CH_2.TX(TX), IBERT_2.Quad_205.CH_0.TX(TX), IBERT_2.Quad_205.CH_2.TX(TX), IBERT_2.Quad_204.CH_1.TX(TX), IBERT_2.Quad_204.CH_3.TX(TX), IBERT_2.Quad_205.CH_1.TX(TX), IBERT_2.Quad_205.CH_3.TX(TX)]
+Links_RXs: [IBERT_2.Quad_204.CH_0.RX(RX), IBERT_2.Quad_204.CH_2.RX(RX), IBERT_2.Quad_205.CH_0.RX(RX), IBERT_2.Quad_205.CH_2.RX(RX), IBERT_2.Quad_204.CH_1.RX(RX), IBERT_2.Quad_204.CH_3.RX(RX), IBERT_2.Quad_205.CH_1.RX(RX), IBERT_2.Quad_205.CH_3.RX(RX), IBERT_2.Quad_202.CH_0.RX(RX), IBERT_2.Quad_202.CH_1.RX(RX), IBERT_2.Quad_202.CH_2.RX(RX), IBERT_2.Quad_202.CH_3.RX(RX), IBERT_2.Quad_203.CH_0.RX(RX), IBERT_2.Quad_203.CH_1.RX(RX), IBERT_2.Quad_203.CH_2.RX(RX), IBERT_2.Quad_203.CH_3.RX(RX)]
+
+--- Link_0 :: RX=IBERT_2.Quad_204.CH_0.RX(RX) TX=IBERT_2.Quad_202.CH_0.TX(TX)  GT=Quad_204 CH=0 ST=51.551 Gbps  -----
+iBERT object IBERT_2.Quad_204.CH_0.RX(RX) property: Pattern = PRBS 31 
+
+--- Link_1 :: RX=IBERT_2.Quad_204.CH_2.RX(RX) TX=IBERT_2.Quad_202.CH_1.TX(TX)  GT=Quad_204 CH=2 ST=51.551 Gbps  -----
+iBERT object IBERT_2.Quad_204.CH_2.RX(RX) property: Pattern = PRBS 31 
+
+--- Link_2 :: RX=IBERT_2.Quad_205.CH_0.RX(RX) TX=IBERT_2.Quad_202.CH_2.TX(TX)  GT=Quad_205 CH=0 ST=51.551 Gbps  -----
+iBERT object IBERT_2.Quad_205.CH_0.RX(RX) property: Pattern = PRBS 31 
+
+--- Link_3 :: RX=IBERT_2.Quad_205.CH_2.RX(RX) TX=IBERT_2.Quad_202.CH_3.TX(TX)  GT=Quad_205 CH=2 ST=51.551 Gbps  -----
+iBERT object IBERT_2.Quad_205.CH_2.RX(RX) property: Pattern = PRBS 31 
+
+--- Link_4 :: RX=IBERT_2.Quad_204.CH_1.RX(RX) TX=IBERT_2.Quad_203.CH_0.TX(TX)  GT=Quad_204 CH=1 ST=51.551 Gbps  -----
+iBERT object IBERT_2.Quad_204.CH_1.RX(RX) property: Pattern = PRBS 31 
+link.status:'No link'   ==> LinkStatus='No link'   LineRate=51.551 Gbps   Patten Checker: LockStatus='Not locked'  ErrorCount='N/A'  CycleCount='N/A'
+
+--- Link_5 :: RX=IBERT_2.Quad_204.CH_3.RX(RX) TX=IBERT_2.Quad_203.CH_1.TX(TX)  GT=Quad_204 CH=3 ST=51.551 Gbps  -----
+iBERT object IBERT_2.Quad_204.CH_3.RX(RX) property: Pattern = PRBS 31 
+link.status:'No link'   ==> LinkStatus='No link'   LineRate=51.551 Gbps   Patten Checker: LockStatus='Not locked'  ErrorCount='N/A'  CycleCount='N/A'
+
+--- Link_6 :: RX=IBERT_2.Quad_205.CH_1.RX(RX) TX=IBERT_2.Quad_203.CH_2.TX(TX)  GT=Quad_205 CH=1 ST=51.551 Gbps  -----
+iBERT object IBERT_2.Quad_205.CH_1.RX(RX) property: Pattern = PRBS 31 
+link.status:'No link'   ==> LinkStatus='No link'   LineRate=51.551 Gbps   Patten Checker: LockStatus='Not locked'  ErrorCount='N/A'  CycleCount='N/A'
+
+--- Link_7 :: RX=IBERT_2.Quad_205.CH_3.RX(RX) TX=IBERT_2.Quad_203.CH_3.TX(TX)  GT=Quad_205 CH=3 ST=51.551 Gbps  -----
+iBERT object IBERT_2.Quad_205.CH_3.RX(RX) property: Pattern = PRBS 31 
+link.status:'No link'   ==> LinkStatus='No link'   LineRate=51.551 Gbps   Patten Checker: LockStatus='Not locked'  ErrorCount='N/A'  CycleCount='N/A'
+
+--- Link_8 :: RX=IBERT_2.Quad_202.CH_0.RX(RX) TX=IBERT_2.Quad_204.CH_0.TX(TX)  GT=Quad_202 CH=0 ST=51.551 Gbps  -----
+iBERT object IBERT_2.Quad_202.CH_0.RX(RX) property: Pattern = PRBS 31 
+
+--- Link_9 :: RX=IBERT_2.Quad_202.CH_1.RX(RX) TX=IBERT_2.Quad_204.CH_2.TX(TX)  GT=Quad_202 CH=1 ST=51.551 Gbps  -----
+iBERT object IBERT_2.Quad_202.CH_1.RX(RX) property: Pattern = PRBS 31 
+
+--- Link_10 :: RX=IBERT_2.Quad_202.CH_2.RX(RX) TX=IBERT_2.Quad_205.CH_0.TX(TX)  GT=Quad_202 CH=2 ST=51.551 Gbps  -----
+iBERT object IBERT_2.Quad_202.CH_2.RX(RX) property: Pattern = PRBS 31 
+
+--- Link_11 :: RX=IBERT_2.Quad_202.CH_3.RX(RX) TX=IBERT_2.Quad_205.CH_2.TX(TX)  GT=Quad_202 CH=3 ST=51.551 Gbps  -----
+iBERT object IBERT_2.Quad_202.CH_3.RX(RX) property: Pattern = PRBS 31 
+
+--- Link_12 :: RX=IBERT_2.Quad_203.CH_0.RX(RX) TX=IBERT_2.Quad_204.CH_1.TX(TX)  GT=Quad_203 CH=0 ST=51.551 Gbps  -----
+iBERT object IBERT_2.Quad_203.CH_0.RX(RX) property: Pattern = PRBS 31 
+link.status:'No link'   ==> LinkStatus='No link'   LineRate=51.563 Gbps   Patten Checker: LockStatus='Not locked'  ErrorCount='N/A'  CycleCount='N/A'
+
+--- Link_13 :: RX=IBERT_2.Quad_203.CH_1.RX(RX) TX=IBERT_2.Quad_204.CH_3.TX(TX)  GT=Quad_203 CH=1 ST=51.551 Gbps  -----
+iBERT object IBERT_2.Quad_203.CH_1.RX(RX) property: Pattern = PRBS 31 
+link.status:'No link'   ==> LinkStatus='No link'   LineRate=51.551 Gbps   Patten Checker: LockStatus='Not locked'  ErrorCount='N/A'  CycleCount='N/A'
+
+--- Link_14 :: RX=IBERT_2.Quad_203.CH_2.RX(RX) TX=IBERT_2.Quad_205.CH_1.TX(TX)  GT=Quad_203 CH=2 ST=51.563 Gbps  -----
+iBERT object IBERT_2.Quad_203.CH_2.RX(RX) property: Pattern = PRBS 31 
+link.status:'No link'   ==> LinkStatus='No link'   LineRate=51.551 Gbps   Patten Checker: LockStatus='Not locked'  ErrorCount='N/A'  CycleCount='N/A'
+
+--- Link_15 :: RX=IBERT_2.Quad_203.CH_3.RX(RX) TX=IBERT_2.Quad_205.CH_3.TX(TX)  GT=Quad_203 CH=3 ST=51.551 Gbps  -----
+iBERT object IBERT_2.Quad_203.CH_3.RX(RX) property: Pattern = PRBS 31 
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ChipScoPy loading time  APP: 2024-06-07 17:47:02.705800   NOW: 2024-06-07 17:48:46.791742   ELAPSED: 104 / 91  	 THREAD: MainThread
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+YK-Quad_204_CH0:: TX=IBERT_2.Quad_202.CH_0.TX(TX)  RX=IBERT_2.Quad_204.CH_0.RX(RX)  LINK=Link_0    YK=YKScan_1    RX.yk_scan=YKScan_1
+YK-Quad_204_CH2:: TX=IBERT_2.Quad_202.CH_1.TX(TX)  RX=IBERT_2.Quad_204.CH_2.RX(RX)  LINK=Link_1    YK=YKScan_2    RX.yk_scan=YKScan_2
+YK-Quad_205_CH0:: TX=IBERT_2.Quad_202.CH_2.TX(TX)  RX=IBERT_2.Quad_205.CH_0.RX(RX)  LINK=Link_2    YK=YKScan_3    RX.yk_scan=YKScan_3
+YK-Quad_205_CH2:: TX=IBERT_2.Quad_202.CH_3.TX(TX)  RX=IBERT_2.Quad_205.CH_2.RX(RX)  LINK=Link_3    YK=YKScan_4    RX.yk_scan=YKScan_4
+YK-Quad_204_CH1:: TX=IBERT_2.Quad_203.CH_0.TX(TX)  RX=IBERT_2.Quad_204.CH_1.RX(RX)  LINK=Link_4    YK=YKScan_5    RX.yk_scan=YKScan_5
+YK-Quad_204_CH3:: TX=IBERT_2.Quad_203.CH_1.TX(TX)  RX=IBERT_2.Quad_204.CH_3.RX(RX)  LINK=Link_5    YK=YKScan_6    RX.yk_scan=YKScan_6
+YK-Quad_205_CH1:: TX=IBERT_2.Quad_203.CH_2.TX(TX)  RX=IBERT_2.Quad_205.CH_1.RX(RX)  LINK=Link_6    YK=YKScan_7    RX.yk_scan=YKScan_7
+YK-Quad_205_CH3:: TX=IBERT_2.Quad_203.CH_3.TX(TX)  RX=IBERT_2.Quad_205.CH_3.RX(RX)  LINK=Link_7    YK=YKScan_8    RX.yk_scan=YKScan_8
+YK-Quad_202_CH0:: TX=IBERT_2.Quad_204.CH_0.TX(TX)  RX=IBERT_2.Quad_202.CH_0.RX(RX)  LINK=Link_8    YK=YKScan_9    RX.yk_scan=YKScan_9
+YK-Quad_202_CH1:: TX=IBERT_2.Quad_204.CH_2.TX(TX)  RX=IBERT_2.Quad_202.CH_1.RX(RX)  LINK=Link_9    YK=YKScan_10   RX.yk_scan=YKScan_10
+YK-Quad_202_CH2:: TX=IBERT_2.Quad_205.CH_0.TX(TX)  RX=IBERT_2.Quad_202.CH_2.RX(RX)  LINK=Link_10   YK=YKScan_11   RX.yk_scan=YKScan_11
+YK-Quad_202_CH3:: TX=IBERT_2.Quad_205.CH_2.TX(TX)  RX=IBERT_2.Quad_202.CH_3.RX(RX)  LINK=Link_11   YK=YKScan_12   RX.yk_scan=YKScan_12
+YK-Quad_203_CH0:: TX=IBERT_2.Quad_204.CH_1.TX(TX)  RX=IBERT_2.Quad_203.CH_0.RX(RX)  LINK=Link_12   YK=YKScan_13   RX.yk_scan=YKScan_13
+YK-Quad_203_CH1:: TX=IBERT_2.Quad_204.CH_3.TX(TX)  RX=IBERT_2.Quad_203.CH_1.RX(RX)  LINK=Link_13   YK=YKScan_14   RX.yk_scan=YKScan_14
+YK-Quad_203_CH2:: TX=IBERT_2.Quad_205.CH_1.TX(TX)  RX=IBERT_2.Quad_203.CH_2.RX(RX)  LINK=Link_14   YK=YKScan_15   RX.yk_scan=YKScan_15
+YK-Quad_203_CH3:: TX=IBERT_2.Quad_205.CH_3.TX(TX)  RX=IBERT_2.Quad_203.CH_3.RX(RX)  LINK=Link_15   YK=YKScan_16   RX.yk_scan=YKScan_16
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ChipScoPy loading time  APP: 2024-06-07 17:47:02.705800   NOW: 2024-06-07 17:49:04.559786   ELAPSED: 121 / 17  	 THREAD: MainThread
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+YK-Quad_204_CH0: #0  /0   t:121  T:Dummy-2   	  WATER: 0/False FSM:0	fsmFunc_reset
+YK-Quad_205_CH1: #0  /0   t:121  T:Dummy-3   	  WATER: 0/False FSM:0	fsmFunc_reset
+YK-Quad_204_CH2: #0  /0   t:121  T:Dummy-4   	  WATER: 0/False FSM:0	fsmFunc_reset
+YK-Quad_204_CH3: #0  /0   t:121  T:Dummy-5   	  WATER: 0/False FSM:0	fsmFunc_reset
+YK-Quad_205_CH2: #0  /0   t:121  T:Dummy-6   	  WATER: 0/False FSM:0	fsmFunc_reset
+YK-Quad_204_CH1: #0  /0   t:121  T:Dummy-7   	  WATER: 0/False FSM:0	fsmFunc_reset
+YK-Quad_205_CH0: #0  /0   t:121  T:Dummy-8   	  WATER: 0/False FSM:0	fsmFunc_reset
+YK-Quad_205_CH3: #0  /0   t:121  T:Dummy-9   	  WATER: 0/False FSM:0	fsmFunc_reset
+YK-Quad_202_CH1: #0  /0   t:121  T:Dummy-10  	  WATER: 0/False FSM:0	fsmFunc_reset
+YK-Quad_202_CH0: #0  /0   t:121  T:Dummy-11  	  WATER: 0/False FSM:0	fsmFunc_reset
+YK-Quad_202_CH2: #0  /0   t:121  T:Dummy-12  	  WATER: 0/False FSM:0	fsmFunc_reset
+YK-Quad_202_CH3: #0  /0   t:121  T:Dummy-13  	  WATER: 0/False FSM:0	fsmFunc_reset
+YK-Quad_203_CH2: #0  /0   t:121  T:Dummy-14  	  WATER: 0/False FSM:0	fsmFunc_reset
+YK-Quad_203_CH0: #0  /0   t:121  T:Dummy-15  	  WATER: 0/False FSM:0	fsmFunc_reset
+YK-Quad_203_CH1: #0  /0   t:121  T:Dummy-16  	  WATER: 0/False FSM:0	fsmFunc_reset
+YK-Quad_203_CH3: #0  /0   t:121  T:Dummy-17  	  WATER: 0/False FSM:0	fsmFunc_reset
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ChipScoPy loading time  APP: 2024-06-07 17:47:02.705800   NOW: 2024-06-07 17:49:04.610240   ELAPSED: 121 / 0   	 THREAD: MainThread
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+resizeEvent: main=PyQt5.QtCore.QSize(2600, 1400)  tbl=PyQt5.QtCore.QSize(2582, 515)  fig=(317, 412) 
+iBERT object IBERT_2.Quad_204.CH_0.RX(RX) property: RX BER Reset = 0x0 
+YK-Quad_204_CH0: #0  /0   t:183  T:Dummy-2   	  WATER: 0/False FSM:1	FSM-WorkerThread.<PyQt5.QtCore.QThread object at 0x7334646e1a20> 
+iBERT object IBERT_2.Quad_205.CH_1.RX(RX) property: RX BER Reset = 0x0 
+YK-Quad_205_CH1: #0  /0   t:183  T:Dummy-3   	  WATER: 0/False FSM:1	FSM-WorkerThread.<PyQt5.QtCore.QThread object at 0x7334540bef80> 
+iBERT object IBERT_2.Quad_204.CH_2.RX(RX) property: RX BER Reset = 0x0 
+YK-Quad_204_CH2: #0  /0   t:183  T:Dummy-4   	  WATER: 0/False FSM:1	FSM-WorkerThread.<PyQt5.QtCore.QThread object at 0x7334645ae680> 
+iBERT object IBERT_2.Quad_204.CH_3.RX(RX) property: RX BER Reset = 0x0 
+YK-Quad_204_CH3: #0  /0   t:183  T:Dummy-5   	  WATER: 0/False FSM:1	FSM-WorkerThread.<PyQt5.QtCore.QThread object at 0x7334541ccee0> 
+iBERT object IBERT_2.Quad_205.CH_2.RX(RX) property: RX BER Reset = 0x0 
+YK-Quad_205_CH2: #0  /0   t:183  T:Dummy-6   	  WATER: 0/False FSM:1	FSM-WorkerThread.<PyQt5.QtCore.QThread object at 0x733454358430> 
+iBERT object IBERT_2.Quad_204.CH_1.RX(RX) property: RX BER Reset = 0x0 
+YK-Quad_204_CH1: #0  /0   t:183  T:Dummy-7   	  WATER: 0/False FSM:1	FSM-WorkerThread.<PyQt5.QtCore.QThread object at 0x73345425e950> 
+iBERT object IBERT_2.Quad_205.CH_0.RX(RX) property: RX BER Reset = 0x0 
+YK-Quad_205_CH0: #0  /0   t:183  T:Dummy-8   	  WATER: 0/False FSM:1	FSM-WorkerThread.<PyQt5.QtCore.QThread object at 0x733454bd5ea0> 
+iBERT object IBERT_2.Quad_205.CH_3.RX(RX) property: RX BER Reset = 0x0 
+YK-Quad_205_CH3: #0  /0   t:183  T:Dummy-9   	  WATER: 0/False FSM:1	FSM-WorkerThread.<PyQt5.QtCore.QThread object at 0x73343bb31510> 
+iBERT object IBERT_2.Quad_202.CH_1.RX(RX) property: RX BER Reset = 0x0 
+YK-Quad_202_CH1: #0  /0   t:183  T:Dummy-10  	  WATER: 0/False FSM:1	FSM-WorkerThread.<PyQt5.QtCore.QThread object at 0x73343b38dd80> 
+iBERT object IBERT_2.Quad_202.CH_0.RX(RX) property: RX BER Reset = 0x0 
+YK-Quad_202_CH0: #0  /0   t:183  T:Dummy-11  	  WATER: 0/False FSM:1	FSM-WorkerThread.<PyQt5.QtCore.QThread object at 0x73343b743ac0> 
+iBERT object IBERT_2.Quad_202.CH_2.RX(RX) property: RX BER Reset = 0x0 
+YK-Quad_202_CH2: #0  /0   t:183  T:Dummy-12  	  WATER: 0/False FSM:1	FSM-WorkerThread.<PyQt5.QtCore.QThread object at 0x73343ab0c5e0> 
+iBERT object IBERT_2.Quad_202.CH_3.RX(RX) property: RX BER Reset = 0x0 
+YK-Quad_202_CH3: #0  /0   t:183  T:Dummy-13  	  WATER: 0/False FSM:1	FSM-WorkerThread.<PyQt5.QtCore.QThread object at 0x73343a712b00> 
+iBERT object IBERT_2.Quad_203.CH_2.RX(RX) property: RX BER Reset = 0x0 
+YK-Quad_203_CH2: #0  /0   t:184  T:Dummy-14  	  WATER: 0/False FSM:1	FSM-WorkerThread.<PyQt5.QtCore.QThread object at 0x7334306c1bd0> 
+iBERT object IBERT_2.Quad_203.CH_0.RX(RX) property: RX BER Reset = 0x0 
+YK-Quad_203_CH0: #0  /0   t:184  T:Dummy-15  	  WATER: 0/False FSM:1	FSM-WorkerThread.<PyQt5.QtCore.QThread object at 0x73343a37d120> 
+iBERT object IBERT_2.Quad_203.CH_1.RX(RX) property: RX BER Reset = 0x0 
+YK-Quad_203_CH1: #0  /0   t:184  T:Dummy-16  	  WATER: 0/False FSM:1	FSM-WorkerThread.<PyQt5.QtCore.QThread object at 0x7334307872e0> 
+iBERT object IBERT_2.Quad_203.CH_3.RX(RX) property: RX BER Reset = 0x0 
+YK-Quad_203_CH3: #0  /0   t:184  T:Dummy-17  	  WATER: 0/False FSM:1	FSM-WorkerThread.<PyQt5.QtCore.QThread object at 0x73343afd4160> 
+YK-Quad_204_CH0: #0  /0   t:184  T:Dummy-2   	  WATER: 0/False FSM:1	fsmFunc_reset
+YK-Quad_205_CH1: #0  /0   t:184  T:Dummy-3   	  WATER: 0/False FSM:1	fsmFunc_reset
+YK-Quad_204_CH2: #0  /0   t:184  T:Dummy-4   	  WATER: 0/False FSM:1	fsmFunc_reset
+YK-Quad_204_CH3: #0  /0   t:184  T:Dummy-5   	  WATER: 0/False FSM:1	fsmFunc_reset
+YK-Quad_205_CH2: #0  /0   t:184  T:Dummy-6   	  WATER: 0/False FSM:1	fsmFunc_reset
+YK-Quad_204_CH1: #0  /0   t:184  T:Dummy-7   	  WATER: 0/False FSM:1	fsmFunc_reset
+YK-Quad_205_CH0: #0  /0   t:184  T:Dummy-8   	  WATER: 0/False FSM:1	fsmFunc_reset
+YK-Quad_205_CH3: #0  /0   t:184  T:Dummy-9   	  WATER: 0/False FSM:1	fsmFunc_reset
+YK-Quad_202_CH1: #0  /0   t:184  T:Dummy-10  	  WATER: 0/False FSM:1	fsmFunc_reset
+YK-Quad_202_CH0: #0  /0   t:184  T:Dummy-11  	  WATER: 0/False FSM:1	fsmFunc_reset
+YK-Quad_202_CH2: #0  /0   t:184  T:Dummy-12  	  WATER: 0/False FSM:1	fsmFunc_reset
+YK-Quad_202_CH3: #0  /0   t:184  T:Dummy-13  	  WATER: 0/False FSM:1	fsmFunc_reset
+YK-Quad_203_CH2: #0  /0   t:185  T:Dummy-14  	  WATER: 0/False FSM:1	fsmFunc_reset
+YK-Quad_203_CH0: #0  /0   t:185  T:Dummy-15  	  WATER: 0/False FSM:1	fsmFunc_reset
+YK-Quad_203_CH1: #0  /0   t:185  T:Dummy-16  	  WATER: 0/False FSM:1	fsmFunc_reset
+YK-Quad_203_CH3: #0  /0   t:185  T:Dummy-17  	  WATER: 0/False FSM:1	fsmFunc_reset
+YK-Quad_204_CH0: #0  /1   t:203  T:Dummy-2   	  WATER: 0/True  FSM:2	FSM-WorkerThread.<PyQt5.QtCore.QThread object at 0x7334646e1a20> 
+YK-Quad_204_CH0: #0  /1   t:204  T:Dummy-2   	  WATER: 0/True  FSM:2	fsmFunc_reset
+YK-Quad_204_CH2: #0  /1   t:205  T:Dummy-4   	  WATER: 0/True  FSM:2	FSM-WorkerThread.<PyQt5.QtCore.QThread object at 0x7334645ae680> 
+YK-Quad_205_CH0: #0  /1   t:206  T:Dummy-8   	  WATER: 0/True  FSM:2	FSM-WorkerThread.<PyQt5.QtCore.QThread object at 0x733454bd5ea0> 
+YK-Quad_204_CH2: #0  /1   t:206  T:Dummy-4   	  WATER: 0/True  FSM:2	fsmFunc_reset
+YK-Quad_205_CH0: #0  /1   t:207  T:Dummy-8   	  WATER: 0/True  FSM:2	fsmFunc_reset
+YK-Quad_204_CH1: #0  /1   t:208  T:Dummy-7   	  WATER: 0/True  FSM:2	FSM-WorkerThread.<PyQt5.QtCore.QThread object at 0x73345425e950> 
+YK-Quad_204_CH1: #0  /1   t:209  T:Dummy-7   	  WATER: 0/True  FSM:2	fsmFunc_reset
+YK-Quad_204_CH3: #0  /1   t:210  T:Dummy-5   	  WATER: 0/True  FSM:2	FSM-WorkerThread.<PyQt5.QtCore.QThread object at 0x7334541ccee0> 
+YK-Quad_205_CH2: #0  /1   t:211  T:Dummy-6   	  WATER: 0/True  FSM:2	FSM-WorkerThread.<PyQt5.QtCore.QThread object at 0x733454358430> 
+YK-Quad_204_CH3: #0  /1   t:211  T:Dummy-5   	  WATER: 0/True  FSM:2	fsmFunc_reset
+YK-Quad_205_CH2: #0  /1   t:212  T:Dummy-6   	  WATER: 0/True  FSM:2	fsmFunc_reset
+YK-Quad_205_CH1: #0  /1   t:215  T:Dummy-3   	  WATER: 0/True  FSM:2	FSM-WorkerThread.<PyQt5.QtCore.QThread object at 0x7334540bef80> 
+YK-Quad_205_CH1: #0  /1   t:216  T:Dummy-3   	  WATER: 0/True  FSM:2	fsmFunc_reset
+YK-Quad_204_CH0: #4  /2   t:217  T:TCF Event Dispatcher	  ERROR slicer: 0
+YK-Quad_205_CH3: #0  /1   t:219  T:Dummy-9   	  WATER: 0/True  FSM:2	FSM-WorkerThread.<PyQt5.QtCore.QThread object at 0x73343bb31510> 
+YK-Quad_205_CH3: #0  /1   t:220  T:Dummy-9   	  WATER: 0/True  FSM:2	fsmFunc_reset
+YK-Quad_202_CH0: #0  /1   t:220  T:Dummy-11  	  WATER: 0/True  FSM:2	FSM-WorkerThread.<PyQt5.QtCore.QThread object at 0x73343b743ac0> 
+YK-Quad_202_CH0: #0  /1   t:221  T:Dummy-11  	  WATER: 0/True  FSM:2	fsmFunc_reset
+YK-Quad_202_CH1: #0  /1   t:223  T:Dummy-10  	  WATER: 0/True  FSM:2	FSM-WorkerThread.<PyQt5.QtCore.QThread object at 0x73343b38dd80> 
+YK-Quad_202_CH1: #0  /1   t:224  T:Dummy-10  	  WATER: 0/True  FSM:2	fsmFunc_reset
+YK-Quad_202_CH2: #0  /1   t:225  T:Dummy-12  	  WATER: 0/True  FSM:2	FSM-WorkerThread.<PyQt5.QtCore.QThread object at 0x73343ab0c5e0> 
+YK-Quad_203_CH0: #0  /1   t:226  T:Dummy-15  	  WATER: 0/True  FSM:2	FSM-WorkerThread.<PyQt5.QtCore.QThread object at 0x73343a37d120> 
+YK-Quad_202_CH2: #0  /1   t:226  T:Dummy-12  	  WATER: 0/True  FSM:2	fsmFunc_reset
+YK-Quad_203_CH0: #0  /1   t:227  T:Dummy-15  	  WATER: 0/True  FSM:2	fsmFunc_reset
+YK-Quad_205_CH0: #5  /2   t:227  T:TCF Event Dispatcher	  ERROR slicer: 0
+YK-Quad_202_CH3: #0  /1   t:227  T:Dummy-13  	  WATER: 0/True  FSM:2	FSM-WorkerThread.<PyQt5.QtCore.QThread object at 0x73343a712b00> 
+YK-Quad_203_CH1: #0  /1   t:228  T:Dummy-16  	  WATER: 0/True  FSM:2	FSM-WorkerThread.<PyQt5.QtCore.QThread object at 0x7334307872e0> 
+YK-Quad_202_CH3: #0  /1   t:228  T:Dummy-13  	  WATER: 0/True  FSM:2	fsmFunc_reset
+YK-Quad_203_CH1: #0  /1   t:229  T:Dummy-16  	  WATER: 0/True  FSM:2	fsmFunc_reset
+YK-Quad_203_CH2: #0  /1   t:231  T:Dummy-14  	  WATER: 0/True  FSM:2	FSM-WorkerThread.<PyQt5.QtCore.QThread object at 0x7334306c1bd0> 
+YK-Quad_203_CH2: #0  /1   t:232  T:Dummy-14  	  WATER: 0/True  FSM:2	fsmFunc_reset
+YKScan-YK-Quad_204_CH0 Exception: TCF Error: IBERT terminate_yk_scan: ChipScope Service IBERT terminate_yk_scan: No YK scan in progress for 'IBERT_2.Quad_204.CH_0.RX'. Nothing to terminate
+YK-Quad_202_CH0: #2  /2   t:239  T:TCF Event Dispatcher	  ERROR slicer: 0
+YKScan-YK-Quad_203_CH3 Exception: TCF Error: IBERT start_yk_scan: ChipScope Service IBERT start_yk_scan: Failed to start YK scan. Cleanup done.
+YK-Quad_203_CH3: #0  /1   t:245  T:Dummy-17  	  WATER: 0/False FSM:2	FSM-WorkerThread.<PyQt5.QtCore.QThread object at 0x73343afd4160> 
+YK-Quad_203_CH3: #0  /1   t:246  T:Dummy-17  	  WATER: 0/False FSM:2	fsmFunc_reset
+YKScan-YK-Quad_205_CH0 Exception: TCF Error: IBERT terminate_yk_scan: ChipScope Service IBERT terminate_yk_scan: No YK scan in progress for 'IBERT_2.Quad_205.CH_0.RX'. Nothing to terminate
+YKScan-YK-Quad_202_CH0 Exception: TCF Error: IBERT terminate_yk_scan: ChipScope Service IBERT terminate_yk_scan: No YK scan in progress for 'IBERT_2.Quad_202.CH_0.RX'. Nothing to terminate
+YK-Quad_204_CH0: #4  /2   t:325  T:Dummy-2   	  WATER:11/True  FSM:10	FSM-WorkerThread.<PyQt5.QtCore.QThread object at 0x7334646e1a20> 
+YK-Quad_204_CH1: #10 /2   t:330  T:Dummy-7   	  WATER:18/False FSM:10	FSM-WorkerThread.<PyQt5.QtCore.QThread object at 0x73345425e950> 
+YK-Quad_204_CH3: #14 /2   t:331  T:Dummy-5   	  WATER:20/False FSM:10	FSM-WorkerThread.<PyQt5.QtCore.QThread object at 0x7334541ccee0> 
+YK-Quad_204_CH2: #9  /2   t:332  T:Dummy-4   	  WATER:17/False FSM:10	FSM-WorkerThread.<PyQt5.QtCore.QThread object at 0x7334645ae680> 
+YK-Quad_205_CH0: #5  /2   t:333  T:Dummy-8   	  WATER:12/True  FSM:10	FSM-WorkerThread.<PyQt5.QtCore.QThread object at 0x733454bd5ea0> 
+YK-Quad_205_CH1: #13 /2   t:334  T:Dummy-3   	  WATER:20/False FSM:10	FSM-WorkerThread.<PyQt5.QtCore.QThread object at 0x7334540bef80> 
+YK-Quad_205_CH3: #14 /2   t:336  T:Dummy-9   	  WATER:20/False FSM:10	FSM-WorkerThread.<PyQt5.QtCore.QThread object at 0x73343bb31510> 
+YK-Quad_205_CH2: #13 /2   t:337  T:Dummy-6   	  WATER:20/False FSM:10	FSM-WorkerThread.<PyQt5.QtCore.QThread object at 0x733454358430> 
+YK-Quad_203_CH0: #14 /2   t:337  T:Dummy-15  	  WATER:20/True  FSM:10	FSM-WorkerThread.<PyQt5.QtCore.QThread object at 0x73343a37d120> 
+YK-Quad_203_CH1: #14 /2   t:338  T:Dummy-16  	  WATER:20/True  FSM:10	FSM-WorkerThread.<PyQt5.QtCore.QThread object at 0x7334307872e0> 
+YK-Quad_203_CH2: #14 /2   t:339  T:Dummy-14  	  WATER:20/True  FSM:10	FSM-WorkerThread.<PyQt5.QtCore.QThread object at 0x7334306c1bd0> 
+YK-Quad_202_CH1: #13 /2   t:344  T:Dummy-10  	  WATER:20/False FSM:10	FSM-WorkerThread.<PyQt5.QtCore.QThread object at 0x73343b38dd80> 
+YK-Quad_202_CH2: #14 /2   t:345  T:Dummy-12  	  WATER:20/False FSM:10	FSM-WorkerThread.<PyQt5.QtCore.QThread object at 0x73343ab0c5e0> 
+YK-Quad_202_CH3: #18 /2   t:345  T:Dummy-13  	  WATER:20/True  FSM:10	FSM-WorkerThread.<PyQt5.QtCore.QThread object at 0x73343a712b00> 
+YK-Quad_204_CH1: #14 /3   t:382  T:Dummy-7   	  WATER:18/True  FSM:10	Peaks too NARROW on (0:50):   P=8954.0 I=48
+YK-Quad_204_CH1: #14 /3   t:382  T:Dummy-7   	  WATER:18/True  FSM:10	Peaks too NARROW on (50:100): P=8954.0 I=51
+YK-Quad_204_CH3: #16 /3   t:383  T:Dummy-5   	  WATER:20/True  FSM:10	Peaks too NARROW on (0:50):   P=10275.0 I=48
+YK-Quad_204_CH3: #16 /3   t:383  T:Dummy-5   	  WATER:20/True  FSM:10	Peaks too NARROW on (50:100): P=10275.0 I=51
+YK-Quad_205_CH1: #14 /3   t:385  T:Dummy-3   	  WATER:20/True  FSM:10	Peaks too NARROW on (0:50):   P=9697.0 I=48
+YK-Quad_205_CH1: #14 /3   t:385  T:Dummy-3   	  WATER:20/True  FSM:10	Peaks too NARROW on (50:100): P=9697.0 I=51
+YK-Quad_205_CH3: #15 /3   t:386  T:Dummy-9   	  WATER:20/True  FSM:10	Peaks too NARROW on (0:50):   P=10185.0 I=48
+YK-Quad_205_CH3: #15 /3   t:386  T:Dummy-9   	  WATER:20/True  FSM:10	Peaks too NARROW on (50:100): P=10185.0 I=51
+YK-Quad_203_CH0: #15 /3   t:387  T:Dummy-15  	  WATER:20/False FSM:10	Peaks too NARROW on (0:50):   P=9910.0 I=48
+YK-Quad_203_CH0: #15 /3   t:387  T:Dummy-15  	  WATER:20/False FSM:10	Peaks too NARROW on (50:100): P=9910.0 I=51
+YK-Quad_203_CH1: #20 /3   t:388  T:Dummy-16  	  WATER:20/False FSM:10	Peaks too NARROW on (0:50):   P=8077.0 I=48
+YK-Quad_203_CH1: #20 /3   t:388  T:Dummy-16  	  WATER:20/False FSM:10	Peaks too NARROW on (50:100): P=8077.0 I=51
+YK-Quad_203_CH2: #22 /3   t:389  T:Dummy-14  	  WATER:20/False FSM:10	Peaks too NARROW on (0:50):   P=10094.0 I=48
+YK-Quad_203_CH2: #22 /3   t:389  T:Dummy-14  	  WATER:20/False FSM:10	Peaks too NARROW on (50:100): P=10094.0 I=51
+YK-Quad_204_CH1: #25 /4   t:469  T:Dummy-7   	  WATER:18/False FSM:10	Peaks too NARROW on (0:50):   P=9053.0 I=48
+YK-Quad_204_CH1: #25 /4   t:469  T:Dummy-7   	  WATER:18/False FSM:10	Peaks too NARROW on (50:100): P=9053.0 I=51
+YK-Quad_204_CH3: #30 /4   t:470  T:Dummy-5   	  WATER:20/False FSM:10	Peaks too NARROW on (0:50):   P=10023.0 I=48
+YK-Quad_204_CH3: #30 /4   t:470  T:Dummy-5   	  WATER:20/False FSM:10	Peaks too NARROW on (50:100): P=10023.0 I=51
+YK-Quad_205_CH1: #28 /4   t:472  T:Dummy-3   	  WATER:20/False FSM:10	Peaks too NARROW on (0:50):   P=9918.0 I=48
+YK-Quad_205_CH1: #28 /4   t:472  T:Dummy-3   	  WATER:20/False FSM:10	Peaks too NARROW on (50:100): P=9918.0 I=51
+YK-Quad_205_CH3: #30 /4   t:472  T:Dummy-9   	  WATER:20/False FSM:10	Peaks too NARROW on (0:50):   P=10311.0 I=48
+YK-Quad_205_CH3: #30 /4   t:472  T:Dummy-9   	  WATER:20/False FSM:10	Peaks too NARROW on (50:100): P=10311.0 I=51
+YK-Quad_204_CH1: #30 /5   t:531  T:Dummy-7   	  WATER:18/True  FSM:10	Peaks too NARROW on (0:50):   P=8900.0 I=48
+Traceback (most recent call last):
+  File "./HPC_Cable_BERT_YK_Scan.py", line 350, in fsmFunc_worker_thread
+  File "./HPC_Cable_BERT_YK_Scan.py", line 421, in fsmFunc_refresh_plots
+    self.dataView.myCanvas.draw()       # myCanvas.draw_idle(): not good, easier with lagging, non-responsive
+  File "./HPC_Cable_BERT_YK_Scan.py", line 416, in sync_refresh_plotYK
+    self.BPrt_traceData( self.BPrt_HEAD_WATER() + f"refresh_plotYK.{v}.{self.YKScan_slicer_viewPointer}: BER: {self.ber:.2e}  SNR: {self.snr:6.2f}  WATER:{self.YKScan_slicer_buf.shape[0]} Elapsed:{self.elapsed}" )
+  File "./HPC_Cable_BERT_YK_Scan.py", line 826, in update_yk_scan
+  File "/home/bernard/.VENV/venv_SCOPY/lib/python3.10/site-packages/numpy/lib/shape_base.py", line 652, in column_stack
+    return _nx.concatenate(arrays, 1)
+ValueError: all the input array dimensions except for the concatenation axis must match exactly, but along dimension 0, the array at index 0 has size 8000 and the array at index 1 has size 6000
+YK-Quad_204_CH1: #30 /5   t:531  T:Dummy-7   	  WATER:18/True  FSM:10	Peaks too NARROW on (50:100): P=8900.0 I=51
+YK-Quad_204_CH3: #34 /5   t:534  T:Dummy-5   	  WATER:20/True  FSM:10	Peaks too NARROW on (0:50):   P=9899.0 I=48
+YK-Quad_204_CH3: #34 /5   t:534  T:Dummy-5   	  WATER:20/True  FSM:10	Peaks too NARROW on (50:100): P=9899.0 I=51
+YK-Quad_205_CH1: #31 /5   t:542  T:Dummy-3   	  WATER:20/False FSM:10	Peaks too NARROW on (0:50):   P=9938.0 I=48
+YK-Quad_205_CH1: #31 /5   t:542  T:Dummy-3   	  WATER:20/False FSM:10	Peaks too NARROW on (50:100): P=9938.0 I=51
+YK-Quad_205_CH3: #33 /5   t:544  T:Dummy-9   	  WATER:20/True  FSM:10	Peaks too NARROW on (0:50):   P=10273.0 I=48
+YK-Quad_205_CH3: #33 /5   t:544  T:Dummy-9   	  WATER:20/True  FSM:10	Peaks too NARROW on (50:100): P=10273.0 I=51
+YK-Quad_203_CH0: #30 /5   t:546  T:Dummy-15  	  WATER:20/True  FSM:10	Peaks too NARROW on (0:50):   P=10013.0 I=48
+YK-Quad_203_CH0: #30 /5   t:546  T:Dummy-15  	  WATER:20/True  FSM:10	Peaks too NARROW on (50:100): P=10013.0 I=51
+YK-Quad_203_CH1: #33 /5   t:548  T:Dummy-16  	  WATER:20/True  FSM:10	Peaks too NARROW on (0:50):   P=7956.0 I=48
+YK-Quad_203_CH1: #33 /5   t:548  T:Dummy-16  	  WATER:20/True  FSM:10	Peaks too NARROW on (50:100): P=7956.0 I=51
+YK-Quad_203_CH2: #32 /5   t:548  T:Dummy-14  	  WATER:20/True  FSM:10	Peaks too NARROW on (0:50):   P=10171.0 I=48
+YK-Quad_203_CH2: #32 /5   t:548  T:Dummy-14  	  WATER:20/True  FSM:10	Peaks too NARROW on (50:100): P=10171.0 I=51
+YK-Quad_204_CH1: #34 /6   t:584  T:Dummy-7   	  WATER:18/False FSM:10	Peaks too NARROW on (0:50):   P=9004.0 I=48
+YK-Quad_204_CH1: #34 /6   t:584  T:Dummy-7   	  WATER:18/False FSM:10	Peaks too NARROW on (50:100): P=9004.0 I=51
+YK-Quad_204_CH3: #35 /6   t:586  T:Dummy-5   	  WATER:20/False FSM:10	Peaks too NARROW on (0:50):   P=9919.0 I=48
+YK-Quad_204_CH3: #35 /6   t:586  T:Dummy-5   	  WATER:20/False FSM:10	Peaks too NARROW on (50:100): P=9919.0 I=51
+YK-Quad_205_CH3: #38 /6   t:589  T:Dummy-9   	  WATER:20/False FSM:10	Peaks too NARROW on (0:50):   P=10184.0 I=48
+YK-Quad_205_CH3: #38 /6   t:589  T:Dummy-9   	  WATER:20/False FSM:10	Peaks too NARROW on (50:100): P=10184.0 I=51
+YK-Quad_203_CH0: #37 /6   t:591  T:Dummy-15  	  WATER:20/True  FSM:10	Peaks too NARROW on (0:50):   P=10063.0 I=48
+YK-Quad_203_CH0: #37 /6   t:591  T:Dummy-15  	  WATER:20/True  FSM:10	Peaks too NARROW on (50:100): P=10063.0 I=51
+YK-Quad_203_CH1: #40 /6   t:594  T:Dummy-16  	  WATER:20/True  FSM:10	Peaks too NARROW on (0:50):   P=7913.0 I=48
+YK-Quad_203_CH1: #40 /6   t:594  T:Dummy-16  	  WATER:20/True  FSM:10	Peaks too NARROW on (50:100): P=7913.0 I=51
+YK-Quad_203_CH2: #42 /6   t:595  T:Dummy-14  	  WATER:20/False FSM:10	Peaks too NARROW on (0:50):   P=10148.0 I=48
+YK-Quad_203_CH2: #42 /6   t:595  T:Dummy-14  	  WATER:20/False FSM:10	Peaks too NARROW on (50:100): P=10148.0 I=51
+YK-Quad_203_CH0: #43 /7   t:640  T:Dummy-15  	  WATER:20/False FSM:10	Peaks too NARROW on (0:50):   P=10178.0 I=48
+YK-Quad_203_CH0: #43 /7   t:640  T:Dummy-15  	  WATER:20/False FSM:10	Peaks too NARROW on (50:100): P=10178.0 I=51
+YK-Quad_203_CH1: #43 /7   t:643  T:Dummy-16  	  WATER:20/False FSM:10	Peaks too NARROW on (0:50):   P=7912.0 I=48
+YK-Quad_203_CH1: #43 /7   t:643  T:Dummy-16  	  WATER:20/False FSM:10	Peaks too NARROW on (50:100): P=7912.0 I=51
+YK-Quad_203_CH2: #45 /7   t:644  T:Dummy-14  	  WATER:20/False FSM:10	Peaks too NARROW on (0:50):   P=10215.0 I=48
+YK-Quad_203_CH2: #45 /7   t:644  T:Dummy-14  	  WATER:20/False FSM:10	Peaks too NARROW on (50:100): P=10215.0 I=51
+YK-Quad_204_CH1: #45 /8   t:712  T:Dummy-7   	  WATER:18/True  FSM:10	Peaks too NARROW on (0:50):   P=9249.0 I=48
+YK-Quad_204_CH1: #45 /8   t:712  T:Dummy-7   	  WATER:18/True  FSM:10	Peaks too NARROW on (50:100): P=9249.0 I=51
+YK-Quad_204_CH3: #46 /8   t:722  T:Dummy-5   	  WATER:20/True  FSM:10	Peaks too NARROW on (0:50):   P=9956.0 I=48
+YK-Quad_204_CH3: #46 /8   t:722  T:Dummy-5   	  WATER:20/True  FSM:10	Peaks too NARROW on (50:100): P=9956.0 I=51
+YK-Quad_205_CH1: #41 /8   t:723  T:Dummy-3   	  WATER:20/True  FSM:10	Peaks too NARROW on (0:50):   P=9895.0 I=48
+YK-Quad_205_CH1: #41 /8   t:723  T:Dummy-3   	  WATER:20/True  FSM:10	Peaks too NARROW on (50:100): P=9895.0 I=51
+YK-Quad_205_CH3: #46 /8   t:725  T:Dummy-9   	  WATER:20/True  FSM:10	Peaks too NARROW on (0:50):   P=10232.0 I=48
+YK-Quad_205_CH3: #46 /8   t:725  T:Dummy-9   	  WATER:20/True  FSM:10	Peaks too NARROW on (50:100): P=10232.0 I=51
+YK-Quad_203_CH0: #50 /8   t:728  T:Dummy-15  	  WATER:20/True  FSM:10	Peaks too NARROW on (0:50):   P=10097.0 I=48
+YK-Quad_203_CH0: #50 /8   t:728  T:Dummy-15  	  WATER:20/True  FSM:10	Peaks too NARROW on (50:100): P=10097.0 I=51
+YK-Quad_203_CH1: #46 /8   t:737  T:Dummy-16  	  WATER:20/False FSM:10	Peaks too NARROW on (0:50):   P=7894.0 I=48
+YK-Quad_203_CH1: #46 /8   t:737  T:Dummy-16  	  WATER:20/False FSM:10	Peaks too NARROW on (50:100): P=7894.0 I=51
+YK-Quad_203_CH2: #51 /8   t:738  T:Dummy-14  	  WATER:20/False FSM:10	Peaks too NARROW on (0:50):   P=10166.0 I=48
+YK-Quad_203_CH2: #51 /8   t:738  T:Dummy-14  	  WATER:20/False FSM:10	Peaks too NARROW on (50:100): P=10166.0 I=51
+YK-Quad_204_CH1: #58 /9   t:799  T:Dummy-7   	  WATER:18/False FSM:10	Peaks too NARROW on (0:50):   P=9114.0 I=48
+YK-Quad_204_CH1: #58 /9   t:799  T:Dummy-7   	  WATER:18/False FSM:10	Peaks too NARROW on (50:100): P=9114.0 I=51
+YK-Quad_204_CH3: #60 /9   t:800  T:Dummy-5   	  WATER:20/False FSM:10	Peaks too NARROW on (0:50):   P=9896.0 I=48
+YK-Quad_204_CH3: #60 /9   t:800  T:Dummy-5   	  WATER:20/False FSM:10	Peaks too NARROW on (50:100): P=9896.0 I=51
+YK-Quad_205_CH1: #55 /9   t:800  T:Dummy-3   	  WATER:20/False FSM:10	Peaks too NARROW on (0:50):   P=9988.0 I=48
+YK-Quad_205_CH1: #55 /9   t:800  T:Dummy-3   	  WATER:20/False FSM:10	Peaks too NARROW on (50:100): P=9988.0 I=51
+YK-Quad_205_CH3: #62 /9   t:801  T:Dummy-9   	  WATER:20/False FSM:10	Peaks too NARROW on (0:50):   P=10339.0 I=48
+YK-Quad_205_CH3: #62 /9   t:801  T:Dummy-9   	  WATER:20/False FSM:10	Peaks too NARROW on (50:100): P=10339.0 I=51
+YK-Quad_203_CH0: #57 /9   t:801  T:Dummy-15  	  WATER:20/False FSM:10	Peaks too NARROW on (0:50):   P=10077.0 I=48
+YK-Quad_203_CH0: #57 /9   t:801  T:Dummy-15  	  WATER:20/False FSM:10	Peaks too NARROW on (50:100): P=10077.0 I=51
+OnClose: to do YK.stop()
+YK-Quad_204_CH1: #67 /10  t:865  T:Dummy-7   	  WATER:18/True  FSM:10	Peaks too NARROW on (0:50):   P=9187.0 I=48
+YK-Quad_204_CH1: #67 /10  t:865  T:Dummy-7   	  WATER:18/True  FSM:10	Peaks too NARROW on (50:100): P=9187.0 I=51
+YK-Quad_204_CH3: #67 /10  t:866  T:Dummy-5   	  WATER:20/True  FSM:10	Peaks too NARROW on (0:50):   P=9945.0 I=48
+YK-Quad_204_CH3: #67 /10  t:866  T:Dummy-5   	  WATER:20/True  FSM:10	Peaks too NARROW on (50:100): P=9945.0 I=51
+YK-Quad_205_CH1: #62 /10  t:867  T:Dummy-3   	  WATER:20/True  FSM:10	Peaks too NARROW on (0:50):   P=10061.0 I=48
+YK-Quad_205_CH1: #62 /10  t:867  T:Dummy-3   	  WATER:20/True  FSM:10	Peaks too NARROW on (50:100): P=10061.0 I=51
+YK-Quad_205_CH3: #68 /10  t:868  T:Dummy-9   	  WATER:20/True  FSM:10	Peaks too NARROW on (0:50):   P=10317.0 I=48
+YK-Quad_205_CH3: #68 /10  t:868  T:Dummy-9   	  WATER:20/True  FSM:10	Peaks too NARROW on (50:100): P=10317.0 I=51
+YK-Quad_203_CH0: #61 /10  t:871  T:Dummy-15  	  WATER:20/True  FSM:10	Peaks too NARROW on (0:50):   P=10079.0 I=48
+YK-Quad_203_CH0: #61 /10  t:871  T:Dummy-15  	  WATER:20/True  FSM:10	Peaks too NARROW on (50:100): P=10079.0 I=51
+YKScan-YK-Quad_204_CH0 Exception: TCF Error: IBERT terminate_yk_scan: ChipScope Service IBERT terminate_yk_scan: No YK scan in progress for 'IBERT_2.Quad_204.CH_0.RX'. Nothing to terminate
+YK-Quad_203_CH1: #49 /10  t:874  T:Dummy-16  	  WATER:20/True  FSM:10	Peaks too NARROW on (0:50):   P=7885.0 I=48
+YK-Quad_203_CH1: #49 /10  t:874  T:Dummy-16  	  WATER:20/True  FSM:10	Peaks too NARROW on (50:100): P=7885.0 I=51
+YK-Quad_203_CH2: #52 /10  t:875  T:Dummy-14  	  WATER:20/True  FSM:10	Peaks too NARROW on (0:50):   P=10104.0 I=48
+YK-Quad_203_CH2: #52 /10  t:875  T:Dummy-14  	  WATER:20/True  FSM:10	Peaks too NARROW on (50:100): P=10104.0 I=51
+YKScan-YK-Quad_205_CH0 Exception: TCF Error: IBERT terminate_yk_scan: ChipScope Service IBERT terminate_yk_scan: No YK scan in progress for 'IBERT_2.Quad_205.CH_0.RX'. Nothing to terminate
+YKScan-YK-Quad_202_CH0 Exception: TCF Error: IBERT terminate_yk_scan: ChipScope Service IBERT terminate_yk_scan: No YK scan in progress for 'IBERT_2.Quad_202.CH_0.RX'. Nothing to terminate
+YK-Quad_204_CH1: #76 /11  t:1000 T:Dummy-7   	  WATER:18/False FSM:10	Peaks too NARROW on (0:50):   P=9171.0 I=48
+YK-Quad_204_CH1: #76 /11  t:1000 T:Dummy-7   	  WATER:18/False FSM:10	Peaks too NARROW on (50:100): P=9171.0 I=51
+YK-Quad_204_CH3: #78 /11  t:1000 T:Dummy-5   	  WATER:20/False FSM:10	Peaks too NARROW on (0:50):   P=9994.0 I=48
+YK-Quad_204_CH3: #78 /11  t:1000 T:Dummy-5   	  WATER:20/False FSM:10	Peaks too NARROW on (50:100): P=9994.0 I=51
+YK-Quad_205_CH1: #72 /11  t:1001 T:Dummy-3   	  WATER:20/False FSM:10	Peaks too NARROW on (0:50):   P=9914.0 I=48
+YK-Quad_205_CH1: #72 /11  t:1001 T:Dummy-3   	  WATER:20/False FSM:10	Peaks too NARROW on (50:100): P=9914.0 I=51
+YK-Quad_205_CH3: #80 /11  t:1001 T:Dummy-9   	  WATER:20/False FSM:10	Peaks too NARROW on (0:50):   P=10427.0 I=48
+YK-Quad_205_CH3: #80 /11  t:1001 T:Dummy-9   	  WATER:20/False FSM:10	Peaks too NARROW on (50:100): P=10427.0 I=51
+YK-Quad_203_CH0: #73 /11  t:1003 T:Dummy-15  	  WATER:20/True  FSM:10	Peaks too NARROW on (0:50):   P=9927.0 I=48
+YK-Quad_203_CH0: #73 /11  t:1003 T:Dummy-15  	  WATER:20/True  FSM:10	Peaks too NARROW on (50:100): P=9927.0 I=51
+YK-Quad_203_CH1: #61 /11  t:1006 T:Dummy-16  	  WATER:20/True  FSM:10	Peaks too NARROW on (0:50):   P=7916.0 I=48
+YK-Quad_203_CH1: #61 /11  t:1006 T:Dummy-16  	  WATER:20/True  FSM:10	Peaks too NARROW on (50:100): P=7916.0 I=51
+YK-Quad_203_CH2: #65 /11  t:1006 T:Dummy-14  	  WATER:20/True  FSM:10	Peaks too NARROW on (0:50):   P=10138.0 I=48
+YK-Quad_203_CH2: #65 /11  t:1006 T:Dummy-14  	  WATER:20/True  FSM:10	Peaks too NARROW on (50:100): P=10138.0 I=51
+Closed Widget
+
+
+
+
+=================================================================================================================================================================================================================================
+commit df9aae6b3e2c970694c959fcaf21a0e525ebb516
 Date   Tue May 21
        [FPGA] TCL: 2xFPGA supports & better ScoPy logs
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

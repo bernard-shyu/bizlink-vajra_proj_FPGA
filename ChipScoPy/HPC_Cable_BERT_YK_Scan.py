@@ -33,7 +33,7 @@ from more_itertools import one
 from PyQt5 import QtWidgets, QtCore, QtGui
 import numpy as np
 import pandas as pd
-import argparse, math, re
+import argparse, configparser, math, re
 import os, sys, time, datetime, threading
 
 import matplotlib
@@ -77,14 +77,13 @@ ENV_HELP="""
 EXPORT Environment variables:
 ----->
 export ip="10.20.2.146";     export CS_SERVER_URL="TCP:$ip:3042" HW_SERVER_URL="TCP:$ip:3121";
-export HW_PLATFORM="vpk120"; export VERSAL_HWID="112A"
-export WIN_RESOLUTION="3840x2160";
+export HW_PLATFORM="vpk120"; export FPGA_HWID="112A";          export RESOLUTION="3840x2160";
 export PDI_FILE="./PDI_Files/VPK120_iBERT_2xQDD_56G.pdi";      export CSV_PATH="./YK_CSV_Files";
 export SHOW_FIG_TITLE=True;  export WIN_TITLE_FONT=8;
 export MAX_SLICES=20;        export YKSCAN_SLICER_SIZE=200;    export HIST_BINS=40;      
-export CONN_TYPE=XConn_x8;   export DATA_PATTERN="PRBS 9";
+export CONN_TYPE=XConn_x8;   export DPATTERN="PRBS 9";
 export QUAD_NAME="Quad_202"; export QUAD_CHAN=2;
-export APP_DBG_LEVEL=5;
+export DBG_LEVEL=5;          export CONFIG_FILE="config.ini"
 """
 
 CSV_PATH     =     os.getenv("CSV_PATH", "./YK_CSV_Files")
@@ -98,6 +97,7 @@ HW_URL = os.getenv("HW_SERVER_URL", "TCP:localhost:3121")
 HW_PLATFORM = os.getenv("HW_PLATFORM", "vpk120")
 SHOW_FIG_TITLE = os.getenv("SHOW_FIG_TITLE", 'False').lower() in ('true', '1', 't')
 WIN_TITLE_FONT = os.getenv("WIN_TITLE_FONT", '8')
+CONFIG_FILE    = os.getenv("CONFIG_FILE", 'config.ini')
 
 MAX_SLICES    = int(os.getenv("MAX_SLICES", "12"))
 HIST_BINS     = int(os.getenv("HIST_BINS",  "100"))
@@ -108,33 +108,35 @@ YKSCAN_SLICER_SIZE = int(os.getenv("YKSCAN_SLICER_SIZE",  "2000"))   # for simul
 # https://docs.python.org/3/library/argparse.html,  https://docs.python.org/3/howto/argparse.html
 # https://stackoverflow.com/questions/20063/whats-the-best-way-to-parse-command-line-arguments
 #--------------------------------------------------------------------------------------------------------------------------------------
+def get_parameter(argName, defValue, meta, helpTxt, argType = 'string'):
+    if argType  == 'string':
+        argVal = os.getenv(f'{argName}', f"{defValue}")
+        argVal = config.get('SCOPY_SECTION', argName, fallback=argVal)
+        parser.add_argument(f'--{argName}', default=argVal, metavar=meta, help=helpTxt)
+    elif argType  == 'int':
+        argVal = int(os.getenv(f'{argName}', f"{defValue}"))
+        argVal = config.get('SCOPY_SECTION', argName, fallback=argVal)
+        parser.add_argument(f'--{argName}', default=argVal, metavar=meta, help=helpTxt, type=int)
+
 parser = argparse.ArgumentParser(description=f"{APP_TITLE} by Bernard Shyu", epilog=ENV_HELP)
+config = configparser.ConfigParser()
+config.read(CONFIG_FILE)
 
-# The get_design_files() function tries to find the PDI and LTX files. In non-standard
-# configurations, you can put the path for PROGRAMMING_FILE and PROBES_FILE below.
-# design_files = get_design_files(f"{HW_PLATFORM}/production/chipscopy_ced")
-# PDI_FILE = design_files.programming_file
-PDI_FILE = os.getenv("PDI_FILE", "")
-parser.add_argument('--PDI_FILE', default=PDI_FILE, metavar='filename', help='FPGA image file (*.pdi) Ex. PDI_Files/VPK120_iBERT_2xQDD_56G.pdi')
+# The get_design_files() function tries to find the PDI and LTX files. In non-standard configurations, you can put the path for PROGRAMMING_FILE and PROBES_FILE below.
+#    design_files = get_design_files(f"{HW_PLATFORM}/production/chipscopy_ced")
+#    PDI_FILE = design_files.programming_file
+get_parameter( "PDI_FILE",     "",          "filename", 'FPGA image file (*.pdi) Ex. PDI_Files/VPK120_iBERT_2xQDD_56G.pdi' )
 
-VERSAL_HWID = os.getenv("VERSAL_HWID", "0")     # default: NOT specified, auto-detection
-parser.add_argument('--HWID', default=VERSAL_HWID, metavar='hwID', help='VPK120 HWID: S/N (0 or 111A or 112A)')
-
-CONN_TYPE = os.getenv("CONN_TYPE", "SLoop_x8")
-parser.add_argument('--CONN_TYPE', default=CONN_TYPE, metavar='type', help='Connection Type: SLoop_x4 | SLoop_x8 | XConn_x4 | XConn_x8.  Or shorter: S4 | S8 | X4 | X8.  Default: SLoop_x8')
-
-DATA_PATTERN = os.getenv("DATA_PATTERN", "PRBS 31")
-parser.add_argument('--PATTERN', default=DATA_PATTERN, metavar='pattern', help='Bits data pattern: PRBS 7 / PRBS 9 / ...')
-
-APP_DBG_LEVEL = int(os.getenv("APP_DBG_LEVEL", "3"))
-parser.add_argument('--DBG_LEVEL', default=APP_DBG_LEVEL, metavar='level', help='debug level (ERR=0 WARN=1 NOTICE=2 INFO=3 DEBUG=4 TRACE=5, default=3)', type=int)
-parser.add_argument('--DBG_SRCNAME',  default="", metavar='name',  help='DataSource name for trace (YK-Quad_204_CH0), default: ""')
-parser.add_argument('--DBG_LVADJ',    default=2,  metavar='level', help='For the traced DataSource, the adjustment of debug level escalation, default: 2')
-parser.add_argument('--DBG_ASYCOUNT', default=0,  metavar='count', help='For all DataSources, the initial count of TRACE level async-messages to be shown, default: 0')
-parser.add_argument('--DBG_SYNCOUNT', default=0,  metavar='count', help='For all DataSources, the initial count of TRACE level sync-messages  to be shown, default: 0')
-
-WIN_RESOLUTION = os.getenv("WIN_RESOLUTION", "3200x1800")    # 3200x1800 /  3840x2160 / 900x800
-parser.add_argument('--RESOLUTION', default=WIN_RESOLUTION, metavar='resol', help='App Window Resolution: 3200x1800 /  3840x2160 / 900x800')
+get_parameter( "FPGA_HWID",    "0",         "hwID",     'FPGA-board HWID: S/N (0 or 111A or 112A). Default: 0 (NOT specified, auto-detection)' )
+get_parameter( "CONN_TYPE",    "SLoop_x8",  "type",     'Connection Type: SLoop_x4 | SLoop_x8 | XConn_x4 | XConn_x8.  Or shorter: S4 | S8 | X4 | X8.  Default: SLoop_x8' )
+get_parameter( "TESTID",       "",          "TID",      'Specify the TID-name of testing configuration, Ex. "B5.sn111_B1.sn112", means cable B5 on VPK120-sn111 && cable B1 on sn112. Default: ""' )
+get_parameter( "DPATTERN",     "PRBS 31",   "pattern",  'Bits data pattern: PRBS 7 / PRBS 9 / ...' )
+get_parameter( "DBG_LEVEL",    "3",         "level",    'debug level (ERR=0 WARN=1 NOTICE=2 INFO=3 DEBUG=4 TRACE=5, default=3)', argType='int' )
+get_parameter( "DBG_SRCNAME",  "",          "name",     'DataSource name for trace (YK-Quad_204_CH0), default: ""' )
+get_parameter( "DBG_LVADJ",    "2",         "level",    'For the traced DataSource, the adjustment of debug level escalation, default: 2', argType='int' )
+get_parameter( "DBG_ASYCOUNT", "0",         "count",    'For all DataSources, the initial count of TRACE level async-messages to be shown, default: 0', argType='int' )
+get_parameter( "DBG_SYNCOUNT", "0",         "count",    'For all DataSources, the initial count of TRACE level sync-messages  to be shown, default: 0', argType='int' )
+get_parameter( "RESOLUTION",   "3200x1800", "resol",    'App Window Resolution: 3840x2160 / 3200x1800 / 2600x1400 / 1600x990 / 900x800' )
 
 parser.add_argument('--SIMULATE', action='store_true', help='Whether to SIMULATE by random data or by real iBERT data source. default: False')
 
@@ -161,8 +163,8 @@ PLOT_RESOL_Y   = int(re.findall("[0-9]+x([0-9]+)", sysconfig.RESOLUTION)[0])
 FIG_SIZE_X, FIG_SIZE_Y = calculate_plotFigure_size( PLOT_RESOL_X, PLOT_RESOL_Y )
 
 BPrint(f"\n{APP_TITLE } --- {app_start_time}\n", level=DBG_LEVEL_NOTICE)
-BPrint(f"Servers URL: {CS_URL} {HW_URL}\t\tFPGA_HW: {HW_PLATFORM}  HWID: {sysconfig.HWID}\tPDI: '{sysconfig.PDI_FILE}' \n", level=DBG_LEVEL_NOTICE)
-BPrint(f"SYSCONFIG: cTyp={sysconfig.CONN_TYPE} pattern={sysconfig.PATTERN} RATE={TEST_DATA_RATE}G " +
+BPrint(f"Servers URL: {CS_URL} {HW_URL}\t\tFPGA_HW: {HW_PLATFORM}  HWID: {sysconfig.FPGA_HWID}\tPDI: '{sysconfig.PDI_FILE}' \n", level=DBG_LEVEL_NOTICE)
+BPrint(f"SYSCONFIG: cTyp={sysconfig.CONN_TYPE} pattern={sysconfig.DPATTERN} TID={sysconfig.TESTID} RATE={TEST_DATA_RATE}G " +
        f"resolution={sysconfig.RESOLUTION} FIG={FIG_SIZE_X},{FIG_SIZE_Y}", level=DBG_LEVEL_NOTICE)
 BPrint(f"DEBUG: level={sysconfig.DBG_LEVEL} srcName={sysconfig.DBG_SRCNAME} lvAdj={sysconfig.DBG_LVADJ} AsynCnt={sysconfig.DBG_ASYCOUNT} SynCnt={sysconfig.DBG_SYNCOUNT} SIM={sysconfig.SIMULATE} \n", level=DBG_LEVEL_NOTICE)
 
@@ -188,14 +190,14 @@ def create_iBERT_session_device():
     BPrint(f"Versal devices: {session.devices}", level=DBG_LEVEL_NOTICE)
 
     # ## 3 - Program the device with PDI_FILE programming image file.
-    if sysconfig.HWID == "0": 
+    if sysconfig.FPGA_HWID == "0": 
         device = session.devices.filter_by(family="versal").get()
     else:
         device = None
         for d in session.devices:
             context = d['cable_context']
-            if len( re.findall(f"jsn.*{sysconfig.HWID}", context) ) > 0:
-                BPrint(f"Found Versal devices for {sysconfig.HWID}: {context}", level=DBG_LEVEL_NOTICE)
+            if len( re.findall(f"jsn.*{sysconfig.FPGA_HWID}", context) ) > 0:
+                BPrint(f"Found Versal devices for {sysconfig.FPGA_HWID}: {context}", level=DBG_LEVEL_NOTICE)
                 device = d
                 break
             else:
@@ -319,6 +321,14 @@ class Base_DataSource(QtCore.QObject):
     def BPrt_HEAD_WATER(self):
         return self.BPrt_HEAD_COMMON() + f"WATER:{self.YKScan_slicer_buf.shape[0]:>2}/{str(self.YK_is_started):<5} FSM:{self.fsm_state}\t"
 
+    # helper method to trace data for initial counts of traffic
+    def BPrt_traceData(self, msgTxt, trType="ASYNC"):
+        if trType == "ASYNC":
+            lvl = self.dataView.mydbg_INFO  if self.ASYN_samples_count < sysconfig.DBG_ASYCOUNT  else self.dataView.mydbg_TRACE
+        elif trType == "SYNC":
+            lvl = self.dataView.mydbg_INFO  if self.SYNC_samples_count < sysconfig.DBG_SYNCOUNT  else self.dataView.mydbg_TRACE
+        BPrint(msgTxt, level=lvl)
+
     def __refresh_common_data__(self):
         self.SYNC_samples_count +=1
         self.now         = datetime.datetime.now()
@@ -392,8 +402,7 @@ class Base_YKScanLink_DataSrc(Base_DataSource):
         self.sync_update_LinkData()
         self.dataView.myFigure.update_yk_ber(self)
         self.dataView.update_table()
-        lvl = self.dataView.mydbg_INFO  if self.SYNC_samples_count < sysconfig.DBG_SYNCOUNT  else self.dataView.mydbg_TRACE
-        BPrint(self.bprint_link(), level=lvl)
+        self.BPrt_traceData( self.bprint_link(), trType="SYNC" )
 
     def sync_refresh_plotYK(self):
         # rotate VIVADO_SLICES(=4) slicers of view-buffer from self.YKScan_slicer_buf[MAX_SLICES(=12)]
@@ -405,9 +414,7 @@ class Base_YKScanLink_DataSrc(Base_DataSource):
 
         # refresh the matplotlib figures
         self.dataView.myFigure.update_yk_scan(self)
-
-        lvl = self.dataView.mydbg_INFO  if self.ASYN_samples_count < sysconfig.DBG_ASYCOUNT  else self.dataView.mydbg_TRACE
-        BPrint(self.BPrt_HEAD_WATER() + f"refresh_plotYK.{v}.{self.YKScan_slicer_viewPointer}: BER: {self.ber:.2e}  SNR: {self.snr:6.2f}  WATER:{self.YKScan_slicer_buf.shape[0]} Elapsed:{self.elapsed}", level=lvl)
+        self.BPrt_traceData( self.BPrt_HEAD_WATER() + f"refresh_plotYK.{v}.{self.YKScan_slicer_viewPointer}: BER: {self.ber:.2e}  SNR: {self.snr:6.2f}  WATER:{self.YKScan_slicer_buf.shape[0]} Elapsed:{self.elapsed}" )
 
     def fsmFunc_refresh_plots(self):
         self.sync_refresh_plotBER()
@@ -711,9 +718,8 @@ class IBert_YKScanLink_DataSrc(Base_YKScanLink_DataSrc):
             obj.scan_data.pop(0)
 
         #------------------------------------------------------------------------------
-        lvl = self.dataView.mydbg_INFO  if self.ASYN_samples_count < sysconfig.DBG_ASYCOUNT  else self.dataView.mydbg_TRACE
-        BPrint(self.BPrt_HEAD_COMMON() + f"BUF_SHAPE:{self.YKScan_slicer_buf.shape}   SNR:{self.snr:.2f}   DATA:" +
-           f"({self.YKScan_slicer_buf[0][-1]:.1f}, {self.YKScan_slicer_buf[0][-2]:.1f}, {self.YKScan_slicer_buf[0][-3]:.1f}, {self.YKScan_slicer_buf[0][-4]:.1f})", level=lvl)
+        self.BPrt_traceData( self.BPrt_HEAD_COMMON() + f"BUF_SHAPE:{self.YKScan_slicer_buf.shape}   SNR:{self.snr:.2f}   DATA:" +
+           f"({self.YKScan_slicer_buf[0][-1]:.1f}, {self.YKScan_slicer_buf[0][-2]:.1f}, {self.YKScan_slicer_buf[0][-3]:.1f}, {self.YKScan_slicer_buf[0][-4]:.1f})" )
 
     #----------------------------------------------------------------------------------
     def sync_update_LinkData(self):
@@ -740,9 +746,10 @@ class IBert_YKScanLink_DataSrc(Base_YKScanLink_DataSrc):
     def finish_object(self):
         super().finish_object()
         self.fsm_running = False
-        path = f"{CSV_PATH}/YK_{sysconfig.HWID}.{app_start_time.year}-{app_start_time.month:02}{app_start_time.day:02}"
+        #path = f"{CSV_PATH}/YK_{sysconfig.FPGA_HWID}.{app_start_time.year}-{app_start_time.month:02}{app_start_time.day:02}"
+        path = f"{CSV_PATH}/TID_{sysconfig.TESTID}.{app_start_time.year}-{app_start_time.month:02}{app_start_time.day:02}"
         os.makedirs(path, exist_ok=True)
-        self.pd_data.to_csv(f"{path}/{self.dsrcName}-{app_start_time.hour:02}{app_start_time.minute:02}.csv")
+        self.pd_data.to_csv(f"{path}/Sn{sysconfig.FPGA_HWID}_{TEST_DATA_RATE}G.{self.dsrcName}-{app_start_time.hour:02}{app_start_time.minute:02}.csv")
         self.__YKEngine_manage__(False, 11)  # launch YK.stop(), to stop the YKScan engine from running.
 
 
@@ -827,6 +834,11 @@ class MyYK_Figure(matplotlib.figure.Figure):
         self.ax_HIST.cla()              ## NOTE: Histogram must be cleared regularly, otherwise, it will be unresponsive, with messagebox of <<"python3" is not responding>> 
         hist, edges, _ = self.ax_HIST.hist(list(myYK.YKScan_slicer_buf.flatten()), bins=HIST_BINS, orientation='horizontal', color='cyan', range=(0,100))
         myYK.find_peaks_and_valleys(hist, edges) 
+        """
+        If the data has already been binned and counted, use bar or stairs to plot the distribution:
+        counts, bins = np.histogram(x)
+        plt.stairs(counts, bins)
+        """
 
         self.ax_SNR_data.append(myYK.snr)
         self.ax_SNR.plot(self.ax_SNR_data, color='teal')
@@ -874,20 +886,11 @@ class MyLink_TableEntry:
 
 #----------------------------------------------------------------------------------------------------------------------------
 class Base_DataView(QtCore.QObject):
-    def __init__(self):
+    def __init__(self, name, parent):
         super().__init__()
-
-#----------------------------------------------------------------------------------------------------------------------------
-class YKScan_DataView(Base_DataView):
-    s_start_FSM_Worker = QtCore.pyqtSignal()
-
-    def __init__(self, link, parent):
-        super().__init__()
-        self.link    = link
-        self.nID     = link.nID
-        self.myName  = f"YK-{link.gt_name}_CH{link.channel}"
         self.myArena = parent
         self.updateTable = parent.updateTable
+        self.myName  = name
 
         #------------------------------------------------------------------------------
         if self.myName == sysconfig.DBG_SRCNAME:
@@ -898,6 +901,16 @@ class YKScan_DataView(Base_DataView):
             self.mydbg_INFO  = DBG_LEVEL_INFO
             self.mydbg_DEBUG = DBG_LEVEL_DEBUG
             self.mydbg_TRACE = DBG_LEVEL_TRACE
+
+
+#----------------------------------------------------------------------------------------------------------------------------
+class YKScan_DataView(Base_DataView):
+    s_start_FSM_Worker = QtCore.pyqtSignal()
+
+    def __init__(self, link, parent):
+        super().__init__(f"YK-{link.gt_name}_CH{link.channel}", parent)
+        self.link    = link
+        self.nID     = link.nID
 
         #------------------------------------------------------------------------------
         if sysconfig.SIMULATE:   self.myDataSrc = Fake_YKScanLink_DataSrc(self, link)
@@ -1001,8 +1014,9 @@ class HPCTest_ViewArena(QtCore.QObject):
 class HPC_Test_MainWidget(QtWidgets.QMainWindow):
     def __init__(self, n_links):
         super().__init__()
-        titleText = HW_URL if sysconfig.HWID == "0" else f"{HW_URL} / {sysconfig.HWID}"
-        if sysconfig.SIMULATE: titleText = "SIMULATION"
+        titleText = HW_URL if sysconfig.FPGA_HWID == "0" else f"{HW_URL} / {sysconfig.FPGA_HWID}"
+        if sysconfig.SIMULATE:     titleText = "SIMULATION"
+        if sysconfig.TESTID != "": titleText = f"{titleText} / {sysconfig.TESTID} / {TEST_DATA_RATE}G"
         self.setWindowTitle(f"<b><font color='black' size='{WIN_TITLE_FONT}'>BizLink HPC Cable Test: </font><font color='blue' size='{WIN_TITLE_FONT}'>{titleText}</font></b>")
 
         self.resizing_windows = False
@@ -1120,8 +1134,8 @@ def create_links_common(RXs, TXs):
         link.GT_Chan  = link.GT_Group.gts[link.channel]
         BPrint(f"\n--- {link.name} :: RX={link.rx} TX={link.tx}  GT={link.gt_name} CH={link.channel} ST={link.status}  -----", level=DBG_LEVEL_INFO)
 
-        set_property_value( link.rx, 'Pattern',  sysconfig.PATTERN, DBG_LEVEL_INFO) 
-        set_property_value( link.tx, 'Pattern',  sysconfig.PATTERN, DBG_LEVEL_DEBUG) 
+        set_property_value( link.rx, 'Pattern',  sysconfig.DPATTERN, DBG_LEVEL_INFO) 
+        set_property_value( link.tx, 'Pattern',  sysconfig.DPATTERN, DBG_LEVEL_DEBUG) 
         set_property_value( link.rx, 'Loopback', "None"   , DBG_LEVEL_DEBUG)
         set_property_value( link.tx, 'Loopback', "None"   , DBG_LEVEL_DEBUG)
 
@@ -1269,10 +1283,12 @@ def create_LinkGroups():
         case _:                 raise ValueError(f"Not valid Connection Type: {sysconfig.CONN_TYPE}\n")
 
     # These below RESET aren't necessarily required
+    """
     q202.reset()
     q203.reset()
     q204.reset()
     q205.reset()
+    """
 
     all_lnkgrps = get_all_link_groups()
     all_links   = get_all_links()
