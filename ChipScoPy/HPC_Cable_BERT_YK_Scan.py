@@ -381,6 +381,9 @@ class Base_YKScanLink_DataSrc(Base_DataSource):
         self.YKScan_slicer_viewPointer = 0
         self.YKScan_slicer_viewBuffer  = np.zeros(VIVADO_SLICES * YKSCAN_SLICER_SIZE)
 
+        self.ax_SNR_data = []
+        self.ax_BER_data = []
+
     def bprint_link(self):
         return self.BPrt_HEAD_COMMON() + f"SELF={self} LINK={str(self.link):<8}  STATUS={self.status:<12} BER={self.ber:<15} RATE={self.line_rate:<12} BITS={self.bit_count:<18} ERR={self.error_count}"
 
@@ -605,6 +608,8 @@ class Fake_YKScanLink_DataSrc(Base_YKScanLink_DataSrc):
             BPrint(self.BPrt_HEAD_WATER() + f"buffer FULL", level=self.dataView.mydbg_DEBUG)
         self.s_update_YKScan.emit(waterlevel)    # ==> invoke asynFunc_update_YKScan() for PyQT's thread context
 
+        self.ax_SNR_data.append(self.snr)
+
         """
         now = datetime.datetime.now() 
         print(f"\n\n{now} {len(self.YKScan_slicer_buf)}\n")
@@ -619,6 +624,7 @@ class Fake_YKScanLink_DataSrc(Base_YKScanLink_DataSrc):
         self.error_count += np.random.randint(100)                 # random int between 0 and 100
         self.ber          = self.error_count / self.bit_count_N;   #  np.random.random() / 1000000   # BER by random number simulation
         self.snr          = 18 + np.random.rand() * 4              # random float between 0 and 4
+        self.ax_BER_data.append(math.log10(self.ber))
 
 
 # The class correlates to chipscopy.api.ibert.link.Link
@@ -691,10 +697,6 @@ class IBert_YKScanLink_DataSrc(Base_YKScanLink_DataSrc):
     # ## 6 - Define YK Scan Update Method
     #----------------------------------------------------------------------------------
     def asynCB_update_YKScanData(self, obj):
-        self.ASYN_samples_count +=1      #  ==> len(obj.scan_data) - 1
-        self.snr = obj.scan_data[-1].snr
-
-        #------------------------------------------------------------------------------
         # assert YKSCAN_SLICER_SIZE == len(obj.scan_data[-1].slicer)
         if YKSCAN_SLICER_SIZE != len(obj.scan_data[-1].slicer):
             BPrint(self.BPrt_HEAD_COMMON() + f"ERROR slicer: {len(obj.scan_data[-1].slicer)}", level=DBG_LEVEL_ERR)
@@ -702,6 +704,11 @@ class IBert_YKScanLink_DataSrc(Base_YKScanLink_DataSrc):
                 obj.scan_data.pop(0)
             self.s_update_YKScan.emit(VIVADO_SLICES + 1)    # ==> to launch YK.stop() to rejuvenate the YK-engine
             return
+
+        #------------------------------------------------------------------------------
+        self.ASYN_samples_count +=1      #  ==> len(obj.scan_data) - 1
+        self.snr = obj.scan_data[-1].snr
+        self.ax_SNR_data.append(self.snr)
 
         #------------------------------------------------------------------------------
         # Update the circular buffer with new data.
@@ -729,6 +736,7 @@ class IBert_YKScanLink_DataSrc(Base_YKScanLink_DataSrc):
         self.ber         = self.link.ber                                                                                      # main BER read method: works
         #self.ber1       = self.link.rx.property_for_alias(RX_BER)                                                            # another BER method 1: not working
         #self.ber2       = list(self.link.rx.property.refresh(self.link.rx.property_for_alias[RX_BER]).values())[0]           # another BER method 2: works, almost the same value as <self.link.ber>
+        self.ax_BER_data.append(math.log10(self.ber))
 
         # Append data into Pandas table
         self.comments = check_link_status(self.link)
@@ -800,7 +808,6 @@ class MyYK_Figure(matplotlib.figure.Figure):
         else:              self.ax_HIST.set_xlabel("Histogram")
 
         # axis of SNR diagram
-        self.ax_SNR_data = []
         self.ax_SNR = plt.subplot(3,2,5)
         self.ax_SNR.set_xlabel("SNR Sample")
         self.ax_SNR.set_ylabel("SNR (dB)")
@@ -809,7 +816,6 @@ class MyYK_Figure(matplotlib.figure.Figure):
         else:              self.ax_SNR.set_xlabel("SNR")
 
         # axis of BER diagram
-        self.ax_BER_data = []
         self.ax_BER = plt.subplot(3,2,6)
         self.ax_BER.set_xlabel("BER Sample")
         self.ax_BER.set_ylabel("log10")
@@ -844,42 +850,10 @@ class MyYK_Figure(matplotlib.figure.Figure):
         plt.stairs(counts, bins)
         """
 
-        self.ax_SNR_data.append(myYK.snr)
-        self.ax_SNR.plot(self.ax_SNR_data, color='teal')
-        """
-        if self.ax_HIST.lines:
-            for line2 in self.ax_HIST.lines:
-                self.ax_HIST.set_xlim(0, self.ax_HIST.get_xlim()[1] + YKSCAN_SLICER_SIZE)
-                line2.set_xdata(list(line2.get_xdata()) + list(range(len(line2.get_xdata()), len(line2.get_xdata()) + YKSCAN_SLICER_SIZE)))
-                line2.set_ydata(list(line2.get_ydata()) + list(myYK.YKScan_slicer_buf[0]))
-        else:
-            #self.ax_HIST.cla()
-            #color: blue / green / teal / brown / charcoal / black / gray / silver / cyan / violet
-            self.ax_HIST.hist(list(myYK.YKScan_slicer_buf[0]), 50, orientation = 'horizontal', color='cyan', stacked=True, range=(0,100))
-
-        if self.ax_SNR.lines:
-            for line3 in self.ax_SNR.lines:
-                if myYK.ASYN_samples_count > self.ax_SNR.get_xlim()[1]:
-                    self.ax_SNR.set_xlim(0, myYK.ASYN_samples_count+10)
-                line3.set_xdata(list(line3.get_xdata()) + [myYK.ASYN_samples_count])
-                line3.set_ydata(list(line3.get_ydata()) + [myYK.snr])
-        else:
-            self.ax_SNR.plot(myYK.ASYN_samples_count, myYK.snr)
-        """
+        self.ax_SNR.plot(myYK.ax_SNR_data, color='teal')
 
     def update_yk_ber(self, myYK):
-        self.ax_BER_data.append(math.log10(myYK.ber))
-        self.ax_BER.plot(self.ax_BER_data, color='violet')
-        """
-        if self.ax_BER.lines:
-            for line4 in self.ax_BER.lines:
-                if myYK.SYNC_samples_count  > self.ax_BER.get_xlim()[1]:
-                    self.ax_BER.set_xlim(0, myYK.SYNC_samples_count+10)
-                line4.set_xdata(list(line4.get_xdata()) + [myYK.SYNC_samples_count])
-                line4.set_ydata(list(line4.get_ydata()) + [math.log10(myYK.ber)])
-        else:
-            self.ax_BER.plot(myYK.SYNC_samples_count, math.log10(myYK.ber), color='violet')
-        """
+        self.ax_BER.plot(myYK.ax_BER_data, color='violet')
 
 
 #----------------------------------------------------------------------------------------------------------------------------
