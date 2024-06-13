@@ -384,7 +384,8 @@ class Base_YKScanLink_DataSrc(Base_DataSource):
     def bprint_link(self):
         return self.BPrt_HEAD_COMMON() + f"SELF={self} LINK={str(self.link):<8}  STATUS={self.status:<12} BER={self.ber:<15} RATE={self.line_rate:<12} BITS={self.bit_count:<18} ERR={self.error_count}"
 
-    def sync_update_LinkData(self):  pass    # Abstract method: to update data from ource engine, asynchronously by call-back
+    def sync_update_LinkData(self):  pass    # Abstract method: to update data from ource engine, synchronously by polling
+    def async_update_YKData(self):   pass    # Abstract method: to update data from ource engine, asynchronously by call-back
 
     ## FSM-RESET state, fetching YKScan for 4 slices (VIVADO_SLICES), and filling up to 12 (MAX_SLICES)
     def fill_up_slicer_buf(self):
@@ -402,6 +403,7 @@ class Base_YKScanLink_DataSrc(Base_DataSource):
         self.BPrt_traceData( self.bprint_link(), trType="SYNC" )
 
     def sync_refresh_plotYK(self):
+        self.async_update_YKData()
         # rotate VIVADO_SLICES(=4) slicers of view-buffer from self.YKScan_slicer_buf[MAX_SLICES(=12)]
         v = self.YKScan_slicer_viewPointer
         self.YKScan_slicer_viewBuffer = self.YKScan_slicer_buf[v:(v + VIVADO_SLICES)]
@@ -622,12 +624,13 @@ class Fake_YKScanLink_DataSrc(Base_YKScanLink_DataSrc):
 # The class correlates to chipscopy.api.ibert.link.Link
 #----------------------------------------------------------------------------------------------------------------------------
 class IBert_YKScanLink_DataSrc(Base_YKScanLink_DataSrc):
-    WATCHDOG_INTERVAL = 120 * 1000
+    WATCHDOG_INTERVAL = 300 * 1000
 
     def __init__(self, dView, link):
         super().__init__(dView, link)
 
         #------------------------------------------------------------------------------
+        self.monitor_YK_cnt = 0
         self.YK   = create_yk_scans(target_objs=link.rx)[0]                # returns: chipscopy.api.ibert.yk_scan.YKScan object
         self.YK.updates_callback = lambda obj: self.asynCB_update_YKScanData(obj)
         BPrint(f"{self.dsrcName}:: TX={link.tx}  RX={link.rx}  LINK={str(link):<8}  YK={self.YK.name:<10}  RX.yk_scan={link.rx.yk_scan}", level=self.dataView.mydbg_INFO)
@@ -639,34 +642,33 @@ class IBert_YKScanLink_DataSrc(Base_YKScanLink_DataSrc):
     #----------------------------------------------------------------------------------
     def fsmFunc_reset(self):
         BPrint(self.BPrt_HEAD_WATER() + f"fsmFunc_reset", level=self.dataView.mydbg_INFO)
+        self.sync_refresh_plotBER()
         match self.fsm_state:
-            case 0:
-                self.__YKEngine_reset__();
-                return False
             case 1:
-                self.sync_refresh_plotBER()
-                time.sleep(self.link.nID * 1)      # interleaving to prevent overwhelming of data traffic from simultaneous YKScan on all Quad/CH
-                self.__YKEngine_manage__(True, 0)  # launch YK.start(), to start the YKScan engine
+                time.sleep(self.link.nID * 4)       # interleaving to prevent overwhelming of data traffic from simultaneous YKScan on all Quad/CH
+                self.__YKEngine_manage__(True, 0)   # launch YK.start(), to start the YKScan engine
                 return False
-            case 2:
+            case 4:
+                self.__YKEngine_manage__(False, 12) # launch YK.stop(), to stop the YKScan engine
+                return False
+            case 9:
                 self.fill_up_slicer_buf()
-                return True
+                return True                         # end of FSM-RESET state
+            case _:
+                return False
 
     def fsmFunc_watchdog(self):
         BPrint(self.BPrt_HEAD_WATER() + f"Watchdog", level=self.dataView.mydbg_DEBUG)
         if self.fsm_state >= 10:  # Normal FSM-state
             self.__YKEngine_manage__(True, 1)  # relaunch YK.start(), likely it is stopped by throttling of flow control
 
+    def async_update_YKData(self):
+        self.monitor_YK_cnt += 1
+        if  self.monitor_YK_cnt >= 4:
+            self.monitor_YK_cnt = 0
+            self.__YKEngine_manage__(False, 13)     # launch YK.stop(), to stop the YKScan engine
+
     #----------------------------------------------------------------------------------
-    def __YKEngine_reset__(self):
-        self.link.tx.reset(); 
-        self.link.rx.reset();
-        set_property_value( self.link.rx, 'RX BER Reset', 1, self.dataView.mydbg_INFO);
-        """
-        set_property_value( self.link.tx, 'Reset', 1, self.dataView.mydbg_INFO);
-        set_property_value( self.link.rx, 'Reset', 1, self.dataView.mydbg_INFO);
-        """
-        
     def __YKEngine_manage__(self, to_start_YK, _where_):
         try:
             BPrint(self.BPrt_HEAD_WATER() + f"__YKEngine_manage__({_where_:2},  do_YK_Start={to_start_YK})", level=self.dataView.mydbg_DEBUG)
@@ -680,7 +682,6 @@ class IBert_YKScanLink_DataSrc(Base_YKScanLink_DataSrc):
                 self.YK_is_started = False
         except Exception as e:
             print(f"YKScan-{self.dsrcName} Exception: {str(e)}")
-            # self.__YKEngine_reset__();
 
     def asynFunc_update_YKScan(self, waterlevel):
         # throttle the YKScan engine in advance to prevent overflow of the slicer buffer
@@ -820,7 +821,13 @@ class MyYK_Figure(matplotlib.figure.Figure):
     # This method will be called each time the yk scan updates, allowing it to update its graphs in real time. 
     def update_yk_scan(self, myYK):
         # Update the scatter plot with data from the buffer.
-        self.scatter_plot_EYE.set_offsets( np.column_stack((self.scatter_X_data, myYK.YKScan_slicer_viewBuffer.flatten())) )  # Set new data points
+
+        # self.scatter_plot_EYE.set_offsets( np.column_stack((self.scatter_X_data, myYK.YKScan_slicer_viewBuffer.flatten())) )
+        # >>>
+        #      ValueError: all the input array dimensions except for the concatenation axis must match exactly,
+        #                  but along dimension 0, the array at index 0 has size 8000 and the array at index 1 has size 6000
+        buf = myYK.YKScan_slicer_viewBuffer.flatten()
+        self.scatter_plot_EYE.set_offsets( np.column_stack((self.scatter_X_data[0:len(buf)], buf)) )  # Set new data points
 
         # Check if it's rotating the YKScan_slicer_buf on OLD data, then we won't need to do HISTOGRAM
         if myYK.ASYN_samples_calc == myYK.ASYN_samples_count:
@@ -1018,7 +1025,7 @@ class HPCTest_ViewArena(QtCore.QObject):
 class HPC_Test_MainWidget(QtWidgets.QMainWindow):
     def __init__(self, n_links):
         super().__init__()
-        self.setWindowTitle(f"BizLink HPC Cable Test / {HW_URL}")
+        self.setWindowTitle(f"BizLink HPC Cable Test  /  FPGA HW:{sysconfig.SERVER_IP}:{sysconfig.FPGA_HW_PORT}  CS:{sysconfig.FPGA_CS_PORT}")
 
         self.resizing_windows = False
         self.setGeometry(0, 0, PLOT_RESOL_X, PLOT_RESOL_Y)
@@ -1129,6 +1136,10 @@ def create_links_common(RXs, TXs):
     elif DBG_LEVEL_DEBUG <= sysconfig.DBG_LEVEL:  dbg_print = True;  dbg_print_all = False;
     else:                                         dbg_print = False; dbg_print_all = False; 
 
+    #----------------------------------------------------------------------------------------------------------
+    # We split TX & RX reset in 2 loops: 1st TX, 2nd RX
+    # Note: the TX -> RX pair may not come in the order of the below FOR-LOOP.
+    #----------------------------------------------------------------------------------------------------------
     for link in myLinks:
         link.nID = nID; nID += 1
         link.gt_name  = re.findall(".*(Quad_[0-9]*).*", str(link.rx))[0]
@@ -1142,11 +1153,9 @@ def create_links_common(RXs, TXs):
         set_property_value( link.rx, 'Loopback', "None"   , DBG_LEVEL_DEBUG)
         set_property_value( link.tx, 'Loopback', "None"   , DBG_LEVEL_DEBUG)
 
-        """
         link.GT_Chan.reset()
         link.tx.reset()
-        link.rx.reset()
-        """
+        #set_property_value( link.tx, 'Reset', 1, DBG_LEVEL_DEBUG)
 
         if link.status == "No link":     # assert link.status != "No link"
             BPrint(f"link.status:'No link'   ==> {check_link_status(link)}", level=DBG_LEVEL_WARN)
@@ -1190,6 +1199,15 @@ def create_links_common(RXs, TXs):
 
             link.generate_report()
             dbg_print = dbg_print_all
+
+    #----------------------------------------------------------------------------------------------------------
+    # This is 2nd loop for RX reset
+    #----------------------------------------------------------------------------------------------------------
+    for link in myLinks:
+        link.rx.reset()
+        #set_property_value( link.rx, 'Reset', 1, DBG_LEVEL_DEBUG)
+        #set_property_value( link.rx, 'RX BER Reset', 1, DBG_LEVEL_DEBUG)
+
 
 #--------------------------------------------------------------------------------------------------------------------------------------
 # Connection Map for QSFP-DD ports: QDD-1 & QDD-2 on 2x VPK120 (SN: 111/112)
