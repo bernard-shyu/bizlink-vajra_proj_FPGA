@@ -76,33 +76,25 @@ def bprint_loading_time(msg, level=DBG_LEVEL_NOTICE):
 ENV_HELP="""
 EXPORT Environment variables:
 ----->
-export ip="10.20.2.146";     export CS_SERVER_URL="TCP:$ip:3042" HW_SERVER_URL="TCP:$ip:3121";
-export HW_PLATFORM="vpk120"; export FPGA_HWID="112A";          export RESOLUTION="3840x2160";
-export PDI_FILE="./PDI_Files/VPK120_iBERT_2xQDD_56G.pdi";      export CSV_PATH="./YK_CSV_Files";
-export SHOW_FIG_TITLE=True;  export WIN_TITLE_FONT=8;
-export MAX_SLICES=20;        export YKSCAN_SLICER_SIZE=200;    export HIST_BINS=40;      
-export CONN_TYPE=XConn_x8;   export DPATTERN="PRBS 9";
-export QUAD_NAME="Quad_202"; export QUAD_CHAN=2;
-export DBG_LEVEL=5;          export CONFIG_FILE="config.ini"
+export SERVER_IP="10.20.2.8";         export FPGA_CS_PORT="3042";              export FPGA_HW_PORT="3121";
+export FPGA_HWID="112A";              export CONN_TYPE=XConn_x8;               export DPATTERN="PRBS 9";
+export MAX_SLICES=20;                 export YKSCAN_SLICER_SIZE=200;           export HIST_BINS=40;
+export CSV_PATH="YK_CSV_Files";       export CONFIG_FILE="config.ini";         export PDI_FILE="PDI_Files/VPK120_iBERT_2xQDD_53G.pdi";
+export DBG_LEVEL=5;                   export RESOLUTION="3840x2160";           export SHOW_FIG_TITLE=True;
+export WINTITLE_OVHEAD=90;            export WINTITLE_STYLE='color: red; font-size: 24px; font-weight: bold; background-color: rgba(255, 255, 128, 120);';
 """
 
-CSV_PATH     =     os.getenv("CSV_PATH", "./YK_CSV_Files")
-QUAD_NAME    =     os.getenv("QUAD_NAME", "Quad_202")
-QUAD_CHAN    = int(os.getenv("QUAD_CHAN", "0"))
-
-CS_URL = os.getenv("CS_SERVER_URL", "TCP:localhost:3042")
-HW_URL = os.getenv("HW_SERVER_URL", "TCP:localhost:3121")
-
 # specify hw and if programming is desired
-HW_PLATFORM = os.getenv("HW_PLATFORM", "vpk120")
-SHOW_FIG_TITLE = os.getenv("SHOW_FIG_TITLE", 'False').lower() in ('true', '1', 't')
-WIN_TITLE_FONT = os.getenv("WIN_TITLE_FONT", '8')
-CONFIG_FILE    = os.getenv("CONFIG_FILE", 'config.ini')
+SHOW_FIG_TITLE     = os.getenv("SHOW_FIG_TITLE", 'False').lower() in ('true', '1', 't')
+WINTITLE_STYLE     = os.getenv("WINTITLE_STYLE", 'color: blue; font-size: 22px; font-weight: bold; background-color: rgba(255, 255, 128, 120);')
+WINTITLE_OVHEAD    = int(os.getenv("WINTITLE_OVHEAD", "80"))                # overhead for Main-Windows, including Windows Title, borders, Tool-bar area
+CSV_PATH           = os.getenv("CSV_PATH", "YK_CSV_Files")
+CONFIG_FILE        = os.getenv("CONFIG_FILE", 'iBert_HPCTest_config.ini')
 
-MAX_SLICES    = int(os.getenv("MAX_SLICES", "12"))
-HIST_BINS     = int(os.getenv("HIST_BINS",  "100"))
-VIVADO_SLICES = 4    # Vivado always shows 8000 samples
-YKSCAN_SLICER_SIZE = int(os.getenv("YKSCAN_SLICER_SIZE",  "2000"))   # for simulation purpose, we may choose smaller value
+MAX_SLICES         = int(os.getenv("MAX_SLICES",         "12"))
+HIST_BINS          = int(os.getenv("HIST_BINS",          "100"))
+YKSCAN_SLICER_SIZE = int(os.getenv("YKSCAN_SLICER_SIZE", "2000"))           # for simulation purpose, we may choose smaller value
+VIVADO_SLICES      = 4    # Vivado always shows 8000 samples
 
 #--------------------------------------------------------------------------------------------------------------------------------------
 # https://docs.python.org/3/library/argparse.html,  https://docs.python.org/3/howto/argparse.html
@@ -125,8 +117,11 @@ config.read(CONFIG_FILE)
 # The get_design_files() function tries to find the PDI and LTX files. In non-standard configurations, you can put the path for PROGRAMMING_FILE and PROBES_FILE below.
 #    design_files = get_design_files(f"{HW_PLATFORM}/production/chipscopy_ced")
 #    PDI_FILE = design_files.programming_file
-get_parameter( "PDI_FILE",     "",          "filename", 'FPGA image file (*.pdi) Ex. PDI_Files/VPK120_iBERT_2xQDD_56G.pdi' )
-
+SIM_PDIFILE="Bernard_Simulation/VPK120_iBERT_2xQDD_53G.pdi"
+get_parameter( "PDI_FILE",     SIM_PDIFILE, "filename", 'FPGA image file (*.pdi) Ex. PDI_Files/VPK120_iBERT_2xQDD_53G.pdi' )
+get_parameter( "SERVER_IP",    "localhost", "ip",       'FPGA-board IP address. Default: localhost' )
+get_parameter( "FPGA_CS_PORT", "3042",      "port",     'FPGA-board cs_server port. Default: 3042' )
+get_parameter( "FPGA_HW_PORT", "3121",      "port",     'FPGA-board hw_server port. Default: 3042' )
 get_parameter( "FPGA_HWID",    "0",         "hwID",     'FPGA-board HWID: S/N (0 or 111A or 112A). Default: 0 (NOT specified, auto-detection)' )
 get_parameter( "CONN_TYPE",    "SLoop_x8",  "type",     'Connection Type: SLoop_x4 | SLoop_x8 | XConn_x4 | XConn_x8.  Or shorter: S4 | S8 | X4 | X8.  Default: SLoop_x8' )
 get_parameter( "TESTID",       "",          "TID",      'Specify the TID-name of testing configuration, Ex. "B5.sn111_B1.sn112", means cable B5 on VPK120-sn111 && cable B1 on sn112. Default: ""' )
@@ -144,11 +139,10 @@ sysconfig = parser.parse_args()
 
 #--------------------------------------------------------------------------------------------------------------------------------------
 def calculate_plotFigure_size(res_X, res_Y):
-    MWIN_OVERHEAD  = 65    # overhead for Main-Windows, including Windows Title, borders, Tool-bar area
     TB_CELL_HEIGHT = 30    # height of each table cell
     MATPLOTLIB_DPI = 100   # density (or dots) per inch, default: 100.0
     fig_size_x     = (res_X - 10) / global_grid_cols / MATPLOTLIB_DPI
-    fig_size_y     = (res_Y - MWIN_OVERHEAD - TB_CELL_HEIGHT * (global_N_links + 1)) / global_grid_rows / MATPLOTLIB_DPI
+    fig_size_y     = (res_Y - WINTITLE_OVHEAD - TB_CELL_HEIGHT * (global_N_links + 1)) / global_grid_rows / MATPLOTLIB_DPI
     return (fig_size_x, fig_size_y)
 
 TEST_DATA_RATE = int(re.findall(".*VPK120_iBERT_.*_([0-9]+)G.pdi", sysconfig.PDI_FILE)[0])
@@ -162,8 +156,11 @@ PLOT_RESOL_X   = int(re.findall("([0-9]+)x[0-9]+", sysconfig.RESOLUTION)[0])
 PLOT_RESOL_Y   = int(re.findall("[0-9]+x([0-9]+)", sysconfig.RESOLUTION)[0])
 FIG_SIZE_X, FIG_SIZE_Y = calculate_plotFigure_size( PLOT_RESOL_X, PLOT_RESOL_Y )
 
+CS_URL = f"TCP:{sysconfig.SERVER_IP}:{sysconfig.FPGA_CS_PORT}"
+HW_URL = f"TCP:{sysconfig.SERVER_IP}:{sysconfig.FPGA_HW_PORT}"
+
 BPrint(f"\n{APP_TITLE } --- {app_start_time}\n", level=DBG_LEVEL_NOTICE)
-BPrint(f"Servers URL: {CS_URL} {HW_URL}\t\tFPGA_HW: {HW_PLATFORM}  HWID: {sysconfig.FPGA_HWID}\tPDI: '{sysconfig.PDI_FILE}' \n", level=DBG_LEVEL_NOTICE)
+BPrint(f"Servers: CS:{CS_URL} HW:{HW_URL}   FPGA_HW: {sysconfig.FPGA_HWID}   PDI: '{sysconfig.PDI_FILE}'", level=DBG_LEVEL_NOTICE)
 BPrint(f"SYSCONFIG: cTyp={sysconfig.CONN_TYPE} pattern={sysconfig.DPATTERN} TID={sysconfig.TESTID} RATE={TEST_DATA_RATE}G " +
        f"resolution={sysconfig.RESOLUTION} FIG={FIG_SIZE_X},{FIG_SIZE_Y}", level=DBG_LEVEL_NOTICE)
 BPrint(f"DEBUG: level={sysconfig.DBG_LEVEL} srcName={sysconfig.DBG_SRCNAME} lvAdj={sysconfig.DBG_LVADJ} AsynCnt={sysconfig.DBG_ASYCOUNT} SynCnt={sysconfig.DBG_SYNCOUNT} SIM={sysconfig.SIMULATE} \n", level=DBG_LEVEL_NOTICE)
@@ -988,8 +985,15 @@ class HPCTest_ViewArena(QtCore.QObject):
         self.dataViews.append(dview)
         dview.myCanvas.draw()
 
-        self.updateTable( link.nID, 2, "{:^20}".format(re.findall(".*(Quad_.*\.[RT]X).*", str(link.tx))[0]) )
-        self.updateTable( link.nID, 3, "{:^20}".format(re.findall(".*(Quad_.*\.[RT]X).*", str(link.rx))[0]) )
+        # issue: "SyntaxWarning: invalid escape sequence"  (https://stackoverflow.com/questions/52335970/how-to-fix-syntaxwarning-invalid-escape-sequence-in-python)
+        # RootCause: "\ is the escape character in Python string literals."
+        #             it will cause a DeprecationWarning (< 3.12) or a SyntaxWarning (3.12+) otherwise.
+        # To check:  python -Wd -c '"\A"'
+        #            <string>:1: DeprecationWarning: invalid escape sequence '\A'
+        # Resolution: should always use \\ or raw strings r"xxx"
+        #             r"""raw strings""" for docstrings
+        self.updateTable( link.nID, 2, "{:^20}".format(re.findall(r".*(Quad_.*\.[RT]X).*", str(link.tx))[0]) )
+        self.updateTable( link.nID, 3, "{:^20}".format(re.findall(r".*(Quad_.*\.[RT]X).*", str(link.rx))[0]) )
         self.updateTable( link.nID, 4, "{:^20}".format(str(link.status)) )
 
         self.grid_col += 1
@@ -1014,10 +1018,7 @@ class HPCTest_ViewArena(QtCore.QObject):
 class HPC_Test_MainWidget(QtWidgets.QMainWindow):
     def __init__(self, n_links):
         super().__init__()
-        titleText = HW_URL if sysconfig.FPGA_HWID == "0" else f"{HW_URL} / {sysconfig.FPGA_HWID}"
-        if sysconfig.SIMULATE:     titleText = "SIMULATION"
-        if sysconfig.TESTID != "": titleText = f"{titleText} / {sysconfig.TESTID} / {TEST_DATA_RATE}G"
-        self.setWindowTitle(f"<b><font color='black' size='{WIN_TITLE_FONT}'>BizLink HPC Cable Test: </font><font color='blue' size='{WIN_TITLE_FONT}'>{titleText}</font></b>")
+        self.setWindowTitle(f"BizLink HPC Cable Test / {HW_URL}")
 
         self.resizing_windows = False
         self.setGeometry(0, 0, PLOT_RESOL_X, PLOT_RESOL_Y)
@@ -1035,17 +1036,19 @@ class HPC_Test_MainWidget(QtWidgets.QMainWindow):
         # Create a horizontal layout for the toobar
         self.layout_toolbar = QtWidgets.QHBoxLayout()
 
-        label = QtWidgets.QLabel(self)
-        label.setText('Bernard Label')
+        titleText = "SIMULATION"  if sysconfig.FPGA_HWID == "0" else f"{sysconfig.FPGA_HWID}"
+        if sysconfig.TESTID != "": titleText = f"{titleText} / {sysconfig.TESTID} / {TEST_DATA_RATE}G"
+
+        label = QtWidgets.QLabel(titleText, self)
+        label.setStyleSheet(WINTITLE_STYLE)
         self.layout_toolbar.addWidget(label)
 
-        btn = QtWidgets.QPushButton(self)
-        btn.setText('Bernard Button')
+        btn = QtWidgets.QPushButton("Bernard Button", self)
         self.layout_toolbar.addWidget(btn)
 
         box = QtWidgets.QComboBox(self)
         box.addItems(['A','B','C','D'])
-        box.setGeometry(10,10,200,30)
+        box.setGeometry(10,10,200,50)
         self.layout_toolbar.addWidget(box)
 
         self.layout_main.addLayout(self.layout_toolbar)
