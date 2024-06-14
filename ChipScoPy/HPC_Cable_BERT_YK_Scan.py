@@ -89,7 +89,7 @@ SHOW_FIG_TITLE     = os.getenv("SHOW_FIG_TITLE", 'False').lower() in ('true', '1
 WINTITLE_STYLE     = os.getenv("WINTITLE_STYLE", 'color: blue; font-size: 22px; font-weight: bold; background-color: rgba(255, 255, 128, 120);')
 WINTITLE_OVHEAD    = int(os.getenv("WINTITLE_OVHEAD", "80"))                # overhead for Main-Windows, including Windows Title, borders, Tool-bar area
 CSV_PATH           = os.getenv("CSV_PATH", "YK_CSV_Files")
-CONFIG_FILE        = os.getenv("CONFIG_FILE", 'iBert_HPCTest_config.ini')
+CONFIG_FILE        = os.getenv("CONFIG_FILE", 'config.iBert_HPCTest.ini')
 
 MAX_SLICES         = int(os.getenv("MAX_SLICES",         "12"))
 HIST_BINS          = int(os.getenv("HIST_BINS",          "100"))
@@ -380,6 +380,7 @@ class Base_YKScanLink_DataSrc(Base_DataSource):
         self.s_update_YKScan.connect(self.asynFunc_update_YKScan, QtCore.Qt.QueuedConnection)
         self.YKScan_slicer_viewPointer = 0
         self.YKScan_slicer_viewBuffer  = np.zeros(VIVADO_SLICES * YKSCAN_SLICER_SIZE)
+        self.YKScan_slicer_init_filled = False
 
         self.ax_SNR_data = []
         self.ax_BER_data = []
@@ -392,12 +393,23 @@ class Base_YKScanLink_DataSrc(Base_DataSource):
 
     ## FSM-RESET state, fetching YKScan for 4 slices (VIVADO_SLICES), and filling up to 12 (MAX_SLICES)
     def fill_up_slicer_buf(self):
-        while self.ASYN_samples_count < VIVADO_SLICES: # MAX_SLICES:
+        if self.YKScan_slicer_init_filled:         return
+        if self.ASYN_samples_count >= MAX_SLICES:  return
+
+        while self.ASYN_samples_count == 0:
             self.sync_refresh_plotBER()
             time.sleep(2)
 
-        for i in range(VIVADO_SLICES, MAX_SLICES):
-            self.YKScan_slicer_buf = np.append(self.YKScan_slicer_buf, [self.YKScan_slicer_buf[i % VIVADO_SLICES]], axis=0)
+        for i in range(self.ASYN_samples_count, MAX_SLICES):
+            self.YKScan_slicer_buf = np.append(self.YKScan_slicer_buf, [self.YKScan_slicer_buf[i % self.ASYN_samples_count]], axis=0)
+        self.YKScan_slicer_init_filled = True
+
+    def fsmFunc_early_plots(self):
+        self.sync_refresh_plotBER()
+        if self.ASYN_samples_count > 0:
+            self.fill_up_slicer_buf()
+            self.sync_refresh_plotYK()
+        self.dataView.myCanvas.draw()
 
     def sync_refresh_plotBER(self):
         self.sync_update_LinkData()
@@ -552,25 +564,25 @@ class Fake_YKScanLink_DataSrc(Base_YKScanLink_DataSrc):
         self.std_dev = 1.5
         self.wdog_i = 0
 
+        #------------------------------------------------------------------------------
+        self.bits_increment = 2 * TEST_DATA_RATE * 1.0E9    # incremented by every 2 seconds
+        self.bit_count   = "0"
+        self.bit_count_N = 0
+        self.error_count = 0
+        self.status      = self.link.status
+        self.line_rate   = self.link.status
+        self.comments    = ""
+
     #----------------------------------------------------------------------------------
     def fsmFunc_reset(self):
         BPrint(self.BPrt_HEAD_WATER() + f"fsmFunc_reset", level=self.dataView.mydbg_INFO)
+        self.fsmFunc_early_plots()
         match self.fsm_state:
-            case 0:
-                self.bits_increment = 2 * TEST_DATA_RATE * 1.0E9    # incremented by every 2 seconds
-                self.bit_count   = "0"
-                self.bit_count_N = 0
-                self.error_count = 0
-                self.status      = self.link.status
-                self.line_rate   = self.link.status
-                self.comments    = ""
-                return False
-            case 1:
-                self.sync_refresh_plotBER()
-                return False
-            case 2:
+            case 8:
                 self.fill_up_slicer_buf()
                 return True
+            case _:
+                return False
 
     def fsmFunc_watchdog(self):
         if self.fsm_state < 10:
@@ -648,7 +660,7 @@ class IBert_YKScanLink_DataSrc(Base_YKScanLink_DataSrc):
     #----------------------------------------------------------------------------------
     def fsmFunc_reset(self):
         BPrint(self.BPrt_HEAD_WATER() + f"fsmFunc_reset", level=self.dataView.mydbg_INFO)
-        self.sync_refresh_plotBER()
+        self.fsmFunc_early_plots()
         match self.fsm_state:
             case 1:
                 time.sleep(self.link.nID * 4)       # interleaving to prevent overwhelming of data traffic from simultaneous YKScan on all Quad/CH
@@ -687,7 +699,7 @@ class IBert_YKScanLink_DataSrc(Base_YKScanLink_DataSrc):
                     self.YK.stop()
                 self.YK_is_started = False
         except Exception as e:
-            print(f"YKScan-{self.dsrcName} Exception: {str(e)}")
+            print(f"YKScan-{self.dsrcName} ({_where_:2} {to_start_YK})  Exception: {str(e)}")
 
     def asynFunc_update_YKScan(self, waterlevel):
         # throttle the YKScan engine in advance to prevent overflow of the slicer buffer
