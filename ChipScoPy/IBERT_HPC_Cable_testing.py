@@ -19,16 +19,9 @@
 #======================================================================================================================================
 # ## 1 - Initialization: Imports & environments
 #======================================================================================================================================
-from chipscopy import create_session, report_versions, report_hierarchy, get_design_files
-from chipscopy.api.ibert import create_yk_scans
-from chipscopy.api.ibert import delete_link_groups, get_all_links, get_all_link_groups, create_links, create_link_groups
-from chipscopy.api.ibert.aliases import ( PATTERN,
-    EYE_SCAN_HORZ_RANGE, EYE_SCAN_VERT_RANGE, EYE_SCAN_VERT_STEP, EYE_SCAN_HORZ_STEP, EYE_SCAN_TARGET_BER,
-    TX_PRE_CURSOR, TX_POST_CURSOR, TX_DIFFERENTIAL_SWING,
-    RX_LOOPBACK, RX_BER, RX_STATUS, RX_LINE_RATE, RX_RECEIVED_BIT_COUNT, RX_NORMALIZED_RECEIVED_BIT_COUNT, RX_PATTERN_CHECKER_ERROR_COUNT, RX_TERMINATION_VOLTAGE, RX_COMMON_MODE
-)
-from more_itertools import one
 
+from module.common      import *
+from module.iBert_ScoPy import *
 #------------------------------------------
 from PyQt5 import QtWidgets, QtCore, QtGui
 import numpy as np
@@ -42,40 +35,6 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas, NavigationToolbar2QT as NavigationToolbar
 
 #--------------------------------------------------------------------------------------------------------------------------------------
-# Print levels (default: info)
-#--------------------------------
-DBG_LEVEL_WIP    = -1   # working in progress, LEVEL to be defined later
-DBG_LEVEL_ERR    = 0
-DBG_LEVEL_WARN   = 1
-DBG_LEVEL_NOTICE = 2
-DBG_LEVEL_INFO   = 3
-DBG_LEVEL_DEBUG  = 4
-DBG_LEVEL_TRACE  = 5
-#--------------------------------
-def BPrint(*args, level=DBG_LEVEL_INFO):
-    if level <= sysconfig.DBG_LEVEL:
-        print(*args)
-
-app_start_time = datetime.datetime.now()
-APP_TITLE = "ChipScoPy APP fro BizLink iBERT HPC-cables testing"
-
-last_check = app_start_time
-def bprint_loading_time(msg, level=DBG_LEVEL_NOTICE):
-    global last_check
-    now = datetime.datetime.now()
-    elapsed1 = (now - app_start_time).seconds
-    elapsed2 = (now - last_check).seconds
-    last_check = now
-    BPrint("\n----------------------------------------------------------------------------------------------------------------------------------------------------------------\n" + \
-       f"ChipScoPy loading time  APP: {app_start_time}   NOW: {now}   ELAPSED:{elapsed1:>4} / {elapsed2:<4}\t THREAD: {threading.current_thread().name}" +  \
-       "\n----------------------------------------------------------------------------------------------------------------------------------------------------------------\n\n", level=level)
-
-def sleep_QAppVitalize(n):
-    for _ in range(n):
-        QtWidgets.QApplication.processEvents()
-        time.sleep(1)
-
-#--------------------------------------------------------------------------------------------------------------------------------------
 # Configuration variables: 1) external EXPORT Environment variables, 2) command-line arguments (higher priority)
 #--------------------------------------------------------------------------------------------------------------------------------------
 ENV_HELP="""
@@ -85,14 +44,9 @@ export SERVER_IP="10.20.2.8";         export FPGA_CS_PORT="3042";              e
 export FPGA_HWID="112A";              export CONN_TYPE=XConn_x8;               export DPATTERN="PRBS 9";
 export MAX_SLICES=20;                 export YKSCAN_SLICER_SIZE=200;           export HIST_BINS=40;
 export CSV_PATH="YK_CSV_Files";       export CONFIG_FILE="config.ini";         export PDI_FILE="PDI_Files/VPK120_iBERT_2xQDD_53G.pdi";
-export DBG_LEVEL=5;                   export RESOLUTION="3840x2160";           export SHOW_FIG_TITLE=True;
-export WINTITLE_OVHEAD=90;            export WINTITLE_STYLE='color: red; font-size: 24px; font-weight: bold; background-color: rgba(255, 255, 128, 120);';
 """
 
 # specify hw and if programming is desired
-SHOW_FIG_TITLE     = os.getenv("SHOW_FIG_TITLE", 'False').lower() in ('true', '1', 't')
-WINTITLE_STYLE     = os.getenv("WINTITLE_STYLE", 'color: blue; font-size: 22px; font-weight: bold; background-color: rgba(255, 255, 128, 120);')
-WINTITLE_OVHEAD    = int(os.getenv("WINTITLE_OVHEAD", "80"))                # overhead for Main-Windows, including Windows Title, borders, Tool-bar area
 CSV_PATH           = os.getenv("CSV_PATH", "YK_CSV_Files")
 CONFIG_FILE        = os.getenv("CONFIG_FILE", 'config.iBert_HPCTest.ini')
 
@@ -102,22 +56,8 @@ YKSCAN_SLICER_SIZE = int(os.getenv("YKSCAN_SLICER_SIZE", "2000"))           # fo
 VIVADO_SLICES      = 4    # Vivado always shows 8000 samples
 
 #--------------------------------------------------------------------------------------------------------------------------------------
-# https://docs.python.org/3/library/argparse.html,  https://docs.python.org/3/howto/argparse.html
-# https://stackoverflow.com/questions/20063/whats-the-best-way-to-parse-command-line-arguments
-#--------------------------------------------------------------------------------------------------------------------------------------
-def get_parameter(argName, defValue, meta, helpTxt, argType = 'string'):
-    if argType  == 'string':
-        argVal = os.getenv(f'{argName}', f"{defValue}")
-        argVal = config.get('SCOPY_SECTION', argName, fallback=argVal)
-        parser.add_argument(f'--{argName}', default=argVal, metavar=meta, help=helpTxt)
-    elif argType  == 'int':
-        argVal = int(os.getenv(f'{argName}', f"{defValue}"))
-        argVal = config.get('SCOPY_SECTION', argName, fallback=argVal)
-        parser.add_argument(f'--{argName}', default=argVal, metavar=meta, help=helpTxt, type=int)
-
-parser = argparse.ArgumentParser(description=f"{APP_TITLE} by Bernard Shyu", epilog=ENV_HELP)
-config = configparser.ConfigParser()
-config.read(CONFIG_FILE)
+APP_TITLE = "ChipScoPy APP for BizLink iBERT HPC-cables testing"
+parser = init_argParser(APP_TITLE, ENV_HELP, CONFIG_FILE)
 
 # The get_design_files() function tries to find the PDI and LTX files. In non-standard configurations, you can put the path for PROGRAMMING_FILE and PROBES_FILE below.
 #    design_files = get_design_files(f"{HW_PLATFORM}/production/chipscopy_ced")
@@ -131,25 +71,10 @@ get_parameter( "FPGA_HWID",    "0",         "hwID",     'FPGA-board HWID: S/N (0
 get_parameter( "CONN_TYPE",    "SLoop_x8",  "type",     'Connection Type: SLoop_x4 | SLoop_x8 | XConn_x4 | XConn_x8.  Or shorter: S4 | S8 | X4 | X8.  Default: SLoop_x8' )
 get_parameter( "TESTID",       "",          "TID",      'Specify the TID-name of testing configuration, Ex. "B5.sn111_B1.sn112", means cable B5 on VPK120-sn111 && cable B1 on sn112. Default: ""' )
 get_parameter( "DPATTERN",     "PRBS 31",   "pattern",  'Bits data pattern: PRBS 7 / PRBS 9 / ...' )
-get_parameter( "DBG_LEVEL",    "3",         "level",    'debug level (ERR=0 WARN=1 NOTICE=2 INFO=3 DEBUG=4 TRACE=5, default=3)', argType='int' )
-get_parameter( "DBG_SRCNAME",  "",          "name",     'DataSource name for trace (YK-Quad_204_CH0), default: ""' )
-get_parameter( "DBG_LVADJ",    "2",         "level",    'For the traced DataSource, the adjustment of debug level escalation, default: 2', argType='int' )
-get_parameter( "DBG_ASYCOUNT", "0",         "count",    'For all DataSources, the initial count of TRACE level async-messages to be shown, default: 0', argType='int' )
-get_parameter( "DBG_SYNCOUNT", "0",         "count",    'For all DataSources, the initial count of TRACE level sync-messages  to be shown, default: 0', argType='int' )
-get_parameter( "RESOLUTION",   "3200x1800", "resol",    'App Window Resolution: 3840x2160 / 3200x1800 / 2600x1400 / 1600x990 / 900x800' )
 
-parser.add_argument('--SIMULATE', action='store_true', help='Whether to SIMULATE by random data or by real iBERT data source. default: False')
-
-sysconfig = parser.parse_args()
+sysconfig = finish_argParser("YK-Quad_204_CH0")
 
 #--------------------------------------------------------------------------------------------------------------------------------------
-def calculate_plotFigure_size(res_X, res_Y):
-    TB_CELL_HEIGHT = 30    # height of each table cell
-    MATPLOTLIB_DPI = 100   # density (or dots) per inch, default: 100.0
-    fig_size_x     = (res_X - 10) / global_grid_cols / MATPLOTLIB_DPI
-    fig_size_y     = (res_Y - WINTITLE_OVHEAD - TB_CELL_HEIGHT * (global_N_links + 1)) / global_grid_rows / MATPLOTLIB_DPI
-    return (fig_size_x, fig_size_y)
-
 sysconfig.DATA_RATE = int(re.findall(".*VPK120_iBERT_.*_([0-9]+)G.pdi", sysconfig.PDI_FILE)[0])
 
 match sysconfig.CONN_TYPE:
@@ -157,9 +82,7 @@ match sysconfig.CONN_TYPE:
     case "S8" | "SLoop_x8" | "X8" | "XConn_x8": global_N_links = 16;  global_grid_rows = 2;  global_grid_cols = 8;
     case _:   raise ValueError(f"Not valid Connection Type: {sysconfig.CONN_TYPE}\n")
 
-sysconfig.APP_RESOL_X   = int(re.findall("([0-9]+)x[0-9]+", sysconfig.RESOLUTION)[0])
-sysconfig.APP_RESOL_Y   = int(re.findall("[0-9]+x([0-9]+)", sysconfig.RESOLUTION)[0])
-sysconfig.FIG_SIZE_X, sysconfig.FIG_SIZE_Y = calculate_plotFigure_size( sysconfig.APP_RESOL_X, sysconfig.APP_RESOL_Y )
+calculate_plotFigure_size(global_grid_rows, global_grid_cols, global_N_links)
 
 CS_URL = f"TCP:{sysconfig.SERVER_IP}:{sysconfig.FPGA_CS_PORT}"
 HW_URL = f"TCP:{sysconfig.SERVER_IP}:{sysconfig.FPGA_HW_PORT}"
@@ -170,201 +93,9 @@ BPrint(f"SYSCONFIG: cTyp={sysconfig.CONN_TYPE} pattern={sysconfig.DPATTERN} TID=
        f"resolution={sysconfig.RESOLUTION} FIG={sysconfig.FIG_SIZE_X},{sysconfig.FIG_SIZE_Y}", level=DBG_LEVEL_NOTICE)
 BPrint(f"DEBUG: level={sysconfig.DBG_LEVEL} srcName={sysconfig.DBG_SRCNAME} lvAdj={sysconfig.DBG_LVADJ} AsynCnt={sysconfig.DBG_ASYCOUNT} SynCnt={sysconfig.DBG_SYNCOUNT} SIM={sysconfig.SIMULATE} \n", level=DBG_LEVEL_NOTICE)
 
-assert sysconfig.FIG_SIZE_Y > 0
-
-#======================================================================================================================================
-# ## 2 - Create a session and connect to the hw_server and cs_server
-#
-# The session is a container that keeps track of devices and debug cores.
-# - Session is initialized and connected to server(s)
-# - Versions are detected and reported to stdout
-#======================================================================================================================================
-def create_iBERT_session_device():
-    global ibert_gtm
-
-    # Specify locations of the running hw_server and cs_server below.
-    session = create_session(cs_server_url=CS_URL, hw_server_url=HW_URL)
-    if DBG_LEVEL_INFO <= sysconfig.DBG_LEVEL:
-        report_versions(session)
-
-    # Versal devices: [ 'xcvp1202:255211775190703847597631284360770503682:jsn-VPK120 FT4232H-872311160112A-14d00093-0',
-    #                   'xcvp1202:255211775190703847597631284360770495362:jsn-VPK120 FT4232H-872311160111A-14d00093-0' ]
-    BPrint(f"Versal devices: {session.devices}", level=DBG_LEVEL_NOTICE)
-
-    # ## 3 - Program the device with PDI_FILE programming image file.
-    if sysconfig.FPGA_HWID == "0": 
-        device = session.devices.filter_by(family="versal").get()
-    else:
-        device = None
-        for d in session.devices:
-            context = d['cable_context']
-            if len( re.findall(f"jsn.*{sysconfig.FPGA_HWID}", context) ) > 0:
-                BPrint(f"Found Versal devices for {sysconfig.FPGA_HWID}: {context}", level=DBG_LEVEL_NOTICE)
-                device = d
-                break
-            else:
-                BPrint(f"Versal devices: {context}", level=DBG_LEVEL_NOTICE)
-
-    if os.path.exists(sysconfig.PDI_FILE):
-        device.program(sysconfig.PDI_FILE)
-    else:
-        BPrint("skipping programming", level=DBG_LEVEL_NOTICE)
-
-    # ## 4 - Discover and setup the IBERT core. Debug core discovery initializes the chipscope server debug cores.
-    # - The cs_server is initialized and ready for use
-    # - The first ibert found is used
-
-    # # Set any params as needed
-    # params_to_set = {"IBERT.internal_mode": True}
-    # session.set_param(params_to_set)
-
-    BPrint(f"Discovering debug cores...", level=DBG_LEVEL_NOTICE)
-    device.discover_and_setup_cores(ibert_scan=True)
-    if len(device.ibert_cores) == 0:
-        BPrint("No IBERT core found! Exiting...", level=DBG_LEVEL_ERR)
-        exit()
-    
-    # ## 5 - Print the hierarchy of the IBERT core
-    # We also ensure that all the quads instantiated by the ChipScoPy CED design are found by the APIs
-    
-    # Use the first available IBERT core from the device
-    BPrint(f"--> Found {[f'{ibert.name} ({ibert.handle})' for ibert in device.ibert_cores]}\n", level=DBG_LEVEL_NOTICE)
-    ibert_gtm = one(device.ibert_cores.filter_by(name="IBERT Versal GTM"))
-    if len(ibert_gtm.gt_groups) == 0:
-        BPrint("No GT Groups available for use! Exiting...", level=DBG_LEVEL_WARN)
-        exit()
-
-    # We also ensure that all the quads instantiated by the ChipScoPy CED design are found by the APIs
-    if DBG_LEVEL_DEBUG <= sysconfig.DBG_LEVEL:
-        report_hierarchy(ibert_gtm)
-    BPrint(f"--> GT Groups available - {ibert_gtm.gt_groups}", level=DBG_LEVEL_NOTICE)
-    BPrint(f"==> GT Groups available - {[gt_group_obj.name for gt_group_obj in ibert_gtm.gt_groups]}", level=DBG_LEVEL_DEBUG)
-
-
-#--------------------------------------------------------------------------------------------------------------------------------------
-def get_property_value(obj, propName, lv=DBG_LEVEL_DEBUG):
-    #-------------------------------------------------------------------
-    # other likely methods to get property values:
-    #-------------------------------------------------------------------
-    #val = obj.property.refresh(propName)[propName]
-    #val = obj.property.get(propName)
-    #val = obj.property.refresh(obj.property_for_alias[propName]).values()
-    #val = list(obj.property.refresh(obj.property_for_alias[propName]).values())[0]
-    #_, val = obj.property.get(obj.property_for_alias[propName]).popitem()
-    #val   = obj.property.refresh(obj.property_for_alias[propName]).values()
-    #-------------------------------------------------------------------
-    alias  = obj.property_for_alias.get(propName)
-    _, val = obj.property.get(alias).popitem()
-    BPrint(f"iBERT object {obj} property: {propName} = {val} ", level=lv)
-    return val
-
-def set_property_value(obj, propName, val, lv=DBG_LEVEL_DEBUG):
-    alias  = obj.property_for_alias.get(propName)
-    props = { alias: val }
-    obj.property.set(**props)
-    obj.property.commit(list(props.keys()))
-
-    if lv < DBG_LEVEL_DEBUG:
-        get_property_value(obj, propName, lv)
-
-
-def check_link_status(link):
-    if link.status == "No link" or link.ber > 1e-5:
-        lr = get_property_value( link.rx, 'Line Rate'                  )
-        ls = get_property_value( link.rx, 'Pattern Checker Lock Status')
-        ec = get_property_value( link.rx, 'Pattern Checker Error Count')
-        cc = get_property_value( link.rx, 'Pattern Checker Cycle Count')
-        return f"LinkStatus='{link.status}'   LineRate={lr}   Patten Checker: LockStatus='{ls}'  ErrorCount='{ec}'  CycleCount='{cc}'"
-    else:
-        return ""
-
-
 #======================================================================================================================================
 # Data source classes: iBERT-Link data, YK-Scan data, radom number simulattion
 #======================================================================================================================================
-class Base_DataSource(QtCore.QObject):
-    WATCHDOG_INTERVAL = 10 * 1000
-
-    def __init__(self, dView):
-        super().__init__()
-        self.dsrcName = dView.myName
-        self.dataView = dView
-
-        self.snr  = 0
-        self.ber  = 0
-        self.eye  = 0
-        self.hist = ""
-
-        #------------------------------------------------------------------------------
-        self.ASYN_samples_count = 0    # YK-Scan samples
-        self.ASYN_samples_calc  = 0    # YK-Scan samples, TAIL pointer for calculation of histogram statistics
-        self.SYNC_samples_count = 0    # Channel-Link samples
-
-        #------------------------------------------------------------------------------
-        self.fsm_state   = 0
-        self.fsm_running = True
-
-        # Setup a timer to trigger the redraw by calling update_plot.
-        self.watchdog_timer = QtCore.QTimer()
-        self.watchdog_timer.setInterval(self.WATCHDOG_INTERVAL)
-        self.watchdog_timer.timeout.connect(self.fsmFunc_watchdog)
-        self.watchdog_timer.start()
-
-
-    def BPrt_HEAD_COMMON(self):
-        h1 = "t:{:<4d}".format((datetime.datetime.now() - app_start_time).seconds)
-        h2 = f"T:{threading.current_thread().name:<10}"
-        return f"{self.dsrcName}: #{self.ASYN_samples_count:<3d}/{self.SYNC_samples_count:<3d} S:{self.fsm_state:<2} {h1} {h2}\t  "
-
-    # helper method to trace data for initial counts of traffic
-    def BPrt_traceData(self, msgTxt, trType="ASYNC"):
-        if trType == "ASYNC":
-            lvl = self.dataView.mydbg_INFO  if self.ASYN_samples_count < sysconfig.DBG_ASYCOUNT  else self.dataView.mydbg_TRACE
-        elif trType == "SYNC":
-            lvl = self.dataView.mydbg_INFO  if self.SYNC_samples_count < sysconfig.DBG_SYNCOUNT  else self.dataView.mydbg_TRACE
-        BPrint(msgTxt, level=lvl)
-
-    def __refresh_common_data__(self):
-        self.SYNC_samples_count +=1
-        self.now         = datetime.datetime.now()
-        self.elapsed     = (self.now - app_start_time).seconds
-
-    @QtCore.pyqtSlot()
-    def fsmFunc_worker_thread(self):
-        while self.fsm_running:
-            match self.fsm_state:
-                case self.fsm_state if self.fsm_state < 10:  # reset && initial fetch
-                    lvl = self.dataView.mydbg_INFO
-                    if not self.fsmFunc_reset(): 
-                        self.fsm_state += 1
-                    else:
-                        self.fsm_state = 10
-
-                case 10: # main state, main-loop for polling, sporadically fetching or stopping
-                    lvl = self.dataView.mydbg_TRACE
-                    self.fsmFunc_refresh_plots()
-
-                #case 2: # inital stop
-                #case 3: # sporadically fetching
-                #case 4: # sporadically stop 
-                case _: raise ValueError(f"Not valid BaseDataSource.fsm_state : {self.fsm_state}\n")
-
-            BPrint(self.BPrt_HEAD_COMMON() + f"FSM-WorkerThread.{QtCore.QThread.currentThread()} ", level=lvl)
-            sleep_QAppVitalize(2)      #QtCore.QTimer.singleShot(2000, lambda:self.fsmFunc_worker_thread())  (REF: https://stackoverflow.com/questions/41545300/equivalent-to-time-sleep-for-a-pyqt-application)
-
-    #----------------------------------------------------------------------------------
-    #def start_data(self):             pass    # Abstract method: to start data-source engine, like YK.start()
-    #def stop_data(self):              pass    # Abstract method: to stop data-source engine, like YK.stop()
-    #def async_update_data(self):      pass    # Abstract method: to update data from ource engine, asynchronously by call-back
-    def fsmFunc_watchdog(self):        pass    # Abstract method: long  timer polling function
-    def fsmFunc_refresh_plots(self):   pass    # Abstract method: FSM function, polling periodically
-    def fsmFunc_reset(self):           pass    # Abstract method: FSM function, resetting initially
-    #----------------------------------------------------------------------------------
-
-    def finish_object(self):
-        self.watchdog_timer.stop()
-
-
 #----------------------------------------------------------------------------------------------------------------------------
 class Base_YKScanLink_DataSrc(Base_DataSource):
     s_update_YKScan = QtCore.pyqtSignal(int)
@@ -881,25 +612,6 @@ class MyLink_TableEntry:
 
 
 #----------------------------------------------------------------------------------------------------------------------------
-class Base_DataView(QtCore.QObject):
-    def __init__(self, name, parent):
-        super().__init__()
-        self.myArena = parent
-        self.updateTable = parent.updateTable
-        self.myName  = name
-
-        #------------------------------------------------------------------------------
-        if self.myName == sysconfig.DBG_SRCNAME:
-            self.mydbg_INFO  = DBG_LEVEL_INFO  - sysconfig.DBG_LVADJ
-            self.mydbg_DEBUG = DBG_LEVEL_DEBUG - sysconfig.DBG_LVADJ
-            self.mydbg_TRACE = DBG_LEVEL_TRACE - sysconfig.DBG_LVADJ
-        else:
-            self.mydbg_INFO  = DBG_LEVEL_INFO
-            self.mydbg_DEBUG = DBG_LEVEL_DEBUG
-            self.mydbg_TRACE = DBG_LEVEL_TRACE
-
-
-#----------------------------------------------------------------------------------------------------------------------------
 class YKScan_DataView(Base_DataView):
     s_start_FSM_Worker = QtCore.pyqtSignal()
 
@@ -1116,214 +828,11 @@ class HPC_Test_MainWidget(QtWidgets.QMainWindow):
         self.setCentralWidget(widget)
     """
 
-
-#======================================================================================================================================
-def create_links_common(RXs, TXs):
-    global myLinks
-
-    BPrint(f"Links_TXs: {TXs}", level=DBG_LEVEL_INFO)
-    BPrint(f"Links_RXs: {RXs}", level=DBG_LEVEL_INFO)
-    myLinks = create_links(txs=TXs, rxs=RXs)
-
-    nID = 0
-    if   DBG_LEVEL_TRACE <= sysconfig.DBG_LEVEL:  dbg_print = True;  dbg_print_all = True; 
-    elif DBG_LEVEL_DEBUG <= sysconfig.DBG_LEVEL:  dbg_print = True;  dbg_print_all = False;
-    else:                                         dbg_print = False; dbg_print_all = False; 
-
-    #----------------------------------------------------------------------------------------------------------
-    # We split TX & RX reset in 2 loops: 1st TX, 2nd RX
-    # Note: the TX -> RX pair may not come in the order of the below FOR-LOOP.
-    #----------------------------------------------------------------------------------------------------------
-    for link in myLinks:
-        link.nID = nID; nID += 1
-        link.gt_name  = re.findall(".*(Quad_[0-9]*).*", str(link.rx))[0]
-        link.channel  = int(re.findall(".*CH_([0-9]*).*", str(link.rx))[0])
-        link.GT_Group = ibert_gtm.gt_groups.filter_by(name=link.gt_name)[0]
-        link.GT_Chan  = link.GT_Group.gts[link.channel]
-        BPrint(f"\n--- {link.name} :: RX={link.rx} TX={link.tx}  GT={link.gt_name} CH={link.channel} ST={link.status}  -----", level=DBG_LEVEL_INFO)
-
-        set_property_value( link.rx, 'Pattern',  sysconfig.DPATTERN, DBG_LEVEL_INFO) 
-        set_property_value( link.tx, 'Pattern',  sysconfig.DPATTERN, DBG_LEVEL_DEBUG) 
-        set_property_value( link.rx, 'Loopback', "None"   , DBG_LEVEL_DEBUG)
-        set_property_value( link.tx, 'Loopback', "None"   , DBG_LEVEL_DEBUG)
-
-        link.GT_Chan.reset()
-        link.tx.reset()
-        #set_property_value( link.tx, 'Reset', 1, DBG_LEVEL_DEBUG)
-
-        if link.status == "No link":     # assert link.status != "No link"
-            BPrint(f"link.status:'No link'   ==> {check_link_status(link)}", level=DBG_LEVEL_WARN)
-
-        assert link.rx.pll.locked and link.tx.pll.locked
-        BPrint(f"--> RX and TX PLLs are locked for {link}. Checking for link lock...", level=DBG_LEVEL_DEBUG)
-
-        if dbg_print:
-            _, tx_pattern_report      = link.tx.property.report(link.tx.property_for_alias[PATTERN]).popitem()
-            _, tx_preCursor_report    = link.tx.property.report(link.tx.property_for_alias[TX_PRE_CURSOR]).popitem()
-            _, tx_postCursor_report   = link.tx.property.report(link.tx.property_for_alias[TX_POST_CURSOR]).popitem()
-            #_, tx_diffSwing_report    = link.tx.property.report(link.tx.property_for_alias[TX_DIFFERENTIAL_SWING]).popitem()
-            #_, rx_termVolt_report     = link.tx.property.report(link.rx.property_for_alias[RX_TERMINATION_VOLTAGE]).popitem()
-            _, rx_pattern_report      = link.rx.property.report(link.rx.property_for_alias[PATTERN]).popitem()
-            _, rx_loopback_report     = link.tx.property.report(link.rx.property_for_alias[RX_LOOPBACK]).popitem()
-
-            BPrint(f"\n\n--> {link} properties:  BER={link.ber}  Count={link.bit_count}", level=DBG_LEVEL_INFO)
-            BPrint(f"--> Valid values for TX pattern     - {tx_pattern_report['Valid values']}", level=DBG_LEVEL_INFO)
-            BPrint(f"--> Valid values for TX pre-Cursor  - {tx_preCursor_report['Valid values']}", level=DBG_LEVEL_INFO)
-            BPrint(f"--> Valid values for TX post-Cursor - {tx_postCursor_report['Valid values']}", level=DBG_LEVEL_INFO)
-            #BPrint(f"--> Valid values for TX diff Swing  - {tx_diffSwing_report['Valid values']}", level=DBG_LEVEL_INFO)
-            #BPrint(f"--> Valid values for RX term Volt   - {rx_termVolt_report['Valid values']}", level=DBG_LEVEL_INFO)
-            BPrint(f"--> Valid values for RX pattern     - {rx_pattern_report['Valid values']}", level=DBG_LEVEL_INFO)
-            BPrint(f"--> Valid values for RX loopback    - {rx_loopback_report['Valid values']}\n", level=DBG_LEVEL_INFO)
-
-            BPrint(f"==> link.RX: {link.rx} / {link.rx.parent} RX_NAME={link.rx.name} GT_NAME={link.rx.parent.name} GT_alias={link.rx.parent.aliases}", level=DBG_LEVEL_INFO)
-            BPrint(f"==> link.TX: {link.tx} / {link.tx.parent} TX_NAME={link.tx.name} GT_NAME={link.tx.parent.name} GT_alias={link.tx.parent.aliases}\n ", level=DBG_LEVEL_INFO)
-            BPrint(f"GTG_alias={link.GT_Group.property_for_alias}", level=DBG_LEVEL_INFO)
-            BPrint(f"GT_alias={link.GT_Chan.property_for_alias}", level=DBG_LEVEL_INFO)
-            BPrint(f"TX_alias={link.tx.property_for_alias}\n", level=DBG_LEVEL_INFO)
-            BPrint(f"RX_alias={link.rx.property_for_alias}\n", level=DBG_LEVEL_INFO)
-
-            get_property_value( link.rx, 'Pattern' )
-            get_property_value( link.rx, 'Loopback' )
-            get_property_value( link.rx, 'Line Rate' )
-            get_property_value( link.rx, 'Pattern Checker Lock Status' )
-            get_property_value( link.rx, 'Pattern Checker Error Count' )
-            get_property_value( link.rx, 'Pattern Checker Cycle Count' )
-            get_property_value( link.tx, 'Pattern' )
-            get_property_value( link.tx, 'Loopback' )
-
-            link.generate_report()
-            dbg_print = dbg_print_all
-
-    #----------------------------------------------------------------------------------------------------------
-    # This is 2nd loop for RX reset
-    #----------------------------------------------------------------------------------------------------------
-    for link in myLinks:
-        link.rx.reset()
-        #set_property_value( link.rx, 'Reset', 1, DBG_LEVEL_DEBUG)
-        #set_property_value( link.rx, 'RX BER Reset', 1, DBG_LEVEL_DEBUG)
-
-
-#--------------------------------------------------------------------------------------------------------------------------------------
-# Connection Map for QSFP-DD ports: QDD-1 & QDD-2 on 2x VPK120 (SN: 111/112)
-#--------------------------------------------------------------------------------------------------------------------------------------
-#     "XConnected":                                                                   "SelfLooped": 
-#     VPK120 (S/N 111)                        VPK120 (S/N 112)                        VPK120 (S/N 111)  and/or  VPK120 (S/N 112) 
-#     ----------------                        ----------------                        ------------------------------------------
-#     QDD-1 cage <-------------------------------> cage QDD-1                         QDD-1 cage <--------+                    
-#                      2x QSFP-DD cables                                                                  |  1x QSFP-DD cable
-#     QDD-2 cage <-------------------------------> cage QDD-2                         QDD-2 cage <--------+                   
-#--------------------------------------------------------------------------------------------------------------------------------------
-def create_links_SelfLooped_X8():
-    global q205, q204, q203, q202
-
-    RXs = list(); TXs = list();
-    for q_TX, ch_TX, q_RX, ch_RX in ( (q202,0, q204,0), (q202,1, q204,2), (q202,2, q205,0), (q202,3, q205,2), (q203,0, q204,1), (q203,1, q204,3), (q203,2, q205,1), (q203,3, q205,3)
-                                    , (q204,0, q202,0), (q204,2, q202,1), (q205,0, q202,2), (q205,2, q202,3), (q204,1, q203,0), (q204,3, q203,1), (q205,1, q203,2), (q205,3, q203,3) ):
-        RXs.append(q_RX.gts[ch_RX].rx)
-        TXs.append(q_TX.gts[ch_TX].tx)
-
-    create_links_common(RXs, TXs)
-
-#------------------------------------------
-def create_links_SelfLooped_X4():
-    global q205, q204, q203, q202
-
-    RXs = list(); TXs = list();
-    for q_TX, ch_TX, q_RX, ch_RX in ( (q202,0, q204,0), (q202,1, q204,2), (q202,2, q205,0), (q202,3, q205,2)
-                                    , (q204,0, q202,0), (q205,0, q202,2), (q204,1, q203,0), (q205,1, q203,2) ):
-        RXs.append(q_RX.gts[ch_RX].rx)
-        TXs.append(q_TX.gts[ch_TX].tx)
-
-    create_links_common(RXs, TXs)
-
-#------------------------------------------
-def create_links_XConnected_X8():
-    global q202, q203, q204, q205
-
-    RXs = list(); TXs = list();
-    for q, ch in ( (q202,0), (q202,1), (q202,2), (q202,3), (q203,0), (q203,1), (q203,2), (q203,3), (q204,0), (q204,2), (q205,0), (q205,2), (q204,1), (q204,3), (q205,1), (q205,3) ):
-        RXs.append(q.gts[ch].rx)
-        TXs.append(q.gts[ch].tx)
-
-    create_links_common(RXs, TXs)
-
-#------------------------------------------
-def create_links_XConnected_X4():
-    global q202, q203, q204, q205
-
-    RXs = list(); TXs = list();
-    for q, ch in ( (q202,0), (q202,2), (q203,0), (q203,2), (q204,0), (q204,2), (q205,0), (q205,2) ):
-        RXs.append(q.gts[ch].rx)
-        TXs.append(q.gts[ch].tx)
-
-    create_links_common(RXs, TXs)
-
-#------------------------------------------
-class FakeLink:
-    def __init__(self, nID):
-        self.nID = nID;
-        self.name = f"FakeLink-{nID}"
-
-def create_fake_links():
-    global myLinks, all_lnkgrps, all_links
-
-    myLinks = []
-    for nID in range(global_N_links):
-        link = FakeLink(nID)
-        link.gt_name  = f"Quad_90{int(nID/4)}"
-        link.channel  = nID % 4
-        #link.GT_Group = ibert_gtm.gt_groups.filter_by(name=link.gt_name)[0]
-        #link.GT_Chan  = link.GT_Group.gts[link.channel]
-        link.tx = f"IBERT_0.{link.gt_name}.CH_{link.channel}.TX(TX)"
-        link.rx = f"IBERT_0.{link.gt_name}.CH_{link.channel}.RX(RX)"
-        link.status = f"{sysconfig.DATA_RATE} Gbps"
-        myLinks.append(link)
-        BPrint(f"\n--- {link.name:<12}:: RX={link.rx} TX={link.tx}  GT={link.gt_name} CH={link.channel} ST={link.status}  -----", level=DBG_LEVEL_INFO)
-
-#------------------------------------------
-def create_LinkGroups():
-    global q205, q204, q203, q202
-    global myLinks, all_lnkgrps, all_links
-
-    q205 = one(ibert_gtm.gt_groups.filter_by(name="Quad_205"))
-    q204 = one(ibert_gtm.gt_groups.filter_by(name="Quad_204"))
-    q203 = one(ibert_gtm.gt_groups.filter_by(name="Quad_203"))
-    q202 = one(ibert_gtm.gt_groups.filter_by(name="Quad_202"))
-
-    match sysconfig.CONN_TYPE:
-        case "S4" | "SLoop_x4": create_links_SelfLooped_X4()
-        case "S8" | "SLoop_x8": create_links_SelfLooped_X8()
-        case "X4" | "XConn_x4": create_links_XConnected_X4()
-        case "X8" | "XConn_x8": create_links_XConnected_X8()
-        case _:                 raise ValueError(f"Not valid Connection Type: {sysconfig.CONN_TYPE}\n")
-
-    # These below RESET aren't necessarily required
-    """
-    q202.reset()
-    q203.reset()
-    q204.reset()
-    q205.reset()
-    """
-
-    all_lnkgrps = get_all_link_groups()
-    all_links   = get_all_links()
-    BPrint(f"\n--> All Link Groups available - {all_lnkgrps}", level=DBG_LEVEL_DEBUG)
-    BPrint(f"\n--> All Links available - {all_links}", level=DBG_LEVEL_DEBUG)
-
-
 #======================================================================================================================================
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
 
-    if sysconfig.SIMULATE:
-        create_fake_links()
-    else:
-        create_iBERT_session_device()
-        bprint_loading_time("Xilinx iBERT-core created")
-
-        create_LinkGroups()
-        bprint_loading_time("Xilinx Link-Groups created")
-
+    myLinks = init_iBERT_engine(sysconfig, global_N_links)
     MainForm = HPC_Test_MainWidget(len(myLinks))
 
     # ## 7 - Create YK Scan

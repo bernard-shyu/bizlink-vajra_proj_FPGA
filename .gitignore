@@ -147,6 +147,9 @@ x509.genkey
 # Clang's compilation database file
 /compile_commands.json
 
+# Python files
+__pycache__
+
 # Bernard Specific ignore
 BXU_ignore__*
 *__BXU_ignore
