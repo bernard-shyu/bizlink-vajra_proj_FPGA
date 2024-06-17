@@ -1,0 +1,36 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python Debugger: SIMULATION",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "args": ["--SIMULATE", "--RESOLUTION", "1600x990", "--TESTID", "BernardTest", "--CONN_TYPE", "SLoop_x4" ]
+            // "args": "${command:pickArgs}"
+        },
+        {
+            "name": "Python Debugger: FPGA_HW 111A",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "args": ["--FPGA_HWID", "111A", "--SERVER_IP", "10.20.2.8", "--RESOLUTION", "2600x1400", "--TESTID", "A2.sn111_B1.sn112", "--CONN_TYPE", "SLoop_x8", "--PDI_FILE", "PDI_Files/VPK120_iBERT_2xQDD_53G.pdi"]
+            // "args": "${command:pickArgs}"
+        },
+        {
+            // "name": "Python Debugger: Current File with Arguments",
+            "name": "Python Debugger: FPGA_HW 112A",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "args": ["--FPGA_HWID", "112A", "--SERVER_IP", "10.20.2.8", "--RESOLUTION", "2600x1400", "--TESTID", "A2.sn111_B1.sn112", "--CONN_TYPE", "SLoop_x8", "--PDI_FILE", "PDI_Files/VPK120_iBERT_2xQDD_53G.pdi"]
+            // "args": "${command:pickArgs}"
+        }
+    ]
+}

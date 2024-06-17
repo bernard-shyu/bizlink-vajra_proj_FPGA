@@ -21,7 +21,7 @@ def create_iBERT_session_device():
     global ibert_gtm
 
     # Specify locations of the running hw_server and cs_server below.
-    session = create_session(cs_server_url=CS_URL, hw_server_url=HW_URL)
+    session = create_session(cs_server_url=sysconfig.CS_URL, hw_server_url=sysconfig.HW_URL)
     if DBG_LEVEL_INFO <= sysconfig.DBG_LEVEL:
         report_versions(session)
 

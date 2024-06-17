@@ -36,9 +36,13 @@ def bprint_loading_time(msg, level=DBG_LEVEL_NOTICE):
        "\n----------------------------------------------------------------------------------------------------------------------------------------------------------------\n\n", level=level)
 
 def sleep_QAppVitalize(n):
-    for _ in range(n):
+    for _ in range(int(n)):
         QtWidgets.QApplication.processEvents()
         time.sleep(1)
+    n -= int(n)
+    if n > 0:
+        QtWidgets.QApplication.processEvents()
+        time.sleep(n)
 
 #--------------------------------------------------------------------------------------------------------------------------------------
 # https://docs.python.org/3/library/argparse.html,  https://docs.python.org/3/howto/argparse.html
@@ -48,13 +52,11 @@ ENV_COMMON_HELP="""
 export DBG_LEVEL=5;
 export RESOLUTION="3840x2160";
 export SHOW_FIG_TITLE=True;
-export WINTITLE_OVHEAD=90;
-export WINTITLE_STYLE='color: red; font-size: 24px; font-weight: bold; background-color: rgba(255, 255, 128, 120);';
+export WTITLE_STYLE='color: red; font-size: 24px; font-weight: bold; background-color: rgba(255, 255, 128, 120);';
 """
 
 SHOW_FIG_TITLE    = os.getenv("SHOW_FIG_TITLE", 'False').lower() in ('true', '1', 't')
-WINTITLE_STYLE    = os.getenv("WINTITLE_STYLE", 'color: blue; font-size: 22px; font-weight: bold; background-color: rgba(255, 255, 128, 120);')
-WINTITLE_OVHEAD   = int(os.getenv("WINTITLE_OVHEAD", "80"))  # overhead for Main-Windows, including Windows Title, borders, Tool-bar area
+WTITLE_STYLE      = os.getenv("WTITLE_STYLE", 'color: blue; font-size: 22px; font-weight: bold; background-color: rgba(255, 255, 128, 120);')
 
 #--------------------------------------------------------------------------------------------------------------------------------------
 def get_parameter(argName, defValue, meta, helpTxt, argType = 'string'):
@@ -83,6 +85,7 @@ def finish_argParser(dbg_SrcName):
     get_parameter( "DBG_ASYCOUNT", "0",         "count",  'For all DataSources, the initial count of TRACE level async-messages to be shown, default: 0', argType='int' )
     get_parameter( "DBG_SYNCOUNT", "0",         "count",  'For all DataSources, the initial count of TRACE level sync-messages  to be shown, default: 0', argType='int' )
     get_parameter( "RESOLUTION",   "3200x1800", "resol",  'App Window Resolution: 3840x2160 / 3200x1800 / 2600x1400 / 1600x990 / 900x800' )
+    get_parameter( "WTITLE_OVHEAD","80",        "pixel",    'Overhead for Main-Windows, including Windows Title, borders, Tool-bar area.  default: 80', argType='int' )
     parser.add_argument('--SIMULATE', action='store_true', help='Whether to SIMULATE by random data or by real iBERT data source. default: False')
 
     sysconfig = parser.parse_args()
@@ -94,7 +97,7 @@ def calculate_plotFigure_size(grid_rows, grid_cols, N_links):
     TB_CELL_HEIGHT  = 30    # height of each table cell
     MATPLOTLIB_DPI  = 100   # density (or dots) per inch, default: 100.0
     sysconfig.FIG_SIZE_X = (sysconfig.APP_RESOL_X - 10) / grid_cols / MATPLOTLIB_DPI
-    sysconfig.FIG_SIZE_Y = (sysconfig.APP_RESOL_Y - WINTITLE_OVHEAD - TB_CELL_HEIGHT * (N_links + 1)) / grid_rows / MATPLOTLIB_DPI
+    sysconfig.FIG_SIZE_Y = (sysconfig.APP_RESOL_Y - sysconfig.WTITLE_OVHEAD - TB_CELL_HEIGHT * (N_links + 1)) / grid_rows / MATPLOTLIB_DPI
     assert sysconfig.FIG_SIZE_Y > 0
 
 
@@ -167,7 +170,7 @@ class Base_DataSource(QtCore.QObject):
                 case _: raise ValueError(f"Not valid BaseDataSource.fsm_state : {self.fsm_state}\n")
 
             BPrint(self.BPrt_HEAD_COMMON() + f"FSM-WorkerThread.{QtCore.QThread.currentThread()} ", level=lvl)
-            sleep_QAppVitalize(2)      #QtCore.QTimer.singleShot(2000, lambda:self.fsmFunc_worker_thread())  (REF: https://stackoverflow.com/questions/41545300/equivalent-to-time-sleep-for-a-pyqt-application)
+            sleep_QAppVitalize(0.2)      #QtCore.QTimer.singleShot(2000, lambda:self.fsmFunc_worker_thread())  (REF: https://stackoverflow.com/questions/41545300/equivalent-to-time-sleep-for-a-pyqt-application)
 
     #----------------------------------------------------------------------------------
     #def start_data(self):             pass    # Abstract method: to start data-source engine, like YK.start()

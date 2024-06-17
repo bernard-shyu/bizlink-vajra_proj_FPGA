@@ -71,9 +71,13 @@ def bprint_loading_time(msg, level=DBG_LEVEL_NOTICE):
        "\n----------------------------------------------------------------------------------------------------------------------------------------------------------------\n\n", level=level)
 
 def sleep_QAppVitalize(n):
-    for _ in range(n):
+    for _ in range(int(n)):
         QtWidgets.QApplication.processEvents()
         time.sleep(1)
+    n -= int(n)
+    if n > 0:
+        QtWidgets.QApplication.processEvents()
+        time.sleep(n)
 
 #--------------------------------------------------------------------------------------------------------------------------------------
 # Configuration variables: 1) external EXPORT Environment variables, 2) command-line arguments (higher priority)
@@ -86,13 +90,12 @@ export FPGA_HWID="112A";              export CONN_TYPE=XConn_x8;               e
 export MAX_SLICES=20;                 export YKSCAN_SLICER_SIZE=200;           export HIST_BINS=40;
 export CSV_PATH="YK_CSV_Files";       export CONFIG_FILE="config.ini";         export PDI_FILE="PDI_Files/VPK120_iBERT_2xQDD_53G.pdi";
 export DBG_LEVEL=5;                   export RESOLUTION="3840x2160";           export SHOW_FIG_TITLE=True;
-export WINTITLE_OVHEAD=90;            export WINTITLE_STYLE='color: red; font-size: 24px; font-weight: bold; background-color: rgba(255, 255, 128, 120);';
+export export WTITLE_STYLE='color: red; font-size: 24px; font-weight: bold; background-color: rgba(255, 255, 128, 120);';
 """
 
 # specify hw and if programming is desired
 SHOW_FIG_TITLE     = os.getenv("SHOW_FIG_TITLE", 'False').lower() in ('true', '1', 't')
-WINTITLE_STYLE     = os.getenv("WINTITLE_STYLE", 'color: blue; font-size: 22px; font-weight: bold; background-color: rgba(255, 255, 128, 120);')
-WINTITLE_OVHEAD    = int(os.getenv("WINTITLE_OVHEAD", "80"))                # overhead for Main-Windows, including Windows Title, borders, Tool-bar area
+WTITLE_STYLE       = os.getenv("WTITLE_STYLE", 'color: blue; font-size: 22px; font-weight: bold; background-color: rgba(255, 255, 128, 120);')
 CSV_PATH           = os.getenv("CSV_PATH", "YK_CSV_Files")
 CONFIG_FILE        = os.getenv("CONFIG_FILE", 'config.iBert_HPCTest.ini')
 
@@ -126,7 +129,7 @@ SIM_PDIFILE="Bernard_Simulation/VPK120_iBERT_2xQDD_53G.pdi"
 get_parameter( "PDI_FILE",     SIM_PDIFILE, "filename", 'FPGA image file (*.pdi) Ex. PDI_Files/VPK120_iBERT_2xQDD_53G.pdi' )
 get_parameter( "SERVER_IP",    "localhost", "ip",       'FPGA-board IP address. Default: localhost' )
 get_parameter( "FPGA_CS_PORT", "3042",      "port",     'FPGA-board cs_server port. Default: 3042' )
-get_parameter( "FPGA_HW_PORT", "3121",      "port",     'FPGA-board hw_server port. Default: 3042' )
+get_parameter( "FPGA_HW_PORT", "3121",      "port",     'FPGA-board hw_server port. Default: 3121' )
 get_parameter( "FPGA_HWID",    "0",         "hwID",     'FPGA-board HWID: S/N (0 or 111A or 112A). Default: 0 (NOT specified, auto-detection)' )
 get_parameter( "CONN_TYPE",    "SLoop_x8",  "type",     'Connection Type: SLoop_x4 | SLoop_x8 | XConn_x4 | XConn_x8.  Or shorter: S4 | S8 | X4 | X8.  Default: SLoop_x8' )
 get_parameter( "TESTID",       "",          "TID",      'Specify the TID-name of testing configuration, Ex. "B5.sn111_B1.sn112", means cable B5 on VPK120-sn111 && cable B1 on sn112. Default: ""' )
@@ -137,6 +140,7 @@ get_parameter( "DBG_LVADJ",    "2",         "level",    'For the traced DataSour
 get_parameter( "DBG_ASYCOUNT", "0",         "count",    'For all DataSources, the initial count of TRACE level async-messages to be shown, default: 0', argType='int' )
 get_parameter( "DBG_SYNCOUNT", "0",         "count",    'For all DataSources, the initial count of TRACE level sync-messages  to be shown, default: 0', argType='int' )
 get_parameter( "RESOLUTION",   "3200x1800", "resol",    'App Window Resolution: 3840x2160 / 3200x1800 / 2600x1400 / 1600x990 / 900x800' )
+get_parameter( "WTITLE_OVHEAD","80",        "pixel",    'Overhead for Main-Windows, including Windows Title, borders, Tool-bar area.  default: 80', argType='int' )
 
 parser.add_argument('--SIMULATE', action='store_true', help='Whether to SIMULATE by random data or by real iBERT data source. default: False')
 
@@ -147,7 +151,7 @@ def calculate_plotFigure_size(res_X, res_Y):
     TB_CELL_HEIGHT = 30    # height of each table cell
     MATPLOTLIB_DPI = 100   # density (or dots) per inch, default: 100.0
     fig_size_x     = (res_X - 10) / global_grid_cols / MATPLOTLIB_DPI
-    fig_size_y     = (res_Y - WINTITLE_OVHEAD - TB_CELL_HEIGHT * (global_N_links + 1)) / global_grid_rows / MATPLOTLIB_DPI
+    fig_size_y     = (res_Y - sysconfig.WTITLE_OVHEAD - TB_CELL_HEIGHT * (global_N_links + 1)) / global_grid_rows / MATPLOTLIB_DPI
     return (fig_size_x, fig_size_y)
 
 sysconfig.DATA_RATE = int(re.findall(".*VPK120_iBERT_.*_([0-9]+)G.pdi", sysconfig.PDI_FILE)[0])
@@ -161,11 +165,11 @@ sysconfig.APP_RESOL_X   = int(re.findall("([0-9]+)x[0-9]+", sysconfig.RESOLUTION
 sysconfig.APP_RESOL_Y   = int(re.findall("[0-9]+x([0-9]+)", sysconfig.RESOLUTION)[0])
 sysconfig.FIG_SIZE_X, sysconfig.FIG_SIZE_Y = calculate_plotFigure_size( sysconfig.APP_RESOL_X, sysconfig.APP_RESOL_Y )
 
-CS_URL = f"TCP:{sysconfig.SERVER_IP}:{sysconfig.FPGA_CS_PORT}"
-HW_URL = f"TCP:{sysconfig.SERVER_IP}:{sysconfig.FPGA_HW_PORT}"
+sysconfig.CS_URL = f"TCP:{sysconfig.SERVER_IP}:{sysconfig.FPGA_CS_PORT}"
+sysconfig.HW_URL = f"TCP:{sysconfig.SERVER_IP}:{sysconfig.FPGA_HW_PORT}"
 
 BPrint(f"\n{APP_TITLE } --- {app_start_time}\n", level=DBG_LEVEL_NOTICE)
-BPrint(f"Servers: CS:{CS_URL} HW:{HW_URL}   FPGA_HW: {sysconfig.FPGA_HWID}   PDI: '{sysconfig.PDI_FILE}'", level=DBG_LEVEL_NOTICE)
+BPrint(f"Servers: CS:{sysconfig.CS_URL} HW:{sysconfig.HW_URL}   FPGA_HW: {sysconfig.FPGA_HWID}   PDI: '{sysconfig.PDI_FILE}'", level=DBG_LEVEL_NOTICE)
 BPrint(f"SYSCONFIG: cTyp={sysconfig.CONN_TYPE} pattern={sysconfig.DPATTERN} TID={sysconfig.TESTID} RATE={sysconfig.DATA_RATE}G " +
        f"resolution={sysconfig.RESOLUTION} FIG={sysconfig.FIG_SIZE_X},{sysconfig.FIG_SIZE_Y}", level=DBG_LEVEL_NOTICE)
 BPrint(f"DEBUG: level={sysconfig.DBG_LEVEL} srcName={sysconfig.DBG_SRCNAME} lvAdj={sysconfig.DBG_LVADJ} AsynCnt={sysconfig.DBG_ASYCOUNT} SynCnt={sysconfig.DBG_SYNCOUNT} SIM={sysconfig.SIMULATE} \n", level=DBG_LEVEL_NOTICE)
@@ -183,7 +187,7 @@ def create_iBERT_session_device():
     global ibert_gtm
 
     # Specify locations of the running hw_server and cs_server below.
-    session = create_session(cs_server_url=CS_URL, hw_server_url=HW_URL)
+    session = create_session(cs_server_url=sysconfig.CS_URL, hw_server_url=sysconfig.HW_URL)
     if DBG_LEVEL_INFO <= sysconfig.DBG_LEVEL:
         report_versions(session)
 
@@ -350,7 +354,7 @@ class Base_DataSource(QtCore.QObject):
                 case _: raise ValueError(f"Not valid BaseDataSource.fsm_state : {self.fsm_state}\n")
 
             BPrint(self.BPrt_HEAD_COMMON() + f"FSM-WorkerThread.{QtCore.QThread.currentThread()} ", level=lvl)
-            sleep_QAppVitalize(2)      #QtCore.QTimer.singleShot(2000, lambda:self.fsmFunc_worker_thread())  (REF: https://stackoverflow.com/questions/41545300/equivalent-to-time-sleep-for-a-pyqt-application)
+            sleep_QAppVitalize(0.2)      #QtCore.QTimer.singleShot(2000, lambda:self.fsmFunc_worker_thread())  (REF: https://stackoverflow.com/questions/41545300/equivalent-to-time-sleep-for-a-pyqt-application)
 
     #----------------------------------------------------------------------------------
     #def start_data(self):             pass    # Abstract method: to start data-source engine, like YK.start()
@@ -639,7 +643,7 @@ class Fake_YKScanLink_DataSrc(Base_YKScanLink_DataSrc):
         self.__refresh_common_data__()
         self.bit_count_N += self.bits_increment
         self.bit_count    = f"{self.bit_count_N:.3e}"
-        self.error_count += np.random.randint(100)                 # random int between 0 and 100
+        self.error_count += np.random.randint(100) + 1             # random int between 0 and 100
         self.ber          = self.error_count / self.bit_count_N;   #  np.random.random() / 1000000   # BER by random number simulation
         self.snr          = 18 + np.random.rand() * 4              # random float between 0 and 4
         self.ax_BER_data.append(math.log10(self.ber))
@@ -1041,7 +1045,7 @@ class HPC_Test_MainWidget(QtWidgets.QMainWindow):
         if sysconfig.TESTID != "": titleText = f"{titleText} / {sysconfig.TESTID} / {sysconfig.DATA_RATE}G"
 
         label = QtWidgets.QLabel(titleText, self)
-        label.setStyleSheet(WINTITLE_STYLE)
+        label.setStyleSheet(WTITLE_STYLE)
         self.layout_toolbar.addWidget(label)
 
         btn = QtWidgets.QPushButton("Bernard Button", self)
