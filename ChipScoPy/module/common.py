@@ -43,6 +43,12 @@ def sleep_QAppVitalize(n):
     if n > 0:
         QtWidgets.QApplication.processEvents()
         time.sleep(n)
+"""
+def sleep_QAppVitalize(n):
+    for _ in range(int(n * 5 + 0.01)):
+        QtWidgets.QApplication.processEvents()
+        time.sleep(0.2)     # sleeping precision unit is 0.2 sec
+"""
 
 #--------------------------------------------------------------------------------------------------------------------------------------
 # https://docs.python.org/3/library/argparse.html,  https://docs.python.org/3/howto/argparse.html
@@ -117,7 +123,6 @@ class Base_DataSource(QtCore.QObject):
 
         #------------------------------------------------------------------------------
         self.ASYN_samples_count = 0    # YK-Scan samples
-        self.ASYN_samples_calc  = 0    # YK-Scan samples, TAIL pointer for calculation of histogram statistics
         self.SYNC_samples_count = 0    # Channel-Link samples
 
         #------------------------------------------------------------------------------
@@ -170,7 +175,7 @@ class Base_DataSource(QtCore.QObject):
                 case _: raise ValueError(f"Not valid BaseDataSource.fsm_state : {self.fsm_state}\n")
 
             BPrint(self.BPrt_HEAD_COMMON() + f"FSM-WorkerThread.{QtCore.QThread.currentThread()} ", level=lvl)
-            sleep_QAppVitalize(0.2)      #QtCore.QTimer.singleShot(2000, lambda:self.fsmFunc_worker_thread())  (REF: https://stackoverflow.com/questions/41545300/equivalent-to-time-sleep-for-a-pyqt-application)
+            sleep_QAppVitalize(1.0)      #QtCore.QTimer.singleShot(2000, lambda:self.fsmFunc_worker_thread())  (REF: https://stackoverflow.com/questions/41545300/equivalent-to-time-sleep-for-a-pyqt-application)
 
     #----------------------------------------------------------------------------------
     #def start_data(self):             pass    # Abstract method: to start data-source engine, like YK.start()

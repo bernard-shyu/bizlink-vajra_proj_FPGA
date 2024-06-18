@@ -14,7 +14,7 @@
             // "args": "${command:pickArgs}"
         },
         {
-            "name": "Python Debugger: FPGA_HW 111A",
+            "name": "Python Debugger: FPGA_HW 111A / 53G",
             "type": "debugpy",
             "request": "launch",
             "program": "${file}",
@@ -23,13 +23,30 @@
             // "args": "${command:pickArgs}"
         },
         {
-            // "name": "Python Debugger: Current File with Arguments",
-            "name": "Python Debugger: FPGA_HW 112A",
+            "name": "Python Debugger: FPGA_HW 112A / 53G",
             "type": "debugpy",
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
             "args": ["--FPGA_HWID", "112A", "--SERVER_IP", "10.20.2.8", "--RESOLUTION", "2600x1400", "--TESTID", "A2.sn111_B1.sn112", "--CONN_TYPE", "SLoop_x8", "--PDI_FILE", "PDI_Files/VPK120_iBERT_2xQDD_53G.pdi"]
+            // "args": "${command:pickArgs}"
+        },
+        {
+            "name": "Python Debugger: FPGA_HW 111A / 106G",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "args": ["--FPGA_HWID", "111A", "--SERVER_IP", "10.20.2.8", "--RESOLUTION", "2600x1400", "--TESTID", "A2.sn111_B1.sn112", "--CONN_TYPE", "SLoop_x4", "--PDI_FILE", "PDI_Files/VPK120_iBERT_2xQDD_106G.pdi"]
+            // "args": "${command:pickArgs}"
+        },
+        {
+            "name": "Python Debugger: FPGA_HW 112A / 106G",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "args": ["--FPGA_HWID", "112A", "--SERVER_IP", "10.20.2.8", "--RESOLUTION", "2600x1400", "--TESTID", "A2.sn111_B1.sn112", "--CONN_TYPE", "SLoop_x4", "--PDI_FILE", "PDI_Files/VPK120_iBERT_2xQDD_106G.pdi"]
             // "args": "${command:pickArgs}"
         }
     ]

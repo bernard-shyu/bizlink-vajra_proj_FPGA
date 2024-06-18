@@ -26,6 +26,7 @@ from module.iBert_ScoPy import *
 from PyQt5 import QtWidgets, QtCore, QtGui
 import numpy as np
 import pandas as pd
+import scipy.stats as stats
 import argparse, configparser, math, re
 import os, sys, time, datetime, threading
 
@@ -96,10 +97,22 @@ BPrint(f"DEBUG: level={sysconfig.DBG_LEVEL} srcName={sysconfig.DBG_SRCNAME} lvAd
 #======================================================================================================================================
 # Data source classes: iBERT-Link data, YK-Scan data, radom number simulattion
 #======================================================================================================================================
+def analyze_subarray(subarray):   # Helper Function: Calculate descriptive statistics for each subarray
+    return {
+        'mean': np.mean(subarray),
+        'std':  np.std(subarray),
+        #'min':  np.min(subarray),
+        #'max':  np.max(subarray)
+    }
+
+def PrtStat4(s):   # Helper Function: to give descriptive text for statistics subarray
+    return "(M={:.1f}, std={:.1f}, R=[{:.1f}, {:.1f}])".format(s['mean'], s['std'], s['min'], s['max'])
+
+def PrtStat2(s):   # Helper Function: to give descriptive text for statistics subarray
+    return "({:.1f}, {:.1f})".format(s['mean'], s['std'])
+
 #----------------------------------------------------------------------------------------------------------------------------
 class Base_YKScanLink_DataSrc(Base_DataSource):
-    s_update_YKScan = QtCore.pyqtSignal(int)
-
     def __init__(self, dView, link):
         super().__init__(dView)
         self.link = link
@@ -110,10 +123,16 @@ class Base_YKScanLink_DataSrc(Base_DataSource):
         self.YKScan_slicer_buf = np.zeros((0, YKSCAN_SLICER_SIZE))  # Assuming 2D data (X, Y), X-dim will grow to MAX_SLICES
         self.YK_is_started = False
 
-        self.s_update_YKScan.connect(self.asynFunc_update_YKScan, QtCore.Qt.QueuedConnection)
+        # slicer viewer buffer, for vividness
         self.YKScan_slicer_viewPointer = 0
         self.YKScan_slicer_viewBuffer  = np.zeros(VIVADO_SLICES * YKSCAN_SLICER_SIZE)
         self.YKScan_slicer_init_filled = False
+
+        # histogram statistics
+        self.YKScan_slicer_histPointer = 0    # YK-Scan samples, TAIL pointer to differentiate the newly arrived data
+        self.YKScan_slicer_histBuffer  = np.zeros(VIVADO_SLICES * YKSCAN_SLICER_SIZE)
+        self.hist_counts = np.zeros(HIST_BINS)
+        self.hist_bins   = np.zeros(HIST_BINS+1)
 
         self.ax_SNR_data = []
         self.ax_BER_data = []
@@ -150,33 +169,55 @@ class Base_YKScanLink_DataSrc(Base_DataSource):
 
     def sync_refresh_plotBER(self):
         self.sync_update_LinkData()
-        self.dataView.myFigure.update_yk_ber(self)
+        self.dataView.myFigure.update_link_ber(self)
         self.dataView.update_table()
         self.BPrt_traceData( self.bprint_link(), trType="SYNC" )
 
     def sync_refresh_plotYK(self):
         self.async_update_YKData()
-        # rotate VIVADO_SLICES(=4) slicers of view-buffer from self.YKScan_slicer_buf[MAX_SLICES(=12)]
+
+        #-----------------------------------------------------------------------------------------------
+        # refresh the matplotlib figures of YK-Scan slicer EYE, to render in a vivid manner by
+        # rotating VIVADO_SLICES(=4) slicers of view-buffer from self.YKScan_slicer_buf[MAX_SLICES(=12)]
+        #-----------------------------------------------------------------------------------------------
         v = self.YKScan_slicer_viewPointer
         self.YKScan_slicer_viewBuffer = self.YKScan_slicer_buf[v:(v + VIVADO_SLICES)]
         self.YKScan_slicer_viewPointer += VIVADO_SLICES
         if  self.YKScan_slicer_viewPointer >= MAX_SLICES:
             self.YKScan_slicer_viewPointer = 0;
 
-        # refresh the matplotlib figures
         self.dataView.myFigure.update_yk_scan(self)
-        self.BPrt_traceData( self.BPrt_HEAD_WATER() + f"refresh_plotYK.{v}.{self.YKScan_slicer_viewPointer}: BER: {self.ber:.2e}  SNR: {self.snr:6.2f}  Elapsed:{self.elapsed}" )
+
+        #-----------------------------------------------------------------------------------------------
+        # refresh the matplotlib figures of YK-Scan histogram.
+        # - for histogram plot, accumulated new arrived data into older count
+        # - for statistical analysis of normal distribution, works on the entire YKScan_slicer_buf
+        #-----------------------------------------------------------------------------------------------
+        if  self.ASYN_samples_count == self.YKScan_slicer_histPointer:  return
+        n = self.ASYN_samples_count -  self.YKScan_slicer_histPointer   # amount of slicer data newly arrived
+        h = MAX_SLICES - n  if MAX_SLICES > n else 0
+        self.YKScan_slicer_histPointer = self.ASYN_samples_count
+
+        self.YKScan_slicer_histBuffer = self.YKScan_slicer_buf[h:MAX_SLICES]    # the buffer for new data only
+        new_counts, self.hist_bins = np.histogram(list(self.YKScan_slicer_histBuffer.flatten()), bins=HIST_BINS, range=(0,100))
+        self.hist_counts += new_counts
+
+        self.dataView.myFigure.update_yk_hist(self)
+        self.find_peaks_and_valleys()
+        self.do_statistics_analysis()
+
+        self.BPrt_traceData( self.BPrt_HEAD_WATER() + f"refresh_plotYK:: VIEW({v}, {self.YKScan_slicer_viewPointer})  HIST({n}, {h}, {self.hist_counts.shape})  BER: {self.ber:.2e}  SNR: {self.snr:6.2f}  Elapsed:{self.elapsed}" )
 
     def fsmFunc_refresh_plots(self):
         self.sync_refresh_plotBER()
         self.sync_refresh_plotYK()
         self.dataView.myCanvas.draw()       # myCanvas.draw_idle(): not good, easier with lagging, non-responsive
 
-    #  ----------- 00 -------------------------------------------------------------------- 100 ---------
-    #  peaks:                   Peak0                                Peak1
-    #  valeys:                                   Valey0
-    #---------------------------------------------------------------------------------------------------
     def find_NRZ_peaks_and_valleys(self, hist, bins):
+        #  --------- 00 ------------------------------------------------------------------- 100 --------
+        #  peaks:                 Peak0                                Peak1
+        #  valeys:                                 Valey0
+        #-----------------------------------------------------------------------------------------------
         half_BINS = int(HIST_BINS / 2)
 
         #-----------------------------------------------------------------------------------------------
@@ -189,25 +230,24 @@ class Base_YKScanLink_DataSrc(Base_DataSource):
         Peak1 = hist[half_BINS:HIST_BINS].max()
         i_P1  = hist[half_BINS:HIST_BINS].argmax() + half_BINS
 
-        #---------------------------------------------------------------------------------------------------
+        #-----------------------------------------------------------------------------------------------
         # find the valeys
         Valey0 = hist[i_P0:i_P1].min();
         i_V0   = hist[i_P0:i_P1].argmin() + i_P0
 
-        #---------------------------------------------------------------------------------------------------
+        #-----------------------------------------------------------------------------------------------
         # self.hist: Histogram statistics
         # self.eye : EYE opening. i.e average of Peaks distance
-        #---------------------------------------------------------------------------------------------------
+        #-----------------------------------------------------------------------------------------------
         self.hist = f"Peaks: ({i_P0}={Peak0:n}, {i_P1}={Peak1:n})   Valeys: {Valey0:n}"
         self.eye  = i_P1 - i_P0
 
-
-    #  ----------- 00 -------------------------------- 50 -------------------------------- 100 ---------
-    #  peaks:              Peak0           Peak1                  Peak2           Peak3
-    #  valeys:                    Valey0             Valey1               Valey2
-    #---------------------------------------------------------------------------------------------------
     def find_PAM4_peaks_and_valleys(self, hist, bins):
-        HILL_MIN_WIDTH = 3   # The hill peak should have sufficient width
+        #  --------- 00 -------------------------------- 50 -------------------------------- 100 -------
+        #  peaks:            Peak0           Peak1                  Peak2           Peak3
+        #  valeys:                  Valey0             Valey1               Valey2
+        #-----------------------------------------------------------------------------------------------
+        HILL_MIN_WIDTH = 3  if HIST_BINS <= 100 else 5;    # The hill peak should have sufficient width
         half_BINS = int(HIST_BINS / 2)
 
         #-----------------------------------------------------------------------------------------------
@@ -260,6 +300,8 @@ class Base_YKScanLink_DataSrc(Base_DataSource):
         Valey0 = hist[i_P0:i_P1].min();   i_V0 = hist[i_P0:i_P1].argmin() + i_P0
         Valey1 = hist[i_P1:i_P2].min();   i_V1 = hist[i_P1:i_P2].argmin() + i_P1
         Valey2 = hist[i_P2:i_P3].min();   i_V2 = hist[i_P2:i_P3].argmin() + i_P2
+        self.peaks_index  = [i_P0, i_P1, i_P2, i_P3]
+        self.valeys_index = [i_V0, i_V1, i_V2]
 
         """
         # find the standard-deviation
@@ -274,31 +316,60 @@ class Base_YKScanLink_DataSrc(Base_DataSource):
         # self.hist: Histogram statistics
         # self.eye : EYE opening. i.e average of Peaks distance
         #-----------------------------------------------------------------------------------------------
-        #self.hist = f"Peaks: ({i_P0}={Peak0}, {i_P1}={Peak1}, {i_P2}={Peak2}, {i_P3}={Peak3})   Valeys: ({i_V0}={Valey0}, {i_V1}={Valey1}, {i_V2}={Valey2})"
-        self.hist = f"Peaks: ({i_P0}={Peak0:n}, {i_P1}={Peak1:n}, {i_P2}={Peak2:n}, {i_P3}={Peak3:n})   Valeys: ({Valey0:n}, {Valey1:n}, {Valey2:n})"
+        self.hist = f"PEAK ({i_P0}={Peak0:n}, {i_P1}={Peak1:n}, {i_P2}={Peak2:n}, {i_P3}={Peak3:n})  VALEY ({i_V0}={Valey0:n}, {i_V1}={Valey1:n}, {i_V2}={Valey2:n})"
         self.eye  = ((i_P3 - i_P2) + (i_P2 - i_P1) + (i_P1 - i_P0)) / 3
 
-    def find_peaks_and_valleys(self, hist, bins):
-        if len(hist) != HIST_BINS:
-            BPrint(self.BPrt_HEAD_WATER() + f"find Histogram-Peaks: {len(hist)} / {len(bins)} ", level = self.dataView.mydbg_INFO)
+    def find_peaks_and_valleys(self):
+        if len(self.hist_counts) != HIST_BINS:
+            BPrint(self.BPrt_HEAD_WATER() + f"find Histogram-Peaks: {len(self.hist_counts)} / {len(self.hist_bins)} ", level = self.dataView.mydbg_INFO)
             return
         if sysconfig.DATA_RATE > 50:
-            self.find_PAM4_peaks_and_valleys(hist, bins)
+            self.find_PAM4_peaks_and_valleys(self.hist_counts, self.hist_bins)
         else:
-            self.find_NRZ_peaks_and_valleys(hist, bins)
+            self.find_NRZ_peaks_and_valleys(self.hist_counts, self.hist_bins)
         BPrint(self.BPrt_HEAD_WATER() + f"Histogram-EYE: {self.eye:.3f}  statistic: {self.hist}", level = self.dataView.mydbg_TRACE)
+
+    def do_statistics_analysis(self):
+        your_array = self.YKScan_slicer_buf
+
+        # Split the array into subarrays based on value ranges
+        subarray_1 = your_array[(your_array >= 0) & (your_array < self.valeys_index[0])]      # subarray_1 = your_array[(your_array >= 0) & (your_array < 30)]
+        subarray_2 = your_array[(your_array >= self.valeys_index[0]) & (your_array < 50)]     # subarray_2 = your_array[(your_array >= 30) & (your_array < 50)]
+        subarray_3 = your_array[(your_array >= 50) & (your_array < self.valeys_index[2])]     # subarray_3 = your_array[(your_array >= 50) & (your_array < 70)]
+        subarray_4 = your_array[(your_array >= self.valeys_index[2]) & (your_array <= 100)]   # subarray_4 = your_array[(your_array >= 70) & (your_array <= 100)]
+
+        stats_1 = analyze_subarray(subarray_1)
+        stats_2 = analyze_subarray(subarray_2)
+        stats_3 = analyze_subarray(subarray_3)
+        stats_4 = analyze_subarray(subarray_4)
+
+        boundary_12 = (stats_1['mean'] + stats_2['mean']) / 2
+        boundary_23 = (stats_2['mean'] + stats_3['mean']) / 2
+        boundary_34 = (stats_3['mean'] + stats_4['mean']) / 2
+
+        err_1_to_2 = 1 - stats.norm.cdf(boundary_12, loc=stats_1['mean'], scale=stats_1['std'])
+        err_2_to_1 =     stats.norm.cdf(boundary_12, loc=stats_2['mean'], scale=stats_2['std'])
+        err_2_to_3 = 1 - stats.norm.cdf(boundary_23, loc=stats_2['mean'], scale=stats_2['std'])
+        err_3_to_2 =     stats.norm.cdf(boundary_23, loc=stats_3['mean'], scale=stats_3['std'])
+        err_3_to_4 = 1 - stats.norm.cdf(boundary_34, loc=stats_3['mean'], scale=stats_3['std'])
+        err_4_to_3 =     stats.norm.cdf(boundary_34, loc=stats_4['mean'], scale=stats_4['std'])
+        err_all    = err_1_to_2 + err_2_to_1 + err_2_to_3 + err_3_to_2 + err_3_to_4 + err_4_to_3
+
+        BPrint(self.BPrt_HEAD_WATER() + f"Statistic report: ERRs=(ALL:{err_all:.3e} E12:{err_1_to_2:.3e} E21:{err_2_to_1:.3e} E23:{err_2_to_3:.3e} E32:{err_3_to_2:.3e} E34:{err_3_to_4:.3e} E43:{err_4_to_3:.3e}", \
+            f"P1:{PrtStat2(stats_1)} P2:{PrtStat2(stats_2)} P3:{PrtStat2(stats_3)} P4:{PrtStat2(stats_4)}  ", level = self.dataView.mydbg_TRACE)
+
+        self.hist = f"ERRs=(ALL:{err_all:.3e} E12:{err_1_to_2:.1e} E21:{err_2_to_1:.1e} E23:{err_2_to_3:.1e} E32:{err_3_to_2:.1e} E34:{err_3_to_4:.1e} E43:{err_4_to_3:.1e}  " + \
+            f"P1:{PrtStat2(stats_1)} P2:{PrtStat2(stats_2)} P3:{PrtStat2(stats_3)} P4:{PrtStat2(stats_4)}"
 
 
 #----------------------------------------------------------------------------------------------------------------------------
 class Fake_YKScanLink_DataSrc(Base_YKScanLink_DataSrc):
-    #s_update_YKScan = QtCore.pyqtSignal(int)
     WATCHDOG_INTERVAL = 5 * 1000
 
     def __init__(self, dView, link):
         super().__init__(dView, link)
         np.random.seed(42)
         self.peaks_rand_mode   = True
-        self.std_dev = 1.5
         self.wdog_i = 0
 
         #------------------------------------------------------------------------------
@@ -310,7 +381,6 @@ class Fake_YKScanLink_DataSrc(Base_YKScanLink_DataSrc):
         self.line_rate   = self.link.status
         self.comments    = ""
 
-    #----------------------------------------------------------------------------------
     def fsmFunc_reset(self):
         BPrint(self.BPrt_HEAD_WATER() + f"fsmFunc_reset", level=self.dataView.mydbg_INFO)
         self.fsmFunc_early_plots()
@@ -331,12 +401,10 @@ class Fake_YKScanLink_DataSrc(Base_YKScanLink_DataSrc):
             if self.wdog_i % 8 == 0: self.sync_update_YKScanData()
             self.wdog_i += 1
 
-    def asynFunc_update_YKScan(self, waterlevel):
-        pass
-
-    #----------------------------------------------------------------------------------
     def sync_update_YKScanData(self):
         self.ASYN_samples_count +=1      #  ==> len(obj.scan_data) - 1
+
+        std_devs = [1.5, 2.0, 2.5, 3.0]
         if self.peaks_rand_mode:
             # Each peak will have separate randomness
             peak_positions = [20, 40, 60, 80]
@@ -346,26 +414,20 @@ class Fake_YKScanLink_DataSrc(Base_YKScanLink_DataSrc):
             peak_positions = np.array([20, 40, 60, 80]) + 4*(np.random.rand() - 0.5)     #  Adding randomness to PEAK position by +2/-2
 
         slice_data = []
-        for peak_pos in peak_positions:
-            slice_data.append( np.random.normal(loc=peak_pos, scale=self.std_dev, size=int(YKSCAN_SLICER_SIZE/4)) )
+        for i in range(len(peak_positions)):
+            peak_pos = peak_positions[i]
+            std_dev = std_devs[i]
+            slice_data.append( np.random.normal(loc=peak_pos, scale=std_dev, size=int(YKSCAN_SLICER_SIZE/4)) )
         slice_buf = np.column_stack(( slice_data[0], slice_data[1], slice_data[2], slice_data[3] ))
 
         self.YKScan_slicer_buf = np.append(self.YKScan_slicer_buf, [slice_buf.flatten('c')], axis=0)          # append new data
         waterlevel = self.YKScan_slicer_buf.shape[0]
         if waterlevel > MAX_SLICES:
             self.YKScan_slicer_buf = np.delete(self.YKScan_slicer_buf, 0, axis=0)                                     # remove oldest slice data
-            BPrint(self.BPrt_HEAD_WATER() + f"buffer FULL", level=self.dataView.mydbg_DEBUG)
-        self.s_update_YKScan.emit(waterlevel)    # ==> invoke asynFunc_update_YKScan() for PyQT's thread context
+            BPrint(self.BPrt_HEAD_WATER() + f"buffer cycling around", level=self.dataView.mydbg_DEBUG)
 
         self.ax_SNR_data.append(self.snr)
 
-        """
-        now = datetime.datetime.now() 
-        print(f"\n\n{now} {len(self.YKScan_slicer_buf)}\n")
-        print(self.YKScan_slicer_buf[0:YKSCAN_SLICER_SIZE:20])
-        """
-
-    #----------------------------------------------------------------------------------
     def sync_update_LinkData(self):
         self.__refresh_common_data__()
         self.bit_count_N += self.bits_increment
@@ -394,7 +456,6 @@ class IBert_YKScanLink_DataSrc(Base_YKScanLink_DataSrc):
         # Pandas table to keep data for CSV file
         self.pd_data = pd.DataFrame(columns=["Samples", "Elapsed Time", "Status", "Line Rate", "Bits Count", "Errors Count", "BER", "SNR", "EYE-Opening", "Histogram", "comments"])
 
-    #----------------------------------------------------------------------------------
     def fsmFunc_reset(self):
         BPrint(self.BPrt_HEAD_WATER() + f"fsmFunc_reset", level=self.dataView.mydbg_INFO)
         self.fsmFunc_early_plots()
@@ -404,7 +465,7 @@ class IBert_YKScanLink_DataSrc(Base_YKScanLink_DataSrc):
                 self.__YKEngine_manage__(True, 0)   # launch YK.start(), to start the YKScan engine
                 return False
             case 4:
-                self.__YKEngine_manage__(False, 12) # launch YK.stop(), to stop the YKScan engine
+                self.__YKEngine_manage__(False, 12) # launch YK.stop(), to stop the YKScan engine, throttle to prevent overflow of the slicer buffer
                 return False
             case 9:
                 self.fill_up_slicer_buf()
@@ -423,7 +484,6 @@ class IBert_YKScanLink_DataSrc(Base_YKScanLink_DataSrc):
             self.monitor_YK_cnt = 0
             self.__YKEngine_manage__(False, 13)     # launch YK.stop(), to stop the YKScan engine
 
-    #----------------------------------------------------------------------------------
     def __YKEngine_manage__(self, to_start_YK, _where_):
         try:
             BPrint(self.BPrt_HEAD_WATER() + f"__YKEngine_manage__({_where_:2},  do_YK_Start={to_start_YK})", level=self.dataView.mydbg_DEBUG)
@@ -438,20 +498,14 @@ class IBert_YKScanLink_DataSrc(Base_YKScanLink_DataSrc):
         except Exception as e:
             print(f"YKScan-{self.dsrcName} ({_where_:2} {to_start_YK} {self.YK_is_started})  Exception: {str(e)}")
 
-    def asynFunc_update_YKScan(self, waterlevel):
-        # throttle the YKScan engine in advance to prevent overflow of the slicer buffer
-        if waterlevel > VIVADO_SLICES:
-            self.__YKEngine_manage__(False, 10)  # launch YK.stop(), to stop the YKScan engine from running.
-
-    # ## 6 - Define YK Scan Update Method
-    #----------------------------------------------------------------------------------
     def asynCB_update_YKScanData(self, obj):
+        # ## 6 - Define YK Scan Update Method
+        #------------------------------------------------------------------------------
         # assert YKSCAN_SLICER_SIZE == len(obj.scan_data[-1].slicer)
         if YKSCAN_SLICER_SIZE != len(obj.scan_data[-1].slicer):
             BPrint(self.BPrt_HEAD_COMMON() + f"ERROR slicer: {len(obj.scan_data[-1].slicer)}", level=DBG_LEVEL_ERR)
             if len(obj.scan_data[-1].slicer) != 0:
                 obj.scan_data.pop(0)
-            self.s_update_YKScan.emit(VIVADO_SLICES + 1)    # ==> to launch YK.stop() to rejuvenate the YK-engine
             return
 
         #------------------------------------------------------------------------------
@@ -465,8 +519,7 @@ class IBert_YKScanLink_DataSrc(Base_YKScanLink_DataSrc):
         waterlevel = self.YKScan_slicer_buf.shape[0]
         if waterlevel > MAX_SLICES:
             self.YKScan_slicer_buf = np.delete(self.YKScan_slicer_buf, 0, axis=0)                                     # remove oldest slice data
-            BPrint(self.BPrt_HEAD_WATER() + f"buffer FULL", level=self.dataView.mydbg_DEBUG)
-        self.s_update_YKScan.emit(waterlevel)    # ==> invoke asynFunc_update_YKScan() for PyQT's thread context
+            BPrint(self.BPrt_HEAD_WATER() + f"buffer cycling around", level=self.dataView.mydbg_DEBUG)
 
         if len(obj.scan_data) > 2:   # only keep a few samples
             obj.scan_data.pop(0)
@@ -475,7 +528,6 @@ class IBert_YKScanLink_DataSrc(Base_YKScanLink_DataSrc):
         self.BPrt_traceData( self.BPrt_HEAD_COMMON() + f"BUF_SHAPE:{self.YKScan_slicer_buf.shape}   SNR:{self.snr:.2f}   DATA:" +
            f"({self.YKScan_slicer_buf[0][-1]:.1f}, {self.YKScan_slicer_buf[0][-2]:.1f}, {self.YKScan_slicer_buf[0][-3]:.1f}, {self.YKScan_slicer_buf[0][-4]:.1f})" )
 
-    #----------------------------------------------------------------------------------
     def sync_update_LinkData(self):
         self.__refresh_common_data__()
         self.status      = self.link.status
@@ -497,7 +549,6 @@ class IBert_YKScanLink_DataSrc(Base_YKScanLink_DataSrc):
                ber_series.min(), ber_series.max(), ber_series.mean(), ber_series.std(),  snr_series.min(), snr_series.max(), snr_series.mean(), snr_series.std() )
         self.pd_data.loc[len(self.pd_data)] = [ self.SYNC_samples_count, self.elapsed, self.status, self.line_rate, self.bit_count, self.error_count, self.ber, self.snr, self.eye, self.hist, self.comments ]
 
-    #----------------------------------------------------------------------------------
     def finish_object(self):
         super().finish_object()
         self.fsm_running = False
@@ -538,7 +589,7 @@ class MyYK_Figure(matplotlib.figure.Figure):
         self.ax_EYE.set_ylim(0,100)
         self.ax_EYE.set_yticks(range(0, 100, 20))
         if SHOW_FIG_TITLE: self.ax_EYE.set_title("Slicer eye")
-        else:              self.ax_EYE.set_xlabel("EYE")
+        else:              self.ax_EYE.set_xlabel("Slicer")
 
         # Set custom x-axis labels (divide by YKSCAN_SLICER_SIZE:2000)
         self.scatter_X_data = np.linspace( 0, SLICER_CHUNK_SIZE - 1, SLICER_CHUNK_SIZE )
@@ -584,24 +635,18 @@ class MyYK_Figure(matplotlib.figure.Figure):
         buf = myYK.YKScan_slicer_viewBuffer.flatten()
         self.scatter_plot_EYE.set_offsets( np.column_stack((self.scatter_X_data[0:len(buf)], buf)) )  # Set new data points
 
-        # Check if it's rotating the YKScan_slicer_buf on OLD data, then we won't need to do HISTOGRAM
-        if myYK.ASYN_samples_calc == myYK.ASYN_samples_count:
-            return
-        myYK.ASYN_samples_calc = myYK.ASYN_samples_count
-
+    def update_yk_hist(self, myYK):
         # Update the histogram plot     ## color: blue / green / teal / brown / charcoal / black / gray / silver / cyan / violet
-        self.ax_HIST.cla()              ## NOTE: Histogram must be cleared regularly, otherwise, it will be unresponsive, with messagebox of <<"python3" is not responding>> 
-        hist, edges, _ = self.ax_HIST.hist(list(myYK.YKScan_slicer_buf.flatten()), bins=HIST_BINS, orientation='horizontal', color='cyan', range=(0,100))
-        myYK.find_peaks_and_valleys(hist, edges) 
-        """
-        If the data has already been binned and counted, use bar or stairs to plot the distribution:
-        counts, bins = np.histogram(x)
-        plt.stairs(counts, bins)
-        """
+        # self.ax_HIST.cla()              ## NOTE: Histogram must be cleared regularly, otherwise, it will be unresponsive, with messagebox of <<"python3" is not responding>> 
+
+        # hist, edges, _ = self.ax_HIST.hist(list(myYK.YKScan_slicer_buf.flatten()), orientation='horizontal', color='cyan', bins=HIST_BINS, range=(0,100))
+        # self.ax_HIST.stairs(myYK.hist_counts, myYK.hist_bins, orientation='horizontal', color='cyan')
+        self.ax_HIST.barh(myYK.hist_bins[:-1], myYK.hist_counts, height=np.diff(myYK.hist_bins), color='cyan')
 
         self.ax_SNR.plot(myYK.ax_SNR_data, color='teal')
 
-    def update_yk_ber(self, myYK):
+
+    def update_link_ber(self, myYK):
         self.ax_BER.plot(myYK.ax_BER_data, color='violet')
 
 
@@ -635,8 +680,8 @@ class YKScan_DataView(Base_DataView):
         #self.mytable  = MyLink_TableEntry()
 
     def update_table(self):
-        self.updateTable( self.nID, 0, f"{self.myDataSrc.ASYN_samples_count:^10}" )
-        self.updateTable( self.nID, 1, f"{self.myDataSrc.SYNC_samples_count:^10}" )
+        self.updateTable( self.nID, 0, f"{self.myDataSrc.ASYN_samples_count:^5}" )
+        self.updateTable( self.nID, 1, f"{self.myDataSrc.SYNC_samples_count:^5}" )
         self.updateTable( self.nID, 4, f"{self.myDataSrc.status:^20}", QtGui.QColor(255,128,128) if self.myDataSrc.status == "No link" else QtGui.QColor(128,255,128) )
         self.updateTable( self.nID, 5, f"{self.myDataSrc.bit_count:^24}" )                     # type: string
         self.updateTable( self.nID, 6, "{:^24}".format(f"{self.myDataSrc.error_count:.3e}") )  # type: int
@@ -679,7 +724,7 @@ class HPCTest_ViewArena(QtCore.QObject):
         self.tableWidget = QtWidgets.QTableWidget(self.n_links, 12) 
 
         # Table will fit the screen horizontally 
-        self.tableWidget.setHorizontalHeaderLabels( ("YKcount", "LinkCount", "TX", "RX", "Status", "Bits", "Errors", "BER", "SNR", "EYE", "Histogram", "comments") )
+        self.tableWidget.setHorizontalHeaderLabels( ("YK-#", "Lnk-#", "TX", "RX", "Status", "Bits", "Errors", "BER", "SNR", "EYE", "Histogram", "comments") )
         header = self.tableWidget.horizontalHeader()
         header.setStretchLastSection(True) 
         header.setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)    # header.setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
