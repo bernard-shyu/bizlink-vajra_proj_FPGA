@@ -9,7 +9,9 @@ from chipscopy.api.ibert.aliases import ( PATTERN,
 )
 from more_itertools import one
 
+#--------------------------------------------------------------------------------------------------------------------------------------
 from module.common      import *
+
 #======================================================================================================================================
 # ## 2 - Create a session and connect to the hw_server and cs_server
 #
@@ -112,7 +114,7 @@ def check_link_status(link):
         ls = get_property_value( link.rx, 'Pattern Checker Lock Status')
         ec = get_property_value( link.rx, 'Pattern Checker Error Count')
         cc = get_property_value( link.rx, 'Pattern Checker Cycle Count')
-        return f"LinkStatus='{link.status}'   LineRate={lr}   Patten Checker: LockStatus='{ls}'  ErrorCount='{ec}'  CycleCount='{cc}'"
+        return f"LINK ('{link.status}' R={lr} LS='{ls}' EC='{ec}' CC='{cc}')"
     else:
         return ""
 

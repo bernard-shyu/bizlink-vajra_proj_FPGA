@@ -55,14 +55,12 @@ def sleep_QAppVitalize(n):
 # https://stackoverflow.com/questions/20063/whats-the-best-way-to-parse-command-line-arguments
 #--------------------------------------------------------------------------------------------------------------------------------------
 ENV_COMMON_HELP="""
-export DBG_LEVEL=5;
-export RESOLUTION="3840x2160";
 export SHOW_FIG_TITLE=True;
-export WTITLE_STYLE='color: red; font-size: 24px; font-weight: bold; background-color: rgba(255, 255, 128, 120);';
+export QWIN_TITLE_STYLE='color: red; font-size: 24px; font-weight: bold; background-color: rgba(255, 255, 128, 120);';
 """
 
 SHOW_FIG_TITLE    = os.getenv("SHOW_FIG_TITLE", 'False').lower() in ('true', '1', 't')
-WTITLE_STYLE      = os.getenv("WTITLE_STYLE", 'color: blue; font-size: 22px; font-weight: bold; background-color: rgba(255, 255, 128, 120);')
+QWIN_TITLE_STYLE  = os.getenv("QWIN_TITLE_STYLE", 'color: blue; font-size: 22px; font-weight: bold; background-color: rgba(255, 255, 128, 120);')
 
 #--------------------------------------------------------------------------------------------------------------------------------------
 def get_parameter(argName, defValue, meta, helpTxt, argType = 'string'):
@@ -85,16 +83,23 @@ def init_argParser(title, help_txt, config_file):
 def finish_argParser(dbg_SrcName):
     global sysconfig
 
+    DEFAULT_2="10 4 4 4"
     get_parameter( "DBG_LEVEL",    "3",         "level",  'debug level (ERR=0 WARN=1 NOTICE=2 INFO=3 DEBUG=4 TRACE=5, default=3)', argType='int' )
     get_parameter( "DBG_SRCNAME",  "",          "name",   f"DataSource name for trace ({dbg_SrcName}), default: ''" )
     get_parameter( "DBG_LVADJ",    "2",         "level",  'For the traced DataSource, the adjustment of debug level escalation, default: 2', argType='int' )
     get_parameter( "DBG_ASYCOUNT", "0",         "count",  'For all DataSources, the initial count of TRACE level async-messages to be shown, default: 0', argType='int' )
     get_parameter( "DBG_SYNCOUNT", "0",         "count",  'For all DataSources, the initial count of TRACE level sync-messages  to be shown, default: 0', argType='int' )
     get_parameter( "RESOLUTION",   "3200x1800", "resol",  'App Window Resolution: 3840x2160 / 3200x1800 / 2600x1400 / 1600x990 / 900x800' )
-    get_parameter( "WTITLE_OVHEAD","80",        "pixel",    'Overhead for Main-Windows, including Windows Title, borders, Tool-bar area.  default: 80', argType='int' )
+    get_parameter( "QWIN_OVHEAD",  "80",        "pixel",  'Overhead for Main-Windows, including Windows Title, borders, Tool-bar area.  default: 80', argType='int' )
+    get_parameter( "FSM_MAGIC",    DEFAULT_2,   "magic",  f"Special MAGIC formula for performance tuning. Default:  '{DEFAULT_2}'" )
     parser.add_argument('--SIMULATE', action='store_true', help='Whether to SIMULATE by random data or by real iBERT data source. default: False')
 
     sysconfig = parser.parse_args()
+
+    sysconfig.FSM_MAGIC_A = []
+    for m in sysconfig.FSM_MAGIC.split():
+        sysconfig.FSM_MAGIC_A.append(int(m))
+
     sysconfig.APP_RESOL_X = int(re.findall("([0-9]+)x[0-9]+", sysconfig.RESOLUTION)[0])
     sysconfig.APP_RESOL_Y = int(re.findall("[0-9]+x([0-9]+)", sysconfig.RESOLUTION)[0])
     return sysconfig
@@ -103,7 +108,7 @@ def calculate_plotFigure_size(grid_rows, grid_cols, N_links):
     TB_CELL_HEIGHT  = 30    # height of each table cell
     MATPLOTLIB_DPI  = 100   # density (or dots) per inch, default: 100.0
     sysconfig.FIG_SIZE_X = (sysconfig.APP_RESOL_X - 10) / grid_cols / MATPLOTLIB_DPI
-    sysconfig.FIG_SIZE_Y = (sysconfig.APP_RESOL_Y - sysconfig.WTITLE_OVHEAD - TB_CELL_HEIGHT * (N_links + 1)) / grid_rows / MATPLOTLIB_DPI
+    sysconfig.FIG_SIZE_Y = (sysconfig.APP_RESOL_Y - sysconfig.QWIN_OVHEAD - TB_CELL_HEIGHT * (N_links + 1)) / grid_rows / MATPLOTLIB_DPI
     assert sysconfig.FIG_SIZE_Y > 0
 
 
@@ -156,6 +161,7 @@ class Base_DataSource(QtCore.QObject):
 
     @QtCore.pyqtSlot()
     def fsmFunc_worker_thread(self):
+        INTERVAL = sysconfig.FSM_MAGIC_A[0]/10.0     # DEFAULT: 10
         while self.fsm_running:
             match self.fsm_state:
                 case self.fsm_state if self.fsm_state < 10:  # reset && initial fetch
@@ -175,7 +181,7 @@ class Base_DataSource(QtCore.QObject):
                 case _: raise ValueError(f"Not valid BaseDataSource.fsm_state : {self.fsm_state}\n")
 
             BPrint(self.BPrt_HEAD_COMMON() + f"FSM-WorkerThread.{QtCore.QThread.currentThread()} ", level=lvl)
-            sleep_QAppVitalize(1.0)      #QtCore.QTimer.singleShot(2000, lambda:self.fsmFunc_worker_thread())  (REF: https://stackoverflow.com/questions/41545300/equivalent-to-time-sleep-for-a-pyqt-application)
+            sleep_QAppVitalize(INTERVAL)     # QtCore.QTimer.singleShot(2000, lambda:self.fsmFunc_worker_thread())  (REF: https://stackoverflow.com/questions/41545300/equivalent-to-time-sleep-for-a-pyqt-application)
 
     #----------------------------------------------------------------------------------
     #def start_data(self):             pass    # Abstract method: to start data-source engine, like YK.start()

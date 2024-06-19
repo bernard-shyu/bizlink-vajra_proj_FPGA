@@ -46,6 +46,7 @@ export FPGA_HWID="112A";              export CONN_TYPE=XConn_x8;               e
 export MAX_SLICES=20;                 export YKSCAN_SLICER_SIZE=200;           export HIST_BINS=40;
 export CSV_PATH="YK_CSV_Files";       export CONFIG_FILE="config.ini";         export PDI_FILE="PDI_Files/VPK120_iBERT_2xQDD_53G.pdi";
 """
+APP_TITLE = "ChipScoPy APP for BizLink iBERT HPC-cables testing"
 
 # specify hw and if programming is desired
 CSV_PATH           = os.getenv("CSV_PATH", "YK_CSV_Files")
@@ -55,44 +56,57 @@ MAX_SLICES         = int(os.getenv("MAX_SLICES",         "12"))
 HIST_BINS          = int(os.getenv("HIST_BINS",          "100"))
 YKSCAN_SLICER_SIZE = int(os.getenv("YKSCAN_SLICER_SIZE", "2000"))           # for simulation purpose, we may choose smaller value
 VIVADO_SLICES      = 4    # Vivado always shows 8000 samples
+half_BINS          = int(HIST_BINS / 2)
+human_bin          = 100 / HIST_BINS                                        # show to human always in 0 ~ 100 range
 
 #--------------------------------------------------------------------------------------------------------------------------------------
-APP_TITLE = "ChipScoPy APP for BizLink iBERT HPC-cables testing"
-parser = init_argParser(APP_TITLE, ENV_HELP, CONFIG_FILE)
+def prepare_system_config(dbg_SrcName):
+    global global_grid_rows, global_grid_cols, global_N_links
 
-# The get_design_files() function tries to find the PDI and LTX files. In non-standard configurations, you can put the path for PROGRAMMING_FILE and PROBES_FILE below.
-#    design_files = get_design_files(f"{HW_PLATFORM}/production/chipscopy_ced")
-#    PDI_FILE = design_files.programming_file
-SIM_PDIFILE="Bernard_Simulation/VPK120_iBERT_2xQDD_53G.pdi"
-get_parameter( "PDI_FILE",     SIM_PDIFILE, "filename", 'FPGA image file (*.pdi) Ex. PDI_Files/VPK120_iBERT_2xQDD_53G.pdi' )
-get_parameter( "SERVER_IP",    "localhost", "ip",       'FPGA-board IP address. Default: localhost' )
-get_parameter( "FPGA_CS_PORT", "3042",      "port",     'FPGA-board cs_server port. Default: 3042' )
-get_parameter( "FPGA_HW_PORT", "3121",      "port",     'FPGA-board hw_server port. Default: 3121' )
-get_parameter( "FPGA_HWID",    "0",         "hwID",     'FPGA-board HWID: S/N (0 or 111A or 112A). Default: 0 (NOT specified, auto-detection)' )
-get_parameter( "CONN_TYPE",    "SLoop_x8",  "type",     'Connection Type: SLoop_x4 | SLoop_x8 | XConn_x4 | XConn_x8.  Or shorter: S4 | S8 | X4 | X8.  Default: SLoop_x8' )
-get_parameter( "TESTID",       "",          "TID",      'Specify the TID-name of testing configuration, Ex. "B5.sn111_B1.sn112", means cable B5 on VPK120-sn111 && cable B1 on sn112. Default: ""' )
-get_parameter( "DPATTERN",     "PRBS 31",   "pattern",  'Bits data pattern: PRBS 7 / PRBS 9 / ...' )
+    parser = init_argParser(APP_TITLE, ENV_HELP, CONFIG_FILE)
 
-sysconfig = finish_argParser("YK-Quad_204_CH0")
+    # The get_design_files() function tries to find the PDI and LTX files. In non-standard configurations, you can put the path for PROGRAMMING_FILE and PROBES_FILE below.
+    #    design_files = get_design_files(f"{HW_PLATFORM}/production/chipscopy_ced")
+    #    PDI_FILE = design_files.programming_file
+    DEFAULT_1="Bernard_Simulation/VPK120_iBERT_2xQDD_53G.pdi"
+    DEFAULT_2="HIST1,PER2,LNKST"
 
-#--------------------------------------------------------------------------------------------------------------------------------------
-sysconfig.DATA_RATE = int(re.findall(".*VPK120_iBERT_.*_([0-9]+)G.pdi", sysconfig.PDI_FILE)[0])
+    get_parameter( "PDI_FILE",     DEFAULT_1,   "filename", 'FPGA image file (*.pdi) Ex. PDI_Files/VPK120_iBERT_2xQDD_53G.pdi' )
+    get_parameter( "SERVER_IP",    "localhost", "ip",       'FPGA-board IP address. Default: localhost' )
+    get_parameter( "FPGA_CS_PORT", "3042",      "port",     'FPGA-board cs_server port. Default: 3042' )
+    get_parameter( "FPGA_HW_PORT", "3121",      "port",     'FPGA-board hw_server port. Default: 3121' )
+    get_parameter( "FPGA_HWID",    "0",         "hwID",     'FPGA-board HWID: S/N (0 or 111A or 112A). Default: 0 (NOT specified, auto-detection)' )
+    get_parameter( "CONN_TYPE",    "SLoop_x8",  "type",     'Connection Type: SLoop_x4 | SLoop_x8 | XConn_x4 | XConn_x8.  Or shorter: S4 | S8 | X4 | X8.  Default: SLoop_x8' )
+    get_parameter( "TESTID",       "",          "TID",      'Specify the TID-name of testing configuration, Ex. "B5.sn111_B1.sn112", means cable B5 on VPK120-sn111 && cable B1 on sn112. Default: ""' )
+    get_parameter( "DPATTERN",     "PRBS 31",   "pattern",  'Bits data pattern: PRBS 7 / PRBS 9 / ... Default: "PRBS 31"' )
+    get_parameter( "PER_NICE",     "4",         "nice",     'Nicely perform PER (Probility of Error Rate) calculation, with <nice> round per calculation, 0 diable PER, -1 calc PER on close. Default: 0', argType='int' )
+    get_parameter( "COMMENTS",     DEFAULT_2,   "format",   f"Comments Format spec: (HIST1 | HIST2 | PER1 | PER2 | PER3 | PER4 | LNKST). Default: '{DEFAULT_2}'" )
 
-match sysconfig.CONN_TYPE:
-    case "S4" | "SLoop_x4" | "X4" | "XConn_x4": global_N_links = 8;   global_grid_rows = 2;  global_grid_cols = 4;
-    case "S8" | "SLoop_x8" | "X8" | "XConn_x8": global_N_links = 16;  global_grid_rows = 2;  global_grid_cols = 8;
-    case _:   raise ValueError(f"Not valid Connection Type: {sysconfig.CONN_TYPE}\n")
+    #----------------------------------------------------------------------------------------------------------------------------------
+    sysconfig = finish_argParser(dbg_SrcName)
 
-calculate_plotFigure_size(global_grid_rows, global_grid_cols, global_N_links)
+    sysconfig.CS_URL    = f"TCP:{sysconfig.SERVER_IP}:{sysconfig.FPGA_CS_PORT}"
+    sysconfig.HW_URL    = f"TCP:{sysconfig.SERVER_IP}:{sysconfig.FPGA_HW_PORT}"
+    sysconfig.DATA_RATE = int(re.findall(".*VPK120_iBERT_.*_([0-9]+)G.pdi", sysconfig.PDI_FILE)[0])
 
-sysconfig.CS_URL = f"TCP:{sysconfig.SERVER_IP}:{sysconfig.FPGA_CS_PORT}"
-sysconfig.HW_URL = f"TCP:{sysconfig.SERVER_IP}:{sysconfig.FPGA_HW_PORT}"
+    #----------------------------------------------------------------------------------------------------------------------------------
+    match sysconfig.CONN_TYPE:
+        case "S4" | "SLoop_x4" | "X4" | "XConn_x4": global_N_links = 8;   global_grid_rows = 2;  global_grid_cols = 4;
+        case "S8" | "SLoop_x8" | "X8" | "XConn_x8": global_N_links = 16;  global_grid_rows = 2;  global_grid_cols = 8;
+        case _:   raise ValueError(f"Not valid Connection Type: {sysconfig.CONN_TYPE}\n")
 
-BPrint(f"\n{APP_TITLE } --- {app_start_time}\n", level=DBG_LEVEL_NOTICE)
-BPrint(f"Servers: CS:{sysconfig.CS_URL} HW:{sysconfig.HW_URL}   FPGA_HW: {sysconfig.FPGA_HWID}   PDI: '{sysconfig.PDI_FILE}'", level=DBG_LEVEL_NOTICE)
-BPrint(f"SYSCONFIG: cTyp={sysconfig.CONN_TYPE} pattern={sysconfig.DPATTERN} TID={sysconfig.TESTID} RATE={sysconfig.DATA_RATE}G " +
-       f"resolution={sysconfig.RESOLUTION} FIG={sysconfig.FIG_SIZE_X},{sysconfig.FIG_SIZE_Y}", level=DBG_LEVEL_NOTICE)
-BPrint(f"DEBUG: level={sysconfig.DBG_LEVEL} srcName={sysconfig.DBG_SRCNAME} lvAdj={sysconfig.DBG_LVADJ} AsynCnt={sysconfig.DBG_ASYCOUNT} SynCnt={sysconfig.DBG_SYNCOUNT} SIM={sysconfig.SIMULATE} \n", level=DBG_LEVEL_NOTICE)
+    calculate_plotFigure_size(global_grid_rows, global_grid_cols, global_N_links)
+
+    BPrint(f"\n{APP_TITLE} --- {app_start_time}\n", level=DBG_LEVEL_NOTICE)
+    BPrint(f"Server: CS:{sysconfig.CS_URL}  HW:{sysconfig.HW_URL}  FPGA_HW:{sysconfig.FPGA_HWID} \n", level=DBG_LEVEL_NOTICE)
+    BPrint(f"CONFIG: PDI='{sysconfig.PDI_FILE}'  TID={sysconfig.TESTID}  cTyp={sysconfig.CONN_TYPE}  pattern={sysconfig.DPATTERN}  RATE={sysconfig.DATA_RATE}G  " + \
+        f"PER={sysconfig.PER_NICE}  Comm={sysconfig.COMMENTS}  MAGIC='{sysconfig.FSM_MAGIC}' " + \
+        f"resolution={sysconfig.RESOLUTION} FIG={sysconfig.FIG_SIZE_X}, {sysconfig.FIG_SIZE_Y} ", level=DBG_LEVEL_NOTICE)
+    BPrint(f"DEBUG:  lv={sysconfig.DBG_LEVEL}  srcName={sysconfig.DBG_SRCNAME}  lvAdj={sysconfig.DBG_LVADJ}  AsynCnt={sysconfig.DBG_ASYCOUNT}  SynCnt={sysconfig.DBG_SYNCOUNT}  SIM={sysconfig.SIMULATE} \n", level=DBG_LEVEL_NOTICE)
+    BPrint("----------------------------------------------------------------------------------------------------------------------------------------------------------------", level=DBG_LEVEL_NOTICE)
+    return sysconfig
+
+sysconfig = prepare_system_config("YK-Quad_204_CH0")
 
 #======================================================================================================================================
 # Data source classes: iBERT-Link data, YK-Scan data, radom number simulattion
@@ -101,15 +115,15 @@ def analyze_subarray(subarray):   # Helper Function: Calculate descriptive stati
     return {
         'mean': np.mean(subarray),
         'std':  np.std(subarray),
-        #'min':  np.min(subarray),
-        #'max':  np.max(subarray)
+        'min':  0, # np.min(subarray),
+        'max':  0, # np.max(subarray)
     }
 
-def PrtStat4(s):   # Helper Function: to give descriptive text for statistics subarray
-    return "(M={:.1f}, std={:.1f}, R=[{:.1f}, {:.1f}])".format(s['mean'], s['std'], s['min'], s['max'])
-
-def PrtStat2(s):   # Helper Function: to give descriptive text for statistics subarray
-    return "({:.1f}, {:.1f})".format(s['mean'], s['std'])
+def PrtStat(stat, t):   # Helper Function: to give descriptive text for statistics subarray
+    match t:
+        case 4: return "({:.1f} / {:.1f} rng=[{:.1f} - {:.1f}])".format(stat['mean'], stat['std'], stat['min'], stat['max'])
+        case 2: return "({:.1f} / {:.1f})".format(stat['mean'], stat['std'])
+        case 1: return "{:.1f}".format(stat['std'])
 
 #----------------------------------------------------------------------------------------------------------------------------
 class Base_YKScanLink_DataSrc(Base_DataSource):
@@ -133,6 +147,19 @@ class Base_YKScanLink_DataSrc(Base_DataSource):
         self.YKScan_slicer_histBuffer  = np.zeros(VIVADO_SLICES * YKSCAN_SLICER_SIZE)
         self.hist_counts = np.zeros(HIST_BINS)
         self.hist_bins   = np.zeros(HIST_BINS+1)
+        self.per_nice    = sysconfig.PER_NICE
+
+        self.per_val     = 0
+        self.EYE_open    = 0
+        self.comments    = ""
+        self.per_Qtbl    = ""
+        self.per_Pandas  = ""
+        self.hist_QTbl   = ""
+        self.hist_Pandas = ""
+        self.comments    = ""
+        self.LinkStatus  = ""
+        self.BER_stat    = ""
+        self.SNR_stat    = ""
 
         self.ax_SNR_data = []
         self.ax_BER_data = []
@@ -169,6 +196,10 @@ class Base_YKScanLink_DataSrc(Base_DataSource):
 
     def sync_refresh_plotBER(self):
         self.sync_update_LinkData()
+        self.comments = self.hist_QTbl + "  " + self.per_Qtbl 
+        if "LNKST" in sysconfig.COMMENTS:
+            self.comments += "  " + self.LinkStatus
+
         self.dataView.myFigure.update_link_ber(self)
         self.dataView.update_table()
         self.BPrt_traceData( self.bprint_link(), trType="SYNC" )
@@ -204,7 +235,12 @@ class Base_YKScanLink_DataSrc(Base_DataSource):
 
         self.dataView.myFigure.update_yk_hist(self)
         self.find_peaks_and_valleys()
-        self.do_statistics_analysis()
+
+        if sysconfig.PER_NICE > 0:
+            self.per_nice += 1
+            if  self.per_nice >= sysconfig.PER_NICE:
+                self.per_nice = 0
+                self.do_statistics_analysis()
 
         self.BPrt_traceData( self.BPrt_HEAD_WATER() + f"refresh_plotYK:: VIEW({v}, {self.YKScan_slicer_viewPointer})  HIST({n}, {h}, {self.hist_counts.shape})  BER: {self.ber:.2e}  SNR: {self.snr:6.2f}  Elapsed:{self.elapsed}" )
 
@@ -217,9 +253,6 @@ class Base_YKScanLink_DataSrc(Base_DataSource):
         #  --------- 00 ------------------------------------------------------------------- 100 --------
         #  peaks:                 Peak0                                Peak1
         #  valeys:                                 Valey0
-        #-----------------------------------------------------------------------------------------------
-        half_BINS = int(HIST_BINS / 2)
-
         #-----------------------------------------------------------------------------------------------
         # find the highest peak in [0:50], Peak0
         Peak0 = hist[0:half_BINS].max()
@@ -239,16 +272,23 @@ class Base_YKScanLink_DataSrc(Base_DataSource):
         # self.hist: Histogram statistics
         # self.eye : EYE opening. i.e average of Peaks distance
         #-----------------------------------------------------------------------------------------------
-        self.hist = f"Peaks: ({i_P0}={Peak0:n}, {i_P1}={Peak1:n})   Valeys: {Valey0:n}"
-        self.eye  = i_P1 - i_P0
+        self.hist_Pandas  = f"PEAK ({int(i_P0*human_bin):02}={Peak0:n} / {int(i_P1*human_bin):02}={Peak1:n})  VALEY ({int(i_V0*human_bin):02})"
+        self.EYE_open = human_bin * (i_P1 - i_P0)
+
+        if "HIST1" in sysconfig.COMMENTS:
+            self.hist_QTbl = f"PEAK ({int(i_P0*human_bin):02} / {int(i_P1*human_bin):02})"
+        elif "HIST2" in sysconfig.COMMENTS:
+            self.hist_QTbl = self.hist_Pandas
+        else:
+            self.hist_QTbl = ""
 
     def find_PAM4_peaks_and_valleys(self, hist, bins):
         #  --------- 00 -------------------------------- 50 -------------------------------- 100 -------
         #  peaks:            Peak0           Peak1                  Peak2           Peak3
         #  valeys:                  Valey0             Valey1               Valey2
         #-----------------------------------------------------------------------------------------------
-        HILL_MIN_WIDTH = 3  if HIST_BINS <= 100 else 5;    # The hill peak should have sufficient width
-        half_BINS = int(HIST_BINS / 2)
+        # HILL_MIN_WIDTH = 3  if HIST_BINS <= 100 else 5;    # The hill peak should have sufficient width
+        HILL_MIN_WIDTH = int (4.1 / human_bin)
 
         #-----------------------------------------------------------------------------------------------
         # find the highest peak in [0:50], it can be Peak0 or Peak1
@@ -258,7 +298,7 @@ class Base_YKScanLink_DataSrc(Base_DataSource):
         # find the 2nd peak in [0:50] to the LEFT or RIGHT side
         if (i + HILL_MIN_WIDTH) >= half_BINS:
             # DEBUG >> (0:50): SHAPE=(100,) P=10373.0 I=48      Exception: zero-size array to reduction operation maximum which has no identity
-            BPrint(self.BPrt_HEAD_WATER() + f"Peaks too NARROW on (0:50):   P={p} I={i}", level = self.dataView.mydbg_INFO)
+            BPrint(self.BPrt_HEAD_WATER() + f"Peaks too NARROW on (0:50):   P={p} I={int(i*human_bin):02}", level = self.dataView.mydbg_INFO)
             Peak0 = p;  i_P0 = i - 1
             Peak1 = p;  i_P1 = i
         else:
@@ -280,7 +320,7 @@ class Base_YKScanLink_DataSrc(Base_DataSource):
 
         # find the 2nd peak in [50:100] to the LEFT or RIGHT side
         if (i - HILL_MIN_WIDTH) <= half_BINS:
-            BPrint(self.BPrt_HEAD_WATER() + f"Peaks too NARROW on (50:100): P={p} I={i}", level = self.dataView.mydbg_INFO)
+            BPrint(self.BPrt_HEAD_WATER() + f"Peaks too NARROW on (50:100): P={p} I={int(i*human_bin)}", level = self.dataView.mydbg_INFO)
             Peak2 = p;  i_P2 = i
             Peak3 = p;  i_P3 = i + 1
         else:
@@ -303,21 +343,20 @@ class Base_YKScanLink_DataSrc(Base_DataSource):
         self.peaks_index  = [i_P0, i_P1, i_P2, i_P3]
         self.valeys_index = [i_V0, i_V1, i_V2]
 
-        """
-        # find the standard-deviation
-        stdvar0 = np.std(hist[0:i_V0])
-        stdvar1 = np.std(hist[i_V0:i_V1])
-        stdvar2 = np.std(hist[i_V1:i_V2])
-        stdvar3 = np.std(hist[i_V2:HIST_BINS])
-        BPrint(self.BPrt_HEAD_WATER() + f"std:   {stdvar0:9.3f}    {stdvar1:9.3f}    {stdvar2:9.3f}    {stdvar3:9.3f} ", level = self.dataView.mydbg_TRACE)
-        """
-
         #-----------------------------------------------------------------------------------------------
         # self.hist: Histogram statistics
         # self.eye : EYE opening. i.e average of Peaks distance
         #-----------------------------------------------------------------------------------------------
-        self.hist = f"PEAK ({i_P0}={Peak0:n}, {i_P1}={Peak1:n}, {i_P2}={Peak2:n}, {i_P3}={Peak3:n})  VALEY ({i_V0}={Valey0:n}, {i_V1}={Valey1:n}, {i_V2}={Valey2:n})"
-        self.eye  = ((i_P3 - i_P2) + (i_P2 - i_P1) + (i_P1 - i_P0)) / 3
+        self.hist_Pandas  = f"PEAK ({int(i_P0*human_bin):02}={Peak0:n} / {int(i_P1*human_bin):02}={Peak1:n} / {int(i_P2*human_bin):02}={Peak2:n} / {int(i_P3*human_bin):02}={Peak3:n})  " + \
+                            f"VALEY ({int(i_V0*human_bin):02}={Valey0:n} / {int(i_V1*human_bin):02}={Valey1:n} / {int(i_V2*human_bin):02}={Valey2:n})"
+        self.EYE_open = human_bin * ((i_P3 - i_P2) + (i_P2 - i_P1) + (i_P1 - i_P0)) / 3
+
+        if "HIST1" in sysconfig.COMMENTS:
+            self.hist_QTbl = f"PEAK ({int(i_P0*human_bin):02} / {int(i_P1*human_bin):02} / {int(i_P2*human_bin):02} / {int(i_P3*human_bin):02})  VALEY ({int(i_V0*human_bin):02} / {int(i_V1*human_bin):02} / {int(i_V2*human_bin):02})"
+        elif "HIST2" in sysconfig.COMMENTS:
+            self.hist_QTbl = self.hist_Pandas
+        else:
+            self.hist_QTbl = ""
 
     def find_peaks_and_valleys(self):
         if len(self.hist_counts) != HIST_BINS:
@@ -327,16 +366,25 @@ class Base_YKScanLink_DataSrc(Base_DataSource):
             self.find_PAM4_peaks_and_valleys(self.hist_counts, self.hist_bins)
         else:
             self.find_NRZ_peaks_and_valleys(self.hist_counts, self.hist_bins)
-        BPrint(self.BPrt_HEAD_WATER() + f"Histogram-EYE: {self.eye:.3f}  statistic: {self.hist}", level = self.dataView.mydbg_TRACE)
+        BPrint(self.BPrt_HEAD_WATER() + f"Histogram-EYE: {self.EYE_open:.3f}  statistic: {self.hist_Pandas}", level = self.dataView.mydbg_TRACE)
 
     def do_statistics_analysis(self):
         your_array = self.YKScan_slicer_buf
 
+        # Sanity check
+        if sysconfig.DATA_RATE < 50:  return
+        if  (self.peaks_index[1] - self.peaks_index[0]) <= 5 or (self.peaks_index[3] - self.peaks_index[2]) <= 5:
+            BPrint(self.BPrt_HEAD_WATER() + f"Report-PER: Peaks too NARROW: {self.peaks_index[0]}, {self.peaks_index[1]}, {self.peaks_index[2]}, {self.peaks_index[3]}", level = self.dataView.mydbg_DEBUG)
+            return
+
         # Split the array into subarrays based on value ranges
-        subarray_1 = your_array[(your_array >= 0) & (your_array < self.valeys_index[0])]      # subarray_1 = your_array[(your_array >= 0) & (your_array < 30)]
-        subarray_2 = your_array[(your_array >= self.valeys_index[0]) & (your_array < 50)]     # subarray_2 = your_array[(your_array >= 30) & (your_array < 50)]
-        subarray_3 = your_array[(your_array >= 50) & (your_array < self.valeys_index[2])]     # subarray_3 = your_array[(your_array >= 50) & (your_array < 70)]
-        subarray_4 = your_array[(your_array >= self.valeys_index[2]) & (your_array <= 100)]   # subarray_4 = your_array[(your_array >= 70) & (your_array <= 100)]
+        valey0 = human_bin * (self.peaks_index[0] + self.peaks_index[1]) / 2
+        valey2 = human_bin * (self.peaks_index[2] + self.peaks_index[3]) / 2
+
+        subarray_1 = your_array[(your_array >= 0)      & (your_array < valey0)]      # subarray_1 = your_array[(your_array >= 0) & (your_array < 30)]
+        subarray_2 = your_array[(your_array >= valey0) & (your_array < 50)]          # subarray_2 = your_array[(your_array >= 30) & (your_array < 50)]
+        subarray_3 = your_array[(your_array >= 50)     & (your_array < valey2)]      # subarray_3 = your_array[(your_array >= 50) & (your_array < 70)]
+        subarray_4 = your_array[(your_array >= valey2) & (your_array <= 100)]        # subarray_4 = your_array[(your_array >= 70) & (your_array <= 100)]
 
         stats_1 = analyze_subarray(subarray_1)
         stats_2 = analyze_subarray(subarray_2)
@@ -353,14 +401,31 @@ class Base_YKScanLink_DataSrc(Base_DataSource):
         err_3_to_2 =     stats.norm.cdf(boundary_23, loc=stats_3['mean'], scale=stats_3['std'])
         err_3_to_4 = 1 - stats.norm.cdf(boundary_34, loc=stats_3['mean'], scale=stats_3['std'])
         err_4_to_3 =     stats.norm.cdf(boundary_34, loc=stats_4['mean'], scale=stats_4['std'])
-        err_all    = err_1_to_2 + err_2_to_1 + err_2_to_3 + err_3_to_2 + err_3_to_4 + err_4_to_3
 
-        BPrint(self.BPrt_HEAD_WATER() + f"Statistic report: ERRs=(ALL:{err_all:.3e} E12:{err_1_to_2:.3e} E21:{err_2_to_1:.3e} E23:{err_2_to_3:.3e} E32:{err_3_to_2:.3e} E34:{err_3_to_4:.3e} E43:{err_4_to_3:.3e}", \
-            f"P1:{PrtStat2(stats_1)} P2:{PrtStat2(stats_2)} P3:{PrtStat2(stats_3)} P4:{PrtStat2(stats_4)}  ", level = self.dataView.mydbg_TRACE)
+        per_ERRs = f"E12={err_1_to_2:.1e} E21={err_2_to_1:.1e} E23={err_2_to_3:.1e} E32={err_3_to_2:.1e} E34={err_3_to_4:.1e} E43={err_4_to_3:.1e}"
+        self.per_val = err_1_to_2 + err_2_to_1 + err_2_to_3 + err_3_to_2 + err_3_to_4 + err_4_to_3
+        self.per_Pandas = f"PER: (P1:{PrtStat(stats_1, 4)} P2:{PrtStat(stats_2, 4)} P3:{PrtStat(stats_3, 4)} P4:{PrtStat(stats_4, 4)} ERR:{per_ERRs })"
 
-        self.hist = f"ERRs=(ALL:{err_all:.3e} E12:{err_1_to_2:.1e} E21:{err_2_to_1:.1e} E23:{err_2_to_3:.1e} E32:{err_3_to_2:.1e} E34:{err_3_to_4:.1e} E43:{err_4_to_3:.1e}  " + \
-            f"P1:{PrtStat2(stats_1)} P2:{PrtStat2(stats_2)} P3:{PrtStat2(stats_3)} P4:{PrtStat2(stats_4)}"
+        if "PER1" in sysconfig.COMMENTS:
+            self.per_Qtbl = f"PER: ({PrtStat(stats_1, 1)} / {PrtStat(stats_2, 1)} / {PrtStat(stats_3, 1)} / {PrtStat(stats_4, 1)})"
+        elif "PER2" in sysconfig.COMMENTS:
+            self.per_Qtbl = f"PER: (P1:{PrtStat(stats_1, 2)} P2:{PrtStat(stats_2, 2)} P3:{PrtStat(stats_3, 2)} P4:{PrtStat(stats_4 , 2)})"
+        elif "PER3" in sysconfig.COMMENTS:
+            self.per_Qtbl = f"PER: (P1:{PrtStat(stats_1, 2)} P2:{PrtStat(stats_2, 2)} P3:{PrtStat(stats_3, 2)} P4:{PrtStat(stats_4, 2)} ERR:{per_ERRs })"
+        elif "PER4" in sysconfig.COMMENTS:
+            self.per_Qtbl = self.per_Pandas
+        else:
+            self.per_Qtbl = ""
 
+        #breakpoint()
+        BPrint(self.BPrt_HEAD_WATER() + f"Report-PER: {self.per_Pandas}   Boundary: {boundary_12:.1f}, {boundary_23:.1f}, {boundary_34:.1f} valey: {valey0:.1f}, {valey2:.1f}", level = self.dataView.mydbg_TRACE)
+
+    def finish_object(self):
+        if sysconfig.PER_NICE < 0:
+            self.do_statistics_analysis()
+            sleep_QAppVitalize(10) 
+
+        super().finish_object()
 
 #----------------------------------------------------------------------------------------------------------------------------
 class Fake_YKScanLink_DataSrc(Base_YKScanLink_DataSrc):
@@ -454,17 +519,17 @@ class IBert_YKScanLink_DataSrc(Base_YKScanLink_DataSrc):
 
         #------------------------------------------------------------------------------
         # Pandas table to keep data for CSV file
-        self.pd_data = pd.DataFrame(columns=["Samples", "Elapsed Time", "Status", "Line Rate", "Bits Count", "Errors Count", "BER", "SNR", "EYE-Opening", "Histogram", "comments"])
+        self.pd_data = pd.DataFrame(columns=["Samples", "Elapsed Time", "Status", "Line Rate", "Bits Count", "Errors Count", "BER", "SNR", "Link Status", "EYE-Opening", "Histogram", "PER", "PER Statistics"])
 
     def fsmFunc_reset(self):
         BPrint(self.BPrt_HEAD_WATER() + f"fsmFunc_reset", level=self.dataView.mydbg_INFO)
         self.fsmFunc_early_plots()
         match self.fsm_state:
             case 1:
-                sleep_QAppVitalize(self.link.nID*4) # interleaving to prevent overwhelming of data traffic from simultaneous YKScan on all Quad/CH
+                sleep_QAppVitalize(self.link.nID * sysconfig.FSM_MAGIC_A[1])       # DEFAULT: 4  ## interleaving to prevent overwhelming of data traffic from simultaneous YKScan on all Quad/CH
                 self.__YKEngine_manage__(True, 0)   # launch YK.start(), to start the YKScan engine
                 return False
-            case 4:
+            case self.fsm_state if self.fsm_state == sysconfig.FSM_MAGIC_A[2]:     # DEFAULT: 4
                 self.__YKEngine_manage__(False, 12) # launch YK.stop(), to stop the YKScan engine, throttle to prevent overflow of the slicer buffer
                 return False
             case 9:
@@ -480,7 +545,7 @@ class IBert_YKScanLink_DataSrc(Base_YKScanLink_DataSrc):
 
     def async_update_YKData(self):
         self.monitor_YK_cnt += 1
-        if  self.monitor_YK_cnt >= 4:
+        if  self.monitor_YK_cnt >= sysconfig.FSM_MAGIC_A[3]:       # DEFAULT: 4
             self.monitor_YK_cnt = 0
             self.__YKEngine_manage__(False, 13)     # launch YK.stop(), to stop the YKScan engine
 
@@ -511,7 +576,7 @@ class IBert_YKScanLink_DataSrc(Base_YKScanLink_DataSrc):
         #------------------------------------------------------------------------------
         self.ASYN_samples_count +=1      #  ==> len(obj.scan_data) - 1
         self.snr = obj.scan_data[-1].snr
-        self.ax_SNR_data.append(self.snr)
+        if self.snr > 0:  self.ax_SNR_data.append(self.snr)      # sanity check
 
         #------------------------------------------------------------------------------
         # Update the circular buffer with new data.
@@ -540,14 +605,16 @@ class IBert_YKScanLink_DataSrc(Base_YKScanLink_DataSrc):
         self.ax_BER_data.append(math.log10(self.ber))
 
         # Append data into Pandas table
-        self.comments = check_link_status(self.link)
-        if self.comments == "":
-            # the Link works normally, then get its statistical data
+        self.LinkStatus = check_link_status(self.link)
+        if self.LinkStatus == "":
+            # the Link works normally, then get its statistical data. NOTE to do sanity check
             ber_series = self.pd_data['BER']
-            snr_series = self.pd_data['SNR']
-            self.comments = "BER: ({:.2e}, {:.2e}) mean={:.2e} std={:.2e}    SNR: ({:.2e}, {:.2e}) mean={:.2e} std={:.2e}".format( 
-               ber_series.min(), ber_series.max(), ber_series.mean(), ber_series.std(),  snr_series.min(), snr_series.max(), snr_series.mean(), snr_series.std() )
-        self.pd_data.loc[len(self.pd_data)] = [ self.SYNC_samples_count, self.elapsed, self.status, self.line_rate, self.bit_count, self.error_count, self.ber, self.snr, self.eye, self.hist, self.comments ]
+            if len(ber_series)       > 0:  self.BER_stat = "BER ({:.2e} / {:.1e}) rng=[{:.1e} - {:.1e}])".format(ber_series.mean(), ber_series.std(), ber_series.min(), ber_series.max())
+            if len(self.ax_SNR_data) > 0:  self.SNR_stat = "SNR ({:4.1f} / {:4.1f})".format(np.mean(self.ax_SNR_data), np.std(self.ax_SNR_data))
+            self.LinkStatus = f"{self.BER_stat}  {self.SNR_stat}"
+
+        self.pd_data.loc[len(self.pd_data)] = [ self.SYNC_samples_count, self.elapsed, self.status, self.line_rate, self.bit_count, self.error_count, self.ber, self.snr, self.LinkStatus, \
+            self.EYE_open, self.hist_Pandas, self.per_val, self.per_Pandas]
 
     def finish_object(self):
         super().finish_object()
@@ -682,13 +749,13 @@ class YKScan_DataView(Base_DataView):
     def update_table(self):
         self.updateTable( self.nID, 0, f"{self.myDataSrc.ASYN_samples_count:^5}" )
         self.updateTable( self.nID, 1, f"{self.myDataSrc.SYNC_samples_count:^5}" )
-        self.updateTable( self.nID, 4, f"{self.myDataSrc.status:^20}", QtGui.QColor(255,128,128) if self.myDataSrc.status == "No link" else QtGui.QColor(128,255,128) )
-        self.updateTable( self.nID, 5, f"{self.myDataSrc.bit_count:^24}" )                     # type: string
-        self.updateTable( self.nID, 6, "{:^24}".format(f"{self.myDataSrc.error_count:.3e}") )  # type: int
-        self.updateTable( self.nID, 7, "{:^20}".format(f"{self.myDataSrc.ber:.3e}") )          # type: float
-        self.updateTable( self.nID, 8, "{:^20}".format(f"{self.myDataSrc.snr:.3f}") )          # type: float
-        self.updateTable( self.nID, 9, "{:^20}".format(f"{self.myDataSrc.eye:.3f}") )          # type: float
-        self.updateTable( self.nID,10, self.myDataSrc.hist )
+        self.updateTable( self.nID, 4, f"{self.myDataSrc.status:^16}", QtGui.QColor(255,128,128) if self.myDataSrc.status == "No link" else QtGui.QColor(128,255,128) )
+        self.updateTable( self.nID, 5, f"{self.myDataSrc.bit_count:^18}" )                     # type: string
+        self.updateTable( self.nID, 6, "{:^16}".format(f"{self.myDataSrc.error_count:.3e}") )  # type: int
+        self.updateTable( self.nID, 7, "{:^16}".format(f"{self.myDataSrc.ber:.3e}") )          # type: float
+        self.updateTable( self.nID, 8, "{:^14}".format(f"{self.myDataSrc.snr:.3f}") )          # type: float
+        self.updateTable( self.nID, 9, "{:^14}".format(f"{self.myDataSrc.EYE_open:.3f}") )     # type: float
+        self.updateTable( self.nID,10, "{:^16}".format(f"{self.myDataSrc.per_val:.3e}") )      # type: float
         self.updateTable( self.nID,11, self.myDataSrc.comments )
         #BPrint("QTable_TYP: bits={}, err={}, ber={}, snr={}".format(type(self.myDataSrc.bit_count), type(self.myDataSrc.error_count), type(self.myDataSrc.ber), type(self.myDataSrc.snr)), level=DBG_LEVEL_WIP)
         #BPrint("QTable_VAL: bits={}, err={}, ber={}, snr={}".format(     self.myDataSrc.bit_count,       self.myDataSrc.error_count,       self.myDataSrc.ber,       self.myDataSrc.snr),  level=DBG_LEVEL_WIP)
@@ -724,7 +791,7 @@ class HPCTest_ViewArena(QtCore.QObject):
         self.tableWidget = QtWidgets.QTableWidget(self.n_links, 12) 
 
         # Table will fit the screen horizontally 
-        self.tableWidget.setHorizontalHeaderLabels( ("YK-#", "Lnk-#", "TX", "RX", "Status", "Bits", "Errors", "BER", "SNR", "EYE", "Histogram", "comments") )
+        self.tableWidget.setHorizontalHeaderLabels( ("YK-#", "Lnk-#", "TX", "RX", "Status", "Bits", "Errors", "BER", "SNR", "EyeOpen", "PER", "Comments") )
         header = self.tableWidget.horizontalHeader()
         header.setStretchLastSection(True) 
         header.setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)    # header.setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
@@ -750,7 +817,7 @@ class HPCTest_ViewArena(QtCore.QObject):
         #             r"""raw strings""" for docstrings
         self.updateTable( link.nID, 2, "{:^20}".format(re.findall(r".*(Quad_.*\.[RT]X).*", str(link.tx))[0]) )
         self.updateTable( link.nID, 3, "{:^20}".format(re.findall(r".*(Quad_.*\.[RT]X).*", str(link.rx))[0]) )
-        self.updateTable( link.nID, 4, "{:^20}".format(str(link.status)) )
+        self.updateTable( link.nID, 4, "{:^16}".format(str(link.status)) )
 
         self.grid_col += 1
         if  self.grid_col >= global_grid_cols:
@@ -798,7 +865,7 @@ class HPC_Test_MainWidget(QtWidgets.QMainWindow):
         if sysconfig.TESTID != "": titleText = f"{titleText} / {sysconfig.TESTID} / {sysconfig.DATA_RATE}G"
 
         label = QtWidgets.QLabel(titleText, self)
-        label.setStyleSheet(WTITLE_STYLE)
+        label.setStyleSheet(QWIN_TITLE_STYLE)
         self.layout_toolbar.addWidget(label)
 
         btn = QtWidgets.QPushButton("Bernard Button", self)
