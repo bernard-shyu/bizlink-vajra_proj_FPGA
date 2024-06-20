@@ -44,12 +44,14 @@ EXPORT Environment variables:
 export SERVER_IP="10.20.2.8";         export FPGA_CS_PORT="3042";              export FPGA_HW_PORT="3121";
 export FPGA_HWID="112A";              export CONN_TYPE=XConn_x8;               export DPATTERN="PRBS 9";
 export MAX_SLICES=20;                 export YKSCAN_SLICER_SIZE=200;           export HIST_BINS=40;
-export CSV_PATH="YK_CSV_Files";       export CONFIG_FILE="config.ini";         export PDI_FILE="PDI_Files/VPK120_iBERT_2xQDD_53G.pdi";
+export CSV_PATH="YK_CSV_Files";       SLICER_PATH="YK_SlicerData_Files";       export CONFIG_FILE="config.ini";
+export PDI_FILE="PDI_Files/VPK120_iBERT_2xQDD_53G.pdi";
 """
 APP_TITLE = "ChipScoPy APP for BizLink iBERT HPC-cables testing"
 
 # specify hw and if programming is desired
 CSV_PATH           = os.getenv("CSV_PATH", "YK_CSV_Files")
+SLICER_PATH        = os.getenv("SLICER_PATH", "YK_SlicerData_Files")
 CONFIG_FILE        = os.getenv("CONFIG_FILE", 'config.iBert_HPCTest.ini')
 
 MAX_SLICES         = int(os.getenv("MAX_SLICES",         "12"))
@@ -506,7 +508,7 @@ class Fake_YKScanLink_DataSrc(Base_YKScanLink_DataSrc):
 # The class correlates to chipscopy.api.ibert.link.Link
 #----------------------------------------------------------------------------------------------------------------------------
 class IBert_YKScanLink_DataSrc(Base_YKScanLink_DataSrc):
-    WATCHDOG_INTERVAL = 300 * 1000
+    WATCHDOG_INTERVAL = sysconfig.FSM_MAGIC_A[4] * 1000            # DEFAULT: 300
 
     def __init__(self, dView, link):
         super().__init__(dView, link)
@@ -562,6 +564,7 @@ class IBert_YKScanLink_DataSrc(Base_YKScanLink_DataSrc):
                 self.YK_is_started = False
         except Exception as e:
             print(f"YKScan-{self.dsrcName} ({_where_:2} {to_start_YK} {self.YK_is_started})  Exception: {str(e)}")
+            self.YK_is_started = not self.YK_is_started
 
     def asynCB_update_YKScanData(self, obj):
         # ## 6 - Define YK Scan Update Method
@@ -618,12 +621,16 @@ class IBert_YKScanLink_DataSrc(Base_YKScanLink_DataSrc):
 
     def finish_object(self):
         super().finish_object()
+        self.__YKEngine_manage__(False, 11)  # launch YK.stop(), to stop the YKScan engine from running.
         self.fsm_running = False
-        #path = f"{CSV_PATH}/YK_{sysconfig.FPGA_HWID}.{app_start_time.year}-{app_start_time.month:02}{app_start_time.day:02}"
+        #------------------- CSV file output -----------------------------------------------------
         path = f"{CSV_PATH}/TID_{sysconfig.TESTID}.{app_start_time.year}-{app_start_time.month:02}{app_start_time.day:02}"
         os.makedirs(path, exist_ok=True)
         self.pd_data.to_csv(f"{path}/Sn{sysconfig.FPGA_HWID}_{sysconfig.DATA_RATE}G.{self.dsrcName}-{app_start_time.hour:02}{app_start_time.minute:02}.csv")
-        self.__YKEngine_manage__(False, 11)  # launch YK.stop(), to stop the YKScan engine from running.
+        #------------------- Slicer data file output ----------------------------------------------
+        path = f"{SLICER_PATH}/TID_{sysconfig.TESTID}.{app_start_time.year}-{app_start_time.month:02}{app_start_time.day:02}"
+        os.makedirs(path, exist_ok=True)
+        np.savetxt(f"{path}/Sn{sysconfig.FPGA_HWID}_{sysconfig.DATA_RATE}G.{self.dsrcName}-{app_start_time.hour:02}{app_start_time.minute:02}.txt", self.YKScan_slicer_buf.flatten())
 
 
 #======================================================================================================================================

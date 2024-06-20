@@ -12,33 +12,44 @@ Can you give me the complete Python code for this?
 [reference picture](https://www.researchgate.net/figure/a-Received-PAM4-signal-and-b-PAM4-signal-at-the-mid-stage-DSP_fig4_270914570)
 """
 
+import sys
+import matplotlib.pyplot as plt
 import numpy as np
 
 #---------------------------------------------------------------------------------------------------
 # Bernard's ChipScoPy's design: YKScan_slicer_buf
 #---------------------------------------------------------------------------------------------------
+def data_source_from_ramdom():
+    # Generate your numpy array (assuming you already have it)
+    # Replace 'your_array' with your actual data
+    your_array = np.random.randint(0, 100, size=8000)
 
-# Generate your numpy array (assuming you already have it)
-# Replace 'your_array' with your actual data
-your_array = np.random.randint(0, 100, size=8000)
+    peak_positions = [20, 40, 60, 80]
+    YKSCAN_SLICER_SIZE = 8000
+    std_devs = [1.5, 2.2, 1.2, 3.3]
+    your_array = np.zeros((0, YKSCAN_SLICER_SIZE))
 
-peak_positions = [20, 40, 60, 80]
-YKSCAN_SLICER_SIZE = 8000
-std_devs = [1.5, 2.2, 1.2, 3.3]
-your_array = np.zeros((0, YKSCAN_SLICER_SIZE))
+    print(f"peak_positions = {peak_positions}\nstd_devs = {std_devs}\n")
 
-print(f"peak_positions = {peak_positions}\nstd_devs = {std_devs}\n")
+    slice_data = []
+    for i in range(len(peak_positions)):
+        peak_pos = peak_positions[i]
+        std_dev = std_devs[i]
+        slice_data.append( np.random.normal(loc=peak_pos, scale=std_dev, size=int(YKSCAN_SLICER_SIZE/4)) )
+    slice_buf = np.column_stack(( slice_data[0], slice_data[1], slice_data[2], slice_data[3] ))
 
-slice_data = []
-for i in range(len(peak_positions)):
-    peak_pos = peak_positions[i]
-    std_dev = std_devs[i]
-    slice_data.append( np.random.normal(loc=peak_pos, scale=std_dev, size=int(YKSCAN_SLICER_SIZE/4)) )
-slice_buf = np.column_stack(( slice_data[0], slice_data[1], slice_data[2], slice_data[3] ))
+    return np.append(your_array, [slice_buf.flatten('c')], axis=0)          # append new data
 
-your_array = np.append(your_array, [slice_buf.flatten('c')], axis=0)          # append new data
+
 #---------------------------------------------------------------------------------------------------
+#your_array = data_source_from_ramdom()
 
+if len(sys.argv) > 0:
+    your_array = np.loadtxt(sys.argv[1])
+else:
+    your_array = np.loadtxt('Sample_YK-Slicer_Files.Cable-2m.txt')
+
+#---------------------------------------------------------------------------------------------------
 # Split the array into subarrays based on value ranges
 subarray_1 = your_array[(your_array >= 0) & (your_array < 30)]
 subarray_2 = your_array[(your_array >= 30) & (your_array < 50)]
@@ -129,6 +140,8 @@ err_3_to_2 = stats.norm.cdf(    boundary_23, loc=stats_3['mean'], scale=stats_3[
 err_3_to_4 = 1 - stats.norm.cdf(boundary_34, loc=stats_3['mean'], scale=stats_3['std'])
 err_4_to_3 = stats.norm.cdf(    boundary_34, loc=stats_4['mean'], scale=stats_4['std'])
 
+total_error = err_1_to_2 + err_2_to_1 + err_2_to_3 + err_3_to_2 + err_3_to_4 + err_4_to_3
+
 print("\n")
 print(f"Bernard Error probability  err_1_to_2: {err_1_to_2:.3e}")
 print(f"Bernard Error probability  err_2_to_1: {err_2_to_1:.3e}")
@@ -138,3 +151,28 @@ print(f"Bernard Error probability  err_3_to_2: {err_3_to_2:.3e}")
                                         
 print(f"Bernard Error probability  err_3_to_4: {err_3_to_4:.3e}")
 print(f"Bernard Error probability  err_4_to_3: {err_4_to_3:.3e}")
+
+print(f"Bernard Error probability  total: {total_error:.3e}")
+
+#---------------------------------------------------------------------------------------------------
+def plot_data_graph(loaded_data):
+    # Create scatter plot
+    plt.figure(figsize=(8, 6))
+    plt.scatter(range(len(loaded_data)), loaded_data, s=5, color='b', alpha=0.5)
+    plt.title('Scatter Plot of Normal Distribution Data')
+    plt.xlabel('Index')
+    plt.ylabel('Value')
+    plt.grid(True)
+    plt.show()
+
+    # Create histogram
+    plt.figure(figsize=(8, 6))
+    plt.hist(loaded_data, bins=100, color='g', edgecolor='black', alpha=0.7)
+    plt.title('Histogram of Normal Distribution Data')
+    plt.xlabel('Value')
+    plt.ylabel('Frequency')
+    plt.grid(True)
+    plt.show()
+
+plot_data_graph(your_array)
+#---------------------------------------------------------------------------------------------------
