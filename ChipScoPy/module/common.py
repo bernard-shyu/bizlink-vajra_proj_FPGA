@@ -83,7 +83,7 @@ def init_argParser(title, help_txt, config_file):
 def finish_argParser(dbg_SrcName):
     global sysconfig
 
-    DEFAULT_2="10 4 4 4 300"
+    DEFAULT_2="10 4 2 2 300 2 2 120"
     get_parameter( "DBG_LEVEL",    "3",         "level",  'debug level (ERR=0 WARN=1 NOTICE=2 INFO=3 DEBUG=4 TRACE=5, default=3)', argType='int' )
     get_parameter( "DBG_SRCNAME",  "",          "name",   f"DataSource name for trace ({dbg_SrcName}), default: ''" )
     get_parameter( "DBG_LVADJ",    "2",         "level",  'For the traced DataSource, the adjustment of debug level escalation, default: 2', argType='int' )
@@ -193,6 +193,7 @@ class Base_DataSource(QtCore.QObject):
     #----------------------------------------------------------------------------------
 
     def finish_object(self):
+        self.fsm_running = False
         self.watchdog_timer.stop()
 
 

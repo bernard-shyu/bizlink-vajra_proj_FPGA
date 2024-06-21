@@ -12,7 +12,7 @@ Can you give me the complete Python code for this?
 [reference picture](https://www.researchgate.net/figure/a-Received-PAM4-signal-and-b-PAM4-signal-at-the-mid-stage-DSP_fig4_270914570)
 """
 
-import sys
+import sys, os
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -42,12 +42,11 @@ def data_source_from_ramdom():
 
 
 #---------------------------------------------------------------------------------------------------
-#your_array = data_source_from_ramdom()
+if len(sys.argv) > 1: fname = sys.argv[1]
+else:                 fname = 'Sample_YK-Slicer_Files.Cable-2m.txt'
 
-if len(sys.argv) > 0:
-    your_array = np.loadtxt(sys.argv[1])
-else:
-    your_array = np.loadtxt('Sample_YK-Slicer_Files.Cable-2m.txt')
+if os.path.isfile(fname): your_array = np.loadtxt(fname)
+else:                     your_array = data_source_from_ramdom()
 
 #---------------------------------------------------------------------------------------------------
 # Split the array into subarrays based on value ranges

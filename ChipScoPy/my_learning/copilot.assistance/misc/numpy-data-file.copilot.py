@@ -29,11 +29,17 @@ Reading Data from the Disk File and Creating Matplotlib Plots: Now let’s read 
 Additionally, we’ll calculate some basic statistical measures:
 """
 
+import sys
 import matplotlib.pyplot as plt
 import numpy as np
 
 # Read data from the file
-loaded_data = np.loadtxt('YK_SlicerData_Files.Cable-B1.56Gpbs.2024-06201404.txt')
+#---------------------------------------------------------------------------------------------------
+if len(sys.argv) > 1: fname = sys.argv[1]
+else:                 fname = 'Sample_YK-Slicer_Files.Cable-2m.txt'
+
+loaded_data = np.loadtxt(fname)
+#---------------------------------------------------------------------------------------------------
 
 # Create scatter plot
 plt.figure(figsize=(8, 6))
@@ -46,7 +52,7 @@ plt.show()
 
 # Create histogram
 plt.figure(figsize=(8, 6))
-plt.hist(loaded_data, bins=30, color='g', edgecolor='black', alpha=0.7)
+plt.hist(loaded_data, bins=100, color='g', edgecolor='black', alpha=0.7)
 plt.title('Histogram of Normal Distribution Data')
 plt.xlabel('Value')
 plt.ylabel('Frequency')

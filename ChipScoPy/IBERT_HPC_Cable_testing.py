@@ -45,6 +45,7 @@ export SERVER_IP="10.20.2.8";         export FPGA_CS_PORT="3042";              e
 export FPGA_HWID="112A";              export CONN_TYPE=XConn_x8;               export DPATTERN="PRBS 9";
 export MAX_SLICES=20;                 export YKSCAN_SLICER_SIZE=200;           export HIST_BINS=40;
 export CSV_PATH="YK_CSV_Files";       SLICER_PATH="YK_SlicerData_Files";       export CONFIG_FILE="config.ini";
+export FLOWCTRL_MODE="object";
 export PDI_FILE="PDI_Files/VPK120_iBERT_2xQDD_53G.pdi";
 """
 APP_TITLE = "ChipScoPy APP for BizLink iBERT HPC-cables testing"
@@ -87,9 +88,10 @@ def prepare_system_config(dbg_SrcName):
     #----------------------------------------------------------------------------------------------------------------------------------
     sysconfig = finish_argParser(dbg_SrcName)
 
-    sysconfig.CS_URL    = f"TCP:{sysconfig.SERVER_IP}:{sysconfig.FPGA_CS_PORT}"
-    sysconfig.HW_URL    = f"TCP:{sysconfig.SERVER_IP}:{sysconfig.FPGA_HW_PORT}"
-    sysconfig.DATA_RATE = int(re.findall(".*VPK120_iBERT_.*_([0-9]+)G.pdi", sysconfig.PDI_FILE)[0])
+    sysconfig.CS_URL        = f"TCP:{sysconfig.SERVER_IP}:{sysconfig.FPGA_CS_PORT}"
+    sysconfig.HW_URL        = f"TCP:{sysconfig.SERVER_IP}:{sysconfig.FPGA_HW_PORT}"
+    sysconfig.DATA_RATE     = int(re.findall(".*VPK120_iBERT_.*_([0-9]+)G.pdi", sysconfig.PDI_FILE)[0])
+    sysconfig.FLOWCTRL_MODE = os.getenv("FLOWCTRL_MODE", 'global')              # DataSource traffic flow control mode: 'global', 'object'
 
     #----------------------------------------------------------------------------------------------------------------------------------
     match sysconfig.CONN_TYPE:
@@ -173,8 +175,9 @@ class Base_YKScanLink_DataSrc(Base_DataSource):
         return self.BPrt_HEAD_COMMON() + f"LINK STATUS={self.status:<12} BER={self.ber:<15} RATE={self.line_rate:<12} BITS={self.bit_count:<18} ERR={self.error_count}"
         #return self.BPrt_HEAD_COMMON() + f"SELF={self} LINK={str(self.link):<8}  STATUS={self.status:<12} BER={self.ber:<15} RATE={self.line_rate:<12} BITS={self.bit_count:<18} ERR={self.error_count}"
 
-    def sync_update_LinkData(self):  pass    # Abstract method: to update data from ource engine, synchronously by polling
-    def async_update_YKData(self):   pass    # Abstract method: to update data from ource engine, asynchronously by call-back
+    def sync_update_LinkData(self):            pass    # Abstract method: to update data from ource engine, synchronously by polling
+    def async_update_YKData(self):             pass    # Abstract method: to update data from ource engine, asynchronously by call-back
+    def dsrc_traffic_manager(self, action):    pass    # Abstract method: To do flow control of data traffic management
 
     ## FSM-RESET state, fetching YKScan for 4 slices (VIVADO_SLICES), and filling up to 12 (MAX_SLICES)
     def fill_up_slicer_buf(self):
@@ -429,6 +432,7 @@ class Base_YKScanLink_DataSrc(Base_DataSource):
 
         super().finish_object()
 
+
 #----------------------------------------------------------------------------------------------------------------------------
 class Fake_YKScanLink_DataSrc(Base_YKScanLink_DataSrc):
     WATCHDOG_INTERVAL = 5 * 1000
@@ -526,21 +530,31 @@ class IBert_YKScanLink_DataSrc(Base_YKScanLink_DataSrc):
     def fsmFunc_reset(self):
         BPrint(self.BPrt_HEAD_WATER() + f"fsmFunc_reset", level=self.dataView.mydbg_INFO)
         self.fsmFunc_early_plots()
-        match self.fsm_state:
-            case 1:
-                sleep_QAppVitalize(self.link.nID * sysconfig.FSM_MAGIC_A[1])       # DEFAULT: 4  ## interleaving to prevent overwhelming of data traffic from simultaneous YKScan on all Quad/CH
-                self.__YKEngine_manage__(True, 0)   # launch YK.start(), to start the YKScan engine
-                return False
-            case self.fsm_state if self.fsm_state == sysconfig.FSM_MAGIC_A[2]:     # DEFAULT: 4
-                self.__YKEngine_manage__(False, 12) # launch YK.stop(), to stop the YKScan engine, throttle to prevent overflow of the slicer buffer
-                return False
-            case 9:
-                self.fill_up_slicer_buf()
-                return True                         # end of FSM-RESET state
-            case _:
-                return False
+        if sysconfig.FLOWCTRL_MODE == 'global':
+            match self.fsm_state:
+                case 9:
+                    self.fill_up_slicer_buf()
+                    return True                         # end of FSM-RESET state
+                case _:
+                    return False
+        else:
+            match self.fsm_state:
+                case 1:
+                    sleep_QAppVitalize(self.link.nID * sysconfig.FSM_MAGIC_A[1])       # DEFAULT: 4  ## interleaving to prevent overwhelming of data traffic from simultaneous YKScan on all Quad/CH
+                    self.__YKEngine_manage__(True, 0)   # launch YK.start(), to start the YKScan engine
+                    return False
+                case self.fsm_state if self.fsm_state == sysconfig.FSM_MAGIC_A[2]:     # DEFAULT: 4
+                    self.__YKEngine_manage__(False, 12) # launch YK.stop(), to stop the YKScan engine, throttle to prevent overflow of the slicer buffer
+                    return False
+                case 9:
+                    self.fill_up_slicer_buf()
+                    return True                         # end of FSM-RESET state
+                case _:
+                    return False
 
     def fsmFunc_watchdog(self):
+        if sysconfig.FLOWCTRL_MODE == 'global': return
+
         BPrint(self.BPrt_HEAD_WATER() + f"Watchdog", level=self.dataView.mydbg_DEBUG)
         if self.fsm_state >= 10:  # Normal FSM-state
             self.__YKEngine_manage__(True, 1)  # relaunch YK.start(), likely it is stopped by throttling of flow control
@@ -550,6 +564,9 @@ class IBert_YKScanLink_DataSrc(Base_YKScanLink_DataSrc):
         if  self.monitor_YK_cnt >= sysconfig.FSM_MAGIC_A[3]:       # DEFAULT: 4
             self.monitor_YK_cnt = 0
             self.__YKEngine_manage__(False, 13)     # launch YK.stop(), to stop the YKScan engine
+
+    def dsrc_traffic_manager(self, action):
+        self.__YKEngine_manage__(action, 99)        # launch YK.stop() or start()
 
     def __YKEngine_manage__(self, to_start_YK, _where_):
         try:
@@ -754,8 +771,8 @@ class YKScan_DataView(Base_DataView):
         #self.mytable  = MyLink_TableEntry()
 
     def update_table(self):
-        self.updateTable( self.nID, 0, f"{self.myDataSrc.ASYN_samples_count:^5}" )
-        self.updateTable( self.nID, 1, f"{self.myDataSrc.SYNC_samples_count:^5}" )
+        self.updateTable( self.nID, 0, f"{self.myDataSrc.ASYN_samples_count:^5}" )             # YK-Scan samples count, by asynchronous call-back
+        self.updateTable( self.nID, 1, f"{self.myDataSrc.SYNC_samples_count:^5}" )             # Link    samples count, by synchronous polling
         self.updateTable( self.nID, 4, f"{self.myDataSrc.status:^16}", QtGui.QColor(255,128,128) if self.myDataSrc.status == "No link" else QtGui.QColor(128,255,128) )
         self.updateTable( self.nID, 5, f"{self.myDataSrc.bit_count:^18}" )                     # type: string
         self.updateTable( self.nID, 6, "{:^16}".format(f"{self.myDataSrc.error_count:.3e}") )  # type: int
@@ -776,7 +793,6 @@ class YKScan_DataView(Base_DataView):
 
 #----------------------------------------------------------------------------------------------------------------------------
 class HPCTest_ViewArena(QtCore.QObject):
-    #def __init__(self, wgCanvas, wgTable, N_Links, N_CavasRows, N_CanvasCols):
     def __init__(self, qwin, qlayout, n_links):
         super().__init__()
         self.dataViews = []
@@ -831,6 +847,18 @@ class HPCTest_ViewArena(QtCore.QObject):
             self.grid_col = 0
             self.grid_row += 1
 
+    def dview_manager_worker(self):
+        # To manage the data traffic for flow control of YKScan super-big flooding of data
+        INTERVAL = sysconfig.FSM_MAGIC_A[5] / 10.0               # DEFAULT: 2
+        while True:
+            for c in self.dataViews:
+                BPrint(c.myDataSrc.BPrt_HEAD_WATER() + f"flow-control WORKER", level=DBG_LEVEL_TRACE)
+                c.myDataSrc.dsrc_traffic_manager(True)
+                sleep_QAppVitalize(INTERVAL)
+                c.myDataSrc.dsrc_traffic_manager(False)
+                sleep_QAppVitalize(sysconfig.FSM_MAGIC_A[6])     # DEFAULT: 2
+            sleep_QAppVitalize(sysconfig.FSM_MAGIC_A[7])         # DEFAULT: 120
+
     def show_dataView(self):
         canvas_time = datetime.datetime.now()
         for c in self.dataViews:
@@ -840,7 +868,15 @@ class HPCTest_ViewArena(QtCore.QObject):
         gui_time = datetime.datetime.now()
         bprint_loading_time(f"HPC_Test_MainWidget::show_figures() finished, CANVAS={canvas_time - app_start_time}  GUI={gui_time - app_start_time}")
 
+        #------------------------------------------------------------------------------
+        if sysconfig.FLOWCTRL_MODE == 'global':
+            self.worker_thread = QtCore.QThread()
+            self.moveToThread(self.worker_thread)
+            self.worker_thread.run = self.dview_manager_worker           #self.worker_thread.run = lambda self: self.dview_manager_worker()
+            self.worker_thread.start()
+
     def finish_object(self):
+        self.worker_thread.quit()
         for c in self.dataViews:
             QtWidgets.QApplication.processEvents()
             c.finish_object()
