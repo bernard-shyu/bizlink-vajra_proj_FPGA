@@ -1,0 +1,13 @@
+,Samples,Elapsed Time,Status,Line Rate,Bits Count,Errors Count,BER,SNR,Link Status,EYE-Opening,Histogram,PER,PER Statistics
+0,1,66,No link,26.555 Gbps,1.799511e+11,0,1.0,0.0,LINK ('No link' R=26.543 Gbps LS='Not locked' EC='0x0' CC='0xBA87_73D2'),0.0,,0,
+1,2,83,No link,26.555 Gbps,6.871658e+11,0,1.0,0.0,LINK ('No link' R=26.555 Gbps LS='Not locked' EC='0x0' CC='0x2_4131_4456'),0.0,,0,
+2,3,102,No link,26.555 Gbps,1.163169e+12,0,1.0,0.0,LINK ('No link' R=26.555 Gbps LS='Not locked' EC='0x0' CC='0x3_A0EB_E21F'),0.0,,0,
+3,4,120,No link,26.555 Gbps,1.670265e+12,0,1.0,8.385018320924216,LINK ('No link' R=26.555 Gbps LS='Not locked' EC='0x0' CC='0x5_11F8_E43D'),0.0,,0,
+4,5,138,No link,26.555 Gbps,2.114953e+12,0,1.0,8.385018320924216,LINK ('No link' R=26.543 Gbps LS='Not locked' EC='0x0' CC='0x6_731B_7A69'),3.0,PEAK (48=1116 / 51=1236)  VALEY (49),0,
+5,6,156,No link,26.543 Gbps,2.577664e+12,0,1.0,8.385018320924216,LINK ('No link' R=26.543 Gbps LS='Not locked' EC='0x0' CC='0x7_AE30_6166'),3.0,PEAK (48=1116 / 51=1236)  VALEY (49),0,
+6,7,170,No link,26.543 Gbps,2.923985e+12,0,1.0,8.385018320924216,LINK ('No link' R=26.543 Gbps LS='Not locked' EC='0x0' CC='0x8_B18D_EF43'),3.0,PEAK (48=1116 / 51=1236)  VALEY (49),0,
+7,8,182,No link,26.555 Gbps,3.276295e+12,0,1.0,8.385018320924216,LINK ('No link' R=26.555 Gbps LS='Not locked' EC='0x0' CC='0x9_B5DC_DE90'),3.0,PEAK (48=1116 / 51=1236)  VALEY (49),0,
+8,9,196,No link,26.555 Gbps,3.638300e+12,0,1.0,8.385018320924216,LINK ('No link' R=26.555 Gbps LS='Not locked' EC='0x0' CC='0xA_C904_46CF'),3.0,PEAK (48=1116 / 51=1236)  VALEY (49),0,
+9,10,210,No link,26.543 Gbps,4.007648e+12,0,1.0,8.385018320924216,LINK ('No link' R=26.543 Gbps LS='Not locked' EC='0x0' CC='0xB_D6DF_DE17'),3.0,PEAK (48=1116 / 51=1236)  VALEY (49),0,
+10,11,223,No link,26.555 Gbps,4.361977e+12,0,1.0,8.385018320924216,LINK ('No link' R=26.555 Gbps LS='Not locked' EC='0x0' CC='0xC_DF72_F793'),3.0,PEAK (48=1116 / 51=1236)  VALEY (49),0,
+11,12,236,No link,26.555 Gbps,4.708306e+12,0,1.0,8.385018320924216,LINK ('No link' R=26.555 Gbps LS='Not locked' EC='0x0' CC='0xD_E4F8_E2ED'),3.0,PEAK (48=1116 / 51=1236)  VALEY (49),0,
