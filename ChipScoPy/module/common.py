@@ -23,6 +23,7 @@ def BPrint(*args, level=DBG_LEVEL_INFO):
         print(*args)
 
 app_start_time = datetime.datetime.now()
+TODAY = f"{app_start_time.date()}"
 
 last_check = app_start_time
 def bprint_loading_time(msg, level=DBG_LEVEL_NOTICE):
@@ -32,7 +33,7 @@ def bprint_loading_time(msg, level=DBG_LEVEL_NOTICE):
     elapsed2 = (now - last_check).seconds
     last_check = now
     BPrint("\n----------------------------------------------------------------------------------------------------------------------------------------------------------------\n" + \
-       f"ChipScoPy loading time  APP: {app_start_time}   NOW: {now}   ELAPSED:{elapsed1:>4} / {elapsed2:<4}\t THREAD: {threading.current_thread().name}" +  \
+       f"Application loading time  APP: {app_start_time}   NOW: {now}   ELAPSED:{elapsed1:>4} / {elapsed2:<4}\t THREAD: {threading.current_thread().name}" +  \
        "\n----------------------------------------------------------------------------------------------------------------------------------------------------------------\n\n", level=level)
 
 def sleep_QAppVitalize(n):
@@ -57,33 +58,35 @@ def sleep_QAppVitalize(n):
 ENV_COMMON_HELP="""
 export SHOW_FIG_TITLE=True;
 export QWIN_TITLE_STYLE='color: red; font-size: 24px; font-weight: bold; background-color: rgba(255, 255, 128, 120);';
+export QWIN_GUI_FONTNAME='Times';  export QWIN_GUI_FONTSIZE=12;
 """
 
 SHOW_FIG_TITLE    = os.getenv("SHOW_FIG_TITLE", 'False').lower() in ('true', '1', 't')
 QWIN_TITLE_STYLE  = os.getenv("QWIN_TITLE_STYLE", 'color: blue; font-size: 22px; font-weight: bold; background-color: rgba(255, 255, 128, 120);')
+QWIN_GUI_FONTNAME = os.getenv("QWIN_GUI_FONTNAME", 'Arial')     # Arial | Helvetica | Times
+QWIN_GUI_FONTSIZE = int(os.getenv("QWIN_GUI_FONTSIZE", '16'))
 
 #--------------------------------------------------------------------------------------------------------------------------------------
 def get_parameter(argName, defValue, meta, helpTxt, argType = 'string'):
     if argType  == 'string':
         argVal = os.getenv(f'{argName}', f"{defValue}")
-        argVal = config.get('SCOPY_SECTION', argName, fallback=argVal)
+        argVal = config.get('GENERAL_SECTION', argName, fallback=argVal)
         parser.add_argument(f'--{argName}', default=argVal, metavar=meta, help=helpTxt)
     elif argType  == 'int':
         argVal = int(os.getenv(f'{argName}', f"{defValue}"))
-        argVal = config.get('SCOPY_SECTION', argName, fallback=argVal)
+        argVal = config.get('GENERAL_SECTION', argName, fallback=argVal)
         parser.add_argument(f'--{argName}', default=argVal, metavar=meta, help=helpTxt, type=int)
 
 def init_argParser(title, help_txt, config_file):
     global parser, config
-    parser = argparse.ArgumentParser(description=f"{title} by Bernard Shyu", epilog=(help_txt + ENV_COMMON_HELP))
+    parser = argparse.ArgumentParser(description=f"{title} by Bernard Shyu", epilog=(ENV_COMMON_HELP + help_txt) )
     config = configparser.ConfigParser()
-    config.read(config_file)
+    config.read(config_file, encoding="utf-8")
     return parser
 
-def finish_argParser(dbg_SrcName):
+def finish_argParser(dbg_SrcName, DEFAULT_A):
     global sysconfig
 
-    DEFAULT_2="10 4 2 2 300 2 2 120"
     get_parameter( "DBG_LEVEL",    "3",         "level",  'debug level (ERR=0 WARN=1 NOTICE=2 INFO=3 DEBUG=4 TRACE=5, default=3)', argType='int' )
     get_parameter( "DBG_SRCNAME",  "",          "name",   f"DataSource name for trace ({dbg_SrcName}), default: ''" )
     get_parameter( "DBG_LVADJ",    "2",         "level",  'For the traced DataSource, the adjustment of debug level escalation, default: 2', argType='int' )
@@ -91,8 +94,8 @@ def finish_argParser(dbg_SrcName):
     get_parameter( "DBG_SYNCOUNT", "0",         "count",  'For all DataSources, the initial count of TRACE level sync-messages  to be shown, default: 0', argType='int' )
     get_parameter( "RESOLUTION",   "3200x1800", "resol",  'App Window Resolution: 3840x2160 / 3200x1800 / 2600x1400 / 1600x990 / 900x800' )
     get_parameter( "QWIN_OVHEAD",  "80",        "pixel",  'Overhead for Main-Windows, including Windows Title, borders, Tool-bar area.  default: 80', argType='int' )
-    get_parameter( "FSM_MAGIC",    DEFAULT_2,   "magic",  f"Special MAGIC formula for performance tuning. Default:  '{DEFAULT_2}'" )
-    parser.add_argument('--SIMULATE', action='store_true', help='Whether to SIMULATE by random data or by real iBERT data source. default: False')
+    get_parameter( "FSM_MAGIC",    DEFAULT_A,   "magic",  f"Special MAGIC formula for performance tuning. Default:  '{DEFAULT_A}'" )
+    parser.add_argument('--SIMULATE', action='store_true', help='Whether to SIMULATE by random data or by real data source. default: False')
 
     sysconfig = parser.parse_args()
 
@@ -105,12 +108,34 @@ def finish_argParser(dbg_SrcName):
     return sysconfig
 
 def calculate_plotFigure_size(grid_rows, grid_cols, N_links):
-    TB_CELL_HEIGHT  = 30    # height of each table cell
+    # height of each table cell, depends on system FONT size
+    if   QWIN_GUI_FONTSIZE <= 10: TB_CELL_HEIGHT = 30;  QWIN_OVHEAD = sysconfig.QWIN_OVHEAD
+    elif QWIN_GUI_FONTSIZE <= 20: TB_CELL_HEIGHT = 31;  QWIN_OVHEAD = sysconfig.QWIN_OVHEAD + 8
+    elif QWIN_GUI_FONTSIZE <= 30: TB_CELL_HEIGHT = 32;  QWIN_OVHEAD = sysconfig.QWIN_OVHEAD + 16
+    else:                         TB_CELL_HEIGHT = 33;  QWIN_OVHEAD = sysconfig.QWIN_OVHEAD + 24
+    #-------------------------------------------------------------------------------------------
     MATPLOTLIB_DPI  = 100   # density (or dots) per inch, default: 100.0
-    sysconfig.FIG_SIZE_X = (sysconfig.APP_RESOL_X - 10) / grid_cols / MATPLOTLIB_DPI
-    sysconfig.FIG_SIZE_Y = (sysconfig.APP_RESOL_Y - sysconfig.QWIN_OVHEAD - TB_CELL_HEIGHT * (N_links + 1)) / grid_rows / MATPLOTLIB_DPI
+    sysconfig.FIG_PIXEL_WIDTH  = int((sysconfig.APP_RESOL_X - 10) / grid_cols)
+    sysconfig.FIG_PIXEL_HEIGHT = int((sysconfig.APP_RESOL_Y - QWIN_OVHEAD - TB_CELL_HEIGHT * (N_links + 1)) / grid_rows)
+    sysconfig.FIG_SIZE_X = sysconfig.FIG_PIXEL_WIDTH  / MATPLOTLIB_DPI
+    sysconfig.FIG_SIZE_Y = sysconfig.FIG_PIXEL_HEIGHT / MATPLOTLIB_DPI
     assert sysconfig.FIG_SIZE_Y > 0
 
+def get_configuration(secName, argName, defValue = ""):
+    global config
+    return config.get(secName, argName, fallback=defValue)
+
+#======================================================================================================================================
+def is_float_number(s):
+    # print(is_float_number("3.14"))  # Output: True
+    # print(is_float_number("abc"))   # Output: False
+    return re.match(r'^[-+]?\d*\.\d+$', s) is not None
+
+
+def is_scientific_number(s):
+    # print(is_scientific_number("1.23e5"))  # Output: True
+    # print(is_scientific_number("abc"))    # Output: False
+    return re.match(r'^[-+]?\d*\.\d+[eE][-+]?\d+$', s) is not None
 
 #======================================================================================================================================
 class Base_DataSource(QtCore.QObject):
@@ -118,13 +143,9 @@ class Base_DataSource(QtCore.QObject):
 
     def __init__(self, dView):
         super().__init__()
-        self.dsrcName = dView.myName
-        self.dataView = dView
-
-        self.snr  = 0
-        self.ber  = 0
-        self.eye  = 0
-        self.hist = ""
+        if not dView is None:
+            self.dsrcName = dView.myName
+            self.dataView = dView
 
         #------------------------------------------------------------------------------
         self.ASYN_samples_count = 0    # YK-Scan samples
@@ -141,10 +162,11 @@ class Base_DataSource(QtCore.QObject):
         self.watchdog_timer.start()
 
 
-    def BPrt_HEAD_COMMON(self):
-        h1 = "t:{:<4d}".format((datetime.datetime.now() - app_start_time).seconds)
-        h2 = f"T:{threading.current_thread().name:<10}"
-        return f"{self.dsrcName}: #{self.ASYN_samples_count:<3d}/{self.SYNC_samples_count:<3d} S:{self.fsm_state:<2} {h1} {h2}\t  "
+    def BPrt_HEAD_COMMON(self, HEAD0 = True, HEAD1 = True, HEAD2 = True, ):
+        h0 = f"#{self.ASYN_samples_count:<3d}/{self.SYNC_samples_count:<3d} S:{self.fsm_state:<2} "  if HEAD0 else ""
+        h1 = "t:{:<4d} ".format((datetime.datetime.now() - app_start_time).seconds)                  if HEAD1 else ""
+        h2 = f"T:{threading.current_thread().name:<10} "                                             if HEAD2 else ""
+        return "{:<18} {}{}{}  ".format(f"{self.dsrcName}:", h0, h1, h2)
 
     # helper method to trace data for initial counts of traffic
     def BPrt_traceData(self, msgTxt, trType="ASYNC"):
@@ -206,8 +228,8 @@ class Base_DataView(QtCore.QObject):
     def __init__(self, name, parent):
         super().__init__()
         self.myArena = parent
-        self.updateTable = parent.updateTable
         self.myName  = name
+        self.updateTable = parent.updateTable
 
         #------------------------------------------------------------------------------
         if self.myName == sysconfig.DBG_SRCNAME:
@@ -219,4 +241,9 @@ class Base_DataView(QtCore.QObject):
             self.mydbg_DEBUG = DBG_LEVEL_DEBUG
             self.mydbg_TRACE = DBG_LEVEL_TRACE
 
+    def setup_worker_thread(self):
+        self.worker_thread = QtCore.QThread()
+        self.myDataSrc.moveToThread(self.worker_thread)                           # move worker to the worker thread
+        self.s_start_FSM_Worker.connect(self.myDataSrc.fsmFunc_worker_thread)
+        self.worker_thread.start()                                                # start the thread
 

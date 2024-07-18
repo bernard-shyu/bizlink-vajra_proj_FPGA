@@ -47,6 +47,7 @@ export MAX_SLICES=20;                 export YKSCAN_SLICER_SIZE=200;           e
 export CSV_PATH="YK_CSV_Files";       SLICER_PATH="YK_SlicerData_Files";       export CONFIG_FILE="config.ini";
 export FLOWCTRL_MODE="object";
 export PDI_FILE="PDI_Files/VPK120_iBERT_2xQDD_53G.pdi";
+### Example Simulation: python IBERT_HPC_Cable_testing.py --SIMULATE --RESOLUTION 1920x990 --TESTID Bernard_TestID --CONN_TYPE SLoop_x4 ###
 """
 APP_TITLE = "ChipScoPy APP for BizLink iBERT HPC-cables testing"
 
@@ -73,6 +74,7 @@ def prepare_system_config(dbg_SrcName):
     #    PDI_FILE = design_files.programming_file
     DEFAULT_1="Bernard_Simulation/VPK120_iBERT_2xQDD_53G.pdi"
     DEFAULT_2="HIST1,PER2,LNKST"
+    DEFAULT_3="4 4 2 2 300 2 2 180"
 
     get_parameter( "PDI_FILE",     DEFAULT_1,   "filename", 'FPGA image file (*.pdi) Ex. PDI_Files/VPK120_iBERT_2xQDD_53G.pdi' )
     get_parameter( "SERVER_IP",    "localhost", "ip",       'FPGA-board IP address. Default: localhost' )
@@ -86,7 +88,7 @@ def prepare_system_config(dbg_SrcName):
     get_parameter( "COMMENTS",     DEFAULT_2,   "format",   f"Comments Format spec: (HIST1 | HIST2 | PER1 | PER2 | PER3 | PER4 | LNKST). Default: '{DEFAULT_2}'" )
 
     #----------------------------------------------------------------------------------------------------------------------------------
-    sysconfig = finish_argParser(dbg_SrcName)
+    sysconfig = finish_argParser(dbg_SrcName, DEFAULT_3)
 
     sysconfig.CS_URL        = f"TCP:{sysconfig.SERVER_IP}:{sysconfig.FPGA_CS_PORT}"
     sysconfig.HW_URL        = f"TCP:{sysconfig.SERVER_IP}:{sysconfig.FPGA_HW_PORT}"
@@ -110,7 +112,8 @@ def prepare_system_config(dbg_SrcName):
     BPrint("----------------------------------------------------------------------------------------------------------------------------------------------------------------", level=DBG_LEVEL_NOTICE)
     return sysconfig
 
-sysconfig = prepare_system_config("YK-Quad_204_CH0")
+if not "sysconfig" in globals():
+    sysconfig = prepare_system_config("YK-Quad_204_CH0")
 
 #======================================================================================================================================
 # Data source classes: iBERT-Link data, YK-Scan data, radom number simulattion
@@ -135,6 +138,11 @@ class Base_YKScanLink_DataSrc(Base_DataSource):
         super().__init__(dView)
         self.link = link
         link.myLink = self
+
+        self.snr  = 0
+        self.ber  = 0
+        self.eye  = 0
+        self.hist = ""
 
         #------------------------------------------------------------------------------
         # Initialize circular buffer
@@ -197,7 +205,7 @@ class Base_YKScanLink_DataSrc(Base_DataSource):
         if self.ASYN_samples_count > 0:
             self.fill_up_slicer_buf()
             self.sync_refresh_plotYK()
-        self.dataView.myCanvas.draw()
+        self.dataView.update_chartView("redraw", self)
 
     def sync_refresh_plotBER(self):
         self.sync_update_LinkData()
@@ -205,8 +213,8 @@ class Base_YKScanLink_DataSrc(Base_DataSource):
         if "LNKST" in sysconfig.COMMENTS:
             self.comments += "  " + self.LinkStatus
 
-        self.dataView.myFigure.update_link_ber(self)
-        self.dataView.update_table()
+        self.dataView.update_chartView("link_ber", self)
+        self.dataView.update_tableView()
         self.BPrt_traceData( self.bprint_link(), trType="SYNC" )
 
     def sync_refresh_plotYK(self):
@@ -222,7 +230,7 @@ class Base_YKScanLink_DataSrc(Base_DataSource):
         if  self.YKScan_slicer_viewPointer >= MAX_SLICES:
             self.YKScan_slicer_viewPointer = 0;
 
-        self.dataView.myFigure.update_yk_scan(self)
+        self.dataView.update_chartView("yk_scan", self)
 
         #-----------------------------------------------------------------------------------------------
         # refresh the matplotlib figures of YK-Scan histogram.
@@ -238,7 +246,7 @@ class Base_YKScanLink_DataSrc(Base_DataSource):
         new_counts, self.hist_bins = np.histogram(list(self.YKScan_slicer_histBuffer.flatten()), bins=HIST_BINS, range=(0,100))
         self.hist_counts += new_counts
 
-        self.dataView.myFigure.update_yk_hist(self)
+        self.dataView.update_chartView("yk_hist", self)
         self.find_peaks_and_valleys()
 
         if sysconfig.PER_NICE > 0:
@@ -252,7 +260,7 @@ class Base_YKScanLink_DataSrc(Base_DataSource):
     def fsmFunc_refresh_plots(self):
         self.sync_refresh_plotBER()
         self.sync_refresh_plotYK()
-        self.dataView.myCanvas.draw()       # myCanvas.draw_idle(): not good, easier with lagging, non-responsive
+        self.dataView.update_chartView("redraw", self)
 
     def find_NRZ_peaks_and_valleys(self, hist, bins):
         #  --------- 00 ------------------------------------------------------------------- 100 --------
@@ -303,7 +311,7 @@ class Base_YKScanLink_DataSrc(Base_DataSource):
         # find the 2nd peak in [0:50] to the LEFT or RIGHT side
         if (i + HILL_MIN_WIDTH) >= half_BINS:
             # DEBUG >> (0:50): SHAPE=(100,) P=10373.0 I=48      Exception: zero-size array to reduction operation maximum which has no identity
-            BPrint(self.BPrt_HEAD_WATER() + f"Peaks too NARROW on (0:50):   P={p} I={int(i*human_bin):02}", level = self.dataView.mydbg_INFO)
+            BPrint(self.BPrt_HEAD_WATER() + f"Peaks too NARROW on (0:50):   P={p} I={int(i*human_bin):02}", level = self.dataView.mydbg_DEBUG)
             Peak0 = p;  i_P0 = i - 1
             Peak1 = p;  i_P1 = i
         else:
@@ -325,7 +333,7 @@ class Base_YKScanLink_DataSrc(Base_DataSource):
 
         # find the 2nd peak in [50:100] to the LEFT or RIGHT side
         if (i - HILL_MIN_WIDTH) <= half_BINS:
-            BPrint(self.BPrt_HEAD_WATER() + f"Peaks too NARROW on (50:100): P={p} I={int(i*human_bin)}", level = self.dataView.mydbg_INFO)
+            BPrint(self.BPrt_HEAD_WATER() + f"Peaks too NARROW on (50:100): P={p} I={int(i*human_bin)}", level = self.dataView.mydbg_DEBUG)
             Peak2 = p;  i_P2 = i
             Peak3 = p;  i_P3 = i + 1
         else:
@@ -567,6 +575,16 @@ class IBert_YKScanLink_DataSrc(Base_YKScanLink_DataSrc):
 
     def dsrc_traffic_manager(self, action):
         self.__YKEngine_manage__(action, 99)        # launch YK.stop() or start()
+        if action:
+            if not self.YK_is_started:
+                self.YK_is_started = not self.YK_is_started
+                BPrint(self.BPrt_HEAD_WATER() + f"dsrc_traffic_manager Error Recover: ACTION={action}, force STOP\n",  level=self.dataView.mydbg_INFO)
+                self.__YKEngine_manage__(False, 101)    # Force to YK.stop()
+        else:
+            if self.YK_is_started:
+                self.YK_is_started = not self.YK_is_started
+                BPrint(self.BPrt_HEAD_WATER() + f"dsrc_traffic_manager Error Recover: ACTION={action}, force START\n", level=self.dataView.mydbg_INFO)
+                self.__YKEngine_manage__(True, 102)    # Force to YK.start()
 
     def __YKEngine_manage__(self, to_start_YK, _where_):
         try:
@@ -581,17 +599,17 @@ class IBert_YKScanLink_DataSrc(Base_YKScanLink_DataSrc):
                 self.YK_is_started = False
         except Exception as e:
             print(f"YKScan-{self.dsrcName} ({_where_:2} {to_start_YK} {self.YK_is_started})  Exception: {str(e)}")
-            self.YK_is_started = not self.YK_is_started
 
     def asynCB_update_YKScanData(self, obj):
         # ## 6 - Define YK Scan Update Method
         #------------------------------------------------------------------------------
         # assert YKSCAN_SLICER_SIZE == len(obj.scan_data[-1].slicer)
         if YKSCAN_SLICER_SIZE != len(obj.scan_data[-1].slicer):
-            BPrint(self.BPrt_HEAD_COMMON() + f"ERROR slicer: {len(obj.scan_data[-1].slicer)}", level=DBG_LEVEL_ERR)
+            BPrint(self.BPrt_HEAD_WATER() + f"ERROR slicer: {len(obj.scan_data[-1].slicer)}", level=DBG_LEVEL_ERR)
             if len(obj.scan_data[-1].slicer) != 0:
                 obj.scan_data.pop(0)
             return
+            self.__YKEngine_manage__(False, 110)    # Force to YK.stop()
 
         #------------------------------------------------------------------------------
         self.ASYN_samples_count +=1      #  ==> len(obj.scan_data) - 1
@@ -742,35 +760,57 @@ class MyYK_Figure(matplotlib.figure.Figure):
 
 
 #----------------------------------------------------------------------------------------------------------------------------
-class MyLink_TableEntry:
-    def __init__(self, canvas, name):
-        pass
-
-
-#----------------------------------------------------------------------------------------------------------------------------
 class YKScan_DataView(Base_DataView):
     s_start_FSM_Worker = QtCore.pyqtSignal()
 
     def __init__(self, link, parent):
         super().__init__(f"YK-{link.gt_name}_CH{link.channel}", parent)
-        self.link    = link
-        self.nID     = link.nID
+        self.link = link
+        self.nID  = link.nID
 
         #------------------------------------------------------------------------------
         if sysconfig.SIMULATE:   self.myDataSrc = Fake_YKScanLink_DataSrc(self, link)
         else:                    self.myDataSrc = IBert_YKScanLink_DataSrc(self, link)
-        self.worker_thread = QtCore.QThread()
-        self.myDataSrc.moveToThread(self.worker_thread)                           # move worker to the worker thread
-        self.s_start_FSM_Worker.connect(self.myDataSrc.fsmFunc_worker_thread)
-        self.worker_thread.start()                                                # start the thread
+        self.setup_worker_thread()
 
         #------------------------------------------------------------------------------
         self.myFigure = plt.figure(FigureClass=MyYK_Figure, num=self.myName, layout='constrained', edgecolor='black', linewidth=3, figsize=[sysconfig.FIG_SIZE_X, sysconfig.FIG_SIZE_Y])   # facecolor='yellow', dpi=100
         self.myFigure.init_YK_axes(self)
         self.myCanvas = FigureCanvas(self.myFigure)
-        #self.mytable  = MyLink_TableEntry()
+        self.hidden   = False
+        self.create_viewChart()
+        self.create_viewTable()        #self.mytable  = MyLink_TableEntry()
 
-    def update_table(self):
+    def create_viewChart(self):
+        if self.hidden:
+            self.myCanvas = None
+        else:
+            self.myFigure = plt.figure(FigureClass=MyYK_Figure, num=self.myName, layout='constrained', edgecolor='black', linewidth=3, figsize=[sysconfig.FIG_SIZE_X, sysconfig.FIG_SIZE_Y])   # facecolor='yellow', dpi=100
+            self.myCanvas = FigureCanvas(self.myFigure)
+            self.myFigure.init_YK_axes(self)
+            self.myCanvas.draw()
+
+    def update_chartView(self, graphType, dsrc):
+        if not self.hidden:
+            match graphType:
+                case "link_ber": self.myFigure.update_link_ber(dsrc)
+                case "yk_scan":  self.myFigure.update_yk_scan(dsrc)
+                case "yk_hist":  self.myFigure.update_yk_hist(dsrc)
+                case "redraw":   self.myCanvas.draw()
+
+    def create_viewTable(self):
+        # issue: "SyntaxWarning: invalid escape sequence"  (https://stackoverflow.com/questions/52335970/how-to-fix-syntaxwarning-invalid-escape-sequence-in-python)
+        # RootCause: "\ is the escape character in Python string literals."
+        #             it will cause a DeprecationWarning (< 3.12) or a SyntaxWarning (3.12+) otherwise.
+        # To check:  python -Wd -c '"\A"'
+        #            <string>:1: DeprecationWarning: invalid escape sequence '\A'
+        # Resolution: should always use \\ or raw strings r"xxx"
+        #             r"""raw strings""" for docstrings
+        self.updateTable( self.nID, 2, "{:^20}".format(re.findall(r".*(Quad_.*\.[RT]X).*", str(self.link.tx))[0]) )
+        self.updateTable( self.nID, 3, "{:^20}".format(re.findall(r".*(Quad_.*\.[RT]X).*", str(self.link.rx))[0]) )
+        self.updateTable( self.nID, 4, "{:^16}".format(str(self.link.status)) )
+
+    def update_tableView(self):
         self.updateTable( self.nID, 0, f"{self.myDataSrc.ASYN_samples_count:^5}" )             # YK-Scan samples count, by asynchronous call-back
         self.updateTable( self.nID, 1, f"{self.myDataSrc.SYNC_samples_count:^5}" )             # Link    samples count, by synchronous polling
         self.updateTable( self.nID, 4, f"{self.myDataSrc.status:^16}", QtGui.QColor(255,128,128) if self.myDataSrc.status == "No link" else QtGui.QColor(128,255,128) )
@@ -784,7 +824,7 @@ class YKScan_DataView(Base_DataView):
         #BPrint("QTable_TYP: bits={}, err={}, ber={}, snr={}".format(type(self.myDataSrc.bit_count), type(self.myDataSrc.error_count), type(self.myDataSrc.ber), type(self.myDataSrc.snr)), level=DBG_LEVEL_WIP)
         #BPrint("QTable_VAL: bits={}, err={}, ber={}, snr={}".format(     self.myDataSrc.bit_count,       self.myDataSrc.error_count,       self.myDataSrc.ber,       self.myDataSrc.snr),  level=DBG_LEVEL_WIP)
 
-    def start_object(self):
+    def start_dataSource(self):
         self.s_start_FSM_Worker.emit()
 
     def finish_object(self):
@@ -831,17 +871,6 @@ class HPCTest_ViewArena(QtCore.QObject):
         self.dataViews.append(dview)
         dview.myCanvas.draw()
 
-        # issue: "SyntaxWarning: invalid escape sequence"  (https://stackoverflow.com/questions/52335970/how-to-fix-syntaxwarning-invalid-escape-sequence-in-python)
-        # RootCause: "\ is the escape character in Python string literals."
-        #             it will cause a DeprecationWarning (< 3.12) or a SyntaxWarning (3.12+) otherwise.
-        # To check:  python -Wd -c '"\A"'
-        #            <string>:1: DeprecationWarning: invalid escape sequence '\A'
-        # Resolution: should always use \\ or raw strings r"xxx"
-        #             r"""raw strings""" for docstrings
-        self.updateTable( link.nID, 2, "{:^20}".format(re.findall(r".*(Quad_.*\.[RT]X).*", str(link.tx))[0]) )
-        self.updateTable( link.nID, 3, "{:^20}".format(re.findall(r".*(Quad_.*\.[RT]X).*", str(link.rx))[0]) )
-        self.updateTable( link.nID, 4, "{:^16}".format(str(link.status)) )
-
         self.grid_col += 1
         if  self.grid_col >= global_grid_cols:
             self.grid_col = 0
@@ -849,24 +878,24 @@ class HPCTest_ViewArena(QtCore.QObject):
 
     def dview_manager_worker(self):
         # To manage the data traffic for flow control of YKScan super-big flooding of data
-        INTERVAL = sysconfig.FSM_MAGIC_A[5] / 10.0               # DEFAULT: 2
+        THROTTLE = sysconfig.FSM_MAGIC_A[5] / 10.0               # DEFAULT: 2    (0.2 sec)
         while True:
             for c in self.dataViews:
                 BPrint(c.myDataSrc.BPrt_HEAD_WATER() + f"flow-control WORKER", level=DBG_LEVEL_TRACE)
                 c.myDataSrc.dsrc_traffic_manager(True)
-                sleep_QAppVitalize(INTERVAL)
+                sleep_QAppVitalize(THROTTLE)
                 c.myDataSrc.dsrc_traffic_manager(False)
-                sleep_QAppVitalize(sysconfig.FSM_MAGIC_A[6])     # DEFAULT: 2
-            sleep_QAppVitalize(sysconfig.FSM_MAGIC_A[7])         # DEFAULT: 120
+                sleep_QAppVitalize(sysconfig.FSM_MAGIC_A[6])     # DEFAULT: 2    (2 sec)
+            sleep_QAppVitalize(sysconfig.FSM_MAGIC_A[7])         # DEFAULT: 120  (2 min)
 
     def show_dataView(self):
         canvas_time = datetime.datetime.now()
         for c in self.dataViews:
             QtWidgets.QApplication.processEvents()
-            c.start_object()
+            c.start_dataSource()
         self.myWidget.show()
         gui_time = datetime.datetime.now()
-        bprint_loading_time(f"HPC_Test_MainWidget::show_figures() finished, CANVAS={canvas_time - app_start_time}  GUI={gui_time - app_start_time}")
+        bprint_loading_time(f"Application_MainWidget::show_figures() finished, CANVAS={canvas_time - app_start_time}  GUI={gui_time - app_start_time}")
 
         #------------------------------------------------------------------------------
         if sysconfig.FLOWCTRL_MODE == 'global':
@@ -883,7 +912,7 @@ class HPCTest_ViewArena(QtCore.QObject):
 
 
 #======================================================================================================================================
-class HPC_Test_MainWidget(QtWidgets.QMainWindow):
+class Application_MainWidget(QtWidgets.QMainWindow):
     def __init__(self, n_links):
         super().__init__()
         self.setWindowTitle(f"BizLink HPC Cable Test  /  FPGA HW:{sysconfig.SERVER_IP}:{sysconfig.FPGA_HW_PORT}  CS:{sysconfig.FPGA_CS_PORT}")
@@ -988,7 +1017,7 @@ if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
 
     myLinks = init_iBERT_engine(sysconfig, global_N_links)
-    MainForm = HPC_Test_MainWidget(len(myLinks))
+    MainForm = Application_MainWidget(len(myLinks))
 
     # ## 7 - Create YK Scan
     # This step initializes the YK scan, setting its update method to the method we defined in the last step. 

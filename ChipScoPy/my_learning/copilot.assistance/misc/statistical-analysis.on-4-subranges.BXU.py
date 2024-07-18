@@ -42,18 +42,25 @@ def data_source_from_ramdom():
 
 
 #---------------------------------------------------------------------------------------------------
-if len(sys.argv) > 1: fname = sys.argv[1]
-else:                 fname = 'Sample_YK-Slicer_Files.Cable-2m.txt'
+boundary_1 = 30
+boundary_2 = 70
+if len(sys.argv) > 1:
+    fname = sys.argv[1]
+    if len(sys.argv) > 3:
+        boundary_1 = int(sys.argv[2])
+        boundary_2 = int(sys.argv[3])
+else:
+    fname = 'Sample_YK-Slicer_Files.Cable-2m.txt'
 
 if os.path.isfile(fname): your_array = np.loadtxt(fname)
 else:                     your_array = data_source_from_ramdom()
 
 #---------------------------------------------------------------------------------------------------
 # Split the array into subarrays based on value ranges
-subarray_1 = your_array[(your_array >= 0) & (your_array < 30)]
-subarray_2 = your_array[(your_array >= 30) & (your_array < 50)]
-subarray_3 = your_array[(your_array >= 50) & (your_array < 70)]
-subarray_4 = your_array[(your_array >= 70) & (your_array <= 100)]
+subarray_1 = your_array[(your_array >= 0)          & (your_array < boundary_1)]
+subarray_2 = your_array[(your_array >= boundary_1) & (your_array < 50)]
+subarray_3 = your_array[(your_array >= 50)         & (your_array < boundary_2)]
+subarray_4 = your_array[(your_array >= boundary_2) & (your_array <= 100)]
 
 # Calculate descriptive statistics for each subarray
 def analyze_subarray(subarray):
@@ -70,10 +77,10 @@ stats_3 = analyze_subarray(subarray_3)
 stats_4 = analyze_subarray(subarray_4)
 
 # Print the results
-print("Statistics for (0, 30):", stats_1)
-print("Statistics for (30, 50):", stats_2)
-print("Statistics for (50, 70):", stats_3)
-print("Statistics for (70, 100):", stats_4)
+print(f"Statistics for (0, {boundary_1}):", stats_1)
+print(f"Statistics for ({boundary_1}, 50):", stats_2)
+print(f"Statistics for (50, {boundary_2}):", stats_3)
+print(f"Statistics for ({boundary_2}, 100):", stats_4)
 
 
 """
