@@ -32,9 +32,11 @@ def bprint_loading_time(msg, level=DBG_LEVEL_NOTICE):
     elapsed1 = (now - app_start_time).seconds
     elapsed2 = (now - last_check).seconds
     last_check = now
+    str_start  = datetime.datetime.strftime(app_start_time ,"%Y-%m-%d %H:%M:%S")
+    str_now    = datetime.datetime.strftime(now ,"%Y-%m-%d %H:%M:%S")
     BPrint("\n----------------------------------------------------------------------------------------------------------------------------------------------------------------\n" + \
-       f"Application loading time  APP: {app_start_time}   NOW: {now}   ELAPSED:{elapsed1:>4} / {elapsed2:<4}\t THREAD: {threading.current_thread().name}" +  \
-       "\n----------------------------------------------------------------------------------------------------------------------------------------------------------------\n\n", level=level)
+       f"Application time: {str_start}  NOW: {str_now}   ELAPSED:{elapsed1:>4}/{elapsed2:<4}   THREAD: {threading.current_thread().name}    LOADING: << {msg} >>" +  \
+       "\n----------------------------------------------------------------------------------------------------------------------------------------------------------------\n", level=level)
 
 def sleep_QAppVitalize(n):
     for _ in range(int(n)):
@@ -55,26 +57,41 @@ def sleep_QAppVitalize(n):
 # https://docs.python.org/3/library/argparse.html,  https://docs.python.org/3/howto/argparse.html
 # https://stackoverflow.com/questions/20063/whats-the-best-way-to-parse-command-line-arguments
 #--------------------------------------------------------------------------------------------------------------------------------------
-ENV_COMMON_HELP="""
-export SHOW_FIG_TITLE=True;
-export QWIN_TITLE_STYLE='color: red; font-size: 24px; font-weight: bold; background-color: rgba(255, 255, 128, 120);';
-export QWIN_GUI_FONTNAME='Times';  export QWIN_GUI_FONTSIZE=12;
-"""
+if not "ENV_COMMON_HELP" in globals():
+    ENV_COMMON_HELP="""
+    export SHOW_FIG_TITLE=True;
+    export QWIN_TITLE_STYLE='color: red; font-size: 24px; font-weight: bold; background-color: rgba(255, 255, 128, 120);';
+    export QWIN_GUI_FONTNAME='Times';  export QWIN_GUI_FONTSIZE=12;
+    """
 
-SHOW_FIG_TITLE    = os.getenv("SHOW_FIG_TITLE", 'False').lower() in ('true', '1', 't')
-QWIN_TITLE_STYLE  = os.getenv("QWIN_TITLE_STYLE", 'color: blue; font-size: 22px; font-weight: bold; background-color: rgba(255, 255, 128, 120);')
-QWIN_GUI_FONTNAME = os.getenv("QWIN_GUI_FONTNAME", 'Arial')     # Arial | Helvetica | Times
-QWIN_GUI_FONTSIZE = int(os.getenv("QWIN_GUI_FONTSIZE", '16'))
+    # https://doc.qt.io/qt-6/qml-color.html
+    SHOW_FIG_TITLE    = os.getenv("SHOW_FIG_TITLE", 'False').lower() in ('true', '1', 't')
+    QWIN_TITLE_STYLE  = os.getenv("QWIN_TITLE_STYLE", 'color: blue; font-weight: bold; background-color: rgba(255, 255, 128, 120);')
+    QWIN_GUI_FONTNAME = os.getenv("QWIN_GUI_FONTNAME", 'Arial')     # Arial | Helvetica | Times
+    QWIN_FONTSIZE_DEFINE = os.getenv("QWIN_FONTSIZE_DEFINE", '16,18,12')
+
+#--------------------------------------------------------------------------------------------------------------------------------------
+class SysConfig_Singleton(argparse.Namespace):
+    _instance_ = None
+
+    def __new__(cls):
+        if cls._instance_ is None:
+            cls._instance_ = super(SysConfig_Singleton, cls).__new__(cls)
+        return cls._instance_
+
+    def initialize(self, sys_conf):
+        for key, value in vars(sys_conf).items():
+            setattr(self, key, value)
 
 #--------------------------------------------------------------------------------------------------------------------------------------
 def get_parameter(argName, defValue, meta, helpTxt, argType = 'string'):
     if argType  == 'string':
-        argVal = os.getenv(f'{argName}', f"{defValue}")
-        argVal = config.get('GENERAL_SECTION', argName, fallback=argVal)
+        argVal = config.get('GENERAL_SECTION', argName, fallback=defValue)
+        argVal = os.getenv(f'{argName}', f"{argVal}")
         parser.add_argument(f'--{argName}', default=argVal, metavar=meta, help=helpTxt)
     elif argType  == 'int':
-        argVal = int(os.getenv(f'{argName}', f"{defValue}"))
-        argVal = config.get('GENERAL_SECTION', argName, fallback=argVal)
+        argVal = config.get('GENERAL_SECTION', argName, fallback=defValue)
+        argVal = int(os.getenv(f'{argName}', f"{argVal}"))
         parser.add_argument(f'--{argName}', default=argVal, metavar=meta, help=helpTxt, type=int)
 
 def init_argParser(title, help_txt, config_file):
@@ -97,7 +114,11 @@ def finish_argParser(dbg_SrcName, DEFAULT_A):
     get_parameter( "FSM_MAGIC",    DEFAULT_A,   "magic",  f"Special MAGIC formula for performance tuning. Default:  '{DEFAULT_A}'" )
     parser.add_argument('--SIMULATE', action='store_true', help='Whether to SIMULATE by random data or by real data source. default: False')
 
-    sysconfig = parser.parse_args()
+    sys_conf  = parser.parse_args()
+    #sys_conf  = parser.parse_args("--FAV_CURR 3,0 --LIVE_MODE 2 --CHART_CONF 5,0,2,2,1".split())
+    sysconfig = SysConfig_Singleton()
+    sysconfig.initialize(sys_conf)
+    sysconfig.config_ini = config
 
     sysconfig.FSM_MAGIC_A = []
     for m in sysconfig.FSM_MAGIC.split():
@@ -105,10 +126,14 @@ def finish_argParser(dbg_SrcName, DEFAULT_A):
 
     sysconfig.APP_RESOL_X = int(re.findall("([0-9]+)x[0-9]+", sysconfig.RESOLUTION)[0])
     sysconfig.APP_RESOL_Y = int(re.findall("[0-9]+x([0-9]+)", sysconfig.RESOLUTION)[0])
+
+    sysconfig.qwin_fontsize = QWIN_FONTSIZE_DEFINE.split(',')
     return sysconfig
 
+#--------------------------------------------------------------------------------------------------------------------------------------
 def calculate_plotFigure_size(grid_rows, grid_cols, N_links):
     # height of each table cell, depends on system FONT size
+    QWIN_GUI_FONTSIZE = int(sysconfig.qwin_fontsize[0])
     if   QWIN_GUI_FONTSIZE <= 10: TB_CELL_HEIGHT = 30;  QWIN_OVHEAD = sysconfig.QWIN_OVHEAD
     elif QWIN_GUI_FONTSIZE <= 20: TB_CELL_HEIGHT = 31;  QWIN_OVHEAD = sysconfig.QWIN_OVHEAD + 8
     elif QWIN_GUI_FONTSIZE <= 30: TB_CELL_HEIGHT = 32;  QWIN_OVHEAD = sysconfig.QWIN_OVHEAD + 16
@@ -122,8 +147,7 @@ def calculate_plotFigure_size(grid_rows, grid_cols, N_links):
     assert sysconfig.FIG_SIZE_Y > 0
 
 def get_configuration(secName, argName, defValue = ""):
-    global config
-    return config.get(secName, argName, fallback=defValue)
+    return sysconfig.config_ini.get(secName, argName, fallback=defValue)
 
 #======================================================================================================================================
 def is_float_number(s):
@@ -140,8 +164,9 @@ def is_scientific_number(s):
 #======================================================================================================================================
 class Base_DataSource(QtCore.QObject):
     WATCHDOG_INTERVAL = 10 * 1000
+    s_start_FSM_Worker = QtCore.pyqtSignal()
 
-    def __init__(self, dView):
+    def __init__(self, dView, fsm_state=0, fsm_running=True, wdog_delay=0):
         super().__init__()
         if not dView is None:
             self.dsrcName = dView.myName
@@ -152,15 +177,17 @@ class Base_DataSource(QtCore.QObject):
         self.SYNC_samples_count = 0    # Channel-Link samples
 
         #------------------------------------------------------------------------------
-        self.fsm_state   = 0
-        self.fsm_running = True
+        self.fsm_state   = fsm_state
+        self.fsm_running = fsm_running 
 
         # Setup a timer to trigger the redraw by calling update_plot.
         self.watchdog_timer = QtCore.QTimer()
         self.watchdog_timer.setInterval(self.WATCHDOG_INTERVAL)
         self.watchdog_timer.timeout.connect(self.fsmFunc_watchdog)
-        self.watchdog_timer.start()
-
+        if wdog_delay > 0:
+            QtCore.QTimer.singleShot(wdog_delay, lambda:self.watchdog_timer.start())
+        else:
+            self.watchdog_timer.start()
 
     def BPrt_HEAD_COMMON(self, HEAD0 = True, HEAD1 = True, HEAD2 = True, ):
         h0 = f"#{self.ASYN_samples_count:<3d}/{self.SYNC_samples_count:<3d} S:{self.fsm_state:<2} "  if HEAD0 else ""
@@ -181,6 +208,12 @@ class Base_DataSource(QtCore.QObject):
         self.now         = datetime.datetime.now()
         self.elapsed     = (self.now - app_start_time).seconds
 
+    def setup_worker_thread(self):
+        self.worker_thread = QtCore.QThread()
+        self.moveToThread(self.worker_thread)                           # move worker to the worker thread
+        self.s_start_FSM_Worker.connect(self.fsmFunc_worker_thread)
+        self.worker_thread.start()                                                # start the thread
+
     @QtCore.pyqtSlot()
     def fsmFunc_worker_thread(self):
         INTERVAL = sysconfig.FSM_MAGIC_A[0]/10.0     # DEFAULT: 10
@@ -195,7 +228,7 @@ class Base_DataSource(QtCore.QObject):
 
                 case 10: # main state, main-loop for polling, sporadically fetching or stopping
                     lvl = self.dataView.mydbg_TRACE
-                    self.fsmFunc_refresh_plots()
+                    self.fsmFunc_running()
 
                 #case 2: # inital stop
                 #case 3: # sporadically fetching
@@ -210,7 +243,7 @@ class Base_DataSource(QtCore.QObject):
     #def stop_data(self):              pass    # Abstract method: to stop data-source engine, like YK.stop()
     #def async_update_data(self):      pass    # Abstract method: to update data from ource engine, asynchronously by call-back
     def fsmFunc_watchdog(self):        pass    # Abstract method: long  timer polling function
-    def fsmFunc_refresh_plots(self):   pass    # Abstract method: FSM function, polling periodically
+    def fsmFunc_running(self):         pass    # Abstract method: FSM function, polling periodically
     def fsmFunc_reset(self):           pass    # Abstract method: FSM function, resetting initially
     #----------------------------------------------------------------------------------
 
@@ -240,10 +273,7 @@ class Base_DataView(QtCore.QObject):
             self.mydbg_INFO  = DBG_LEVEL_INFO
             self.mydbg_DEBUG = DBG_LEVEL_DEBUG
             self.mydbg_TRACE = DBG_LEVEL_TRACE
-
-    def setup_worker_thread(self):
-        self.worker_thread = QtCore.QThread()
-        self.myDataSrc.moveToThread(self.worker_thread)                           # move worker to the worker thread
-        self.s_start_FSM_Worker.connect(self.myDataSrc.fsmFunc_worker_thread)
-        self.worker_thread.start()                                                # start the thread
-
+        self.mydbg_WIP       = DBG_LEVEL_WIP    
+        self.mydbg_ERR       = DBG_LEVEL_ERR    
+        self.mydbg_WARN      = DBG_LEVEL_WARN   
+        self.mydbg_NOTICE    = DBG_LEVEL_NOTICE 

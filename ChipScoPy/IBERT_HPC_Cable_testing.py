@@ -257,7 +257,7 @@ class Base_YKScanLink_DataSrc(Base_DataSource):
 
         self.BPrt_traceData( self.BPrt_HEAD_WATER() + f"refresh_plotYK:: VIEW({v}, {self.YKScan_slicer_viewPointer})  HIST({n}, {h}, {self.hist_counts.shape})  BER: {self.ber:.2e}  SNR: {self.snr:6.2f}  Elapsed:{self.elapsed}" )
 
-    def fsmFunc_refresh_plots(self):
+    def fsmFunc_running(self):
         self.sync_refresh_plotBER()
         self.sync_refresh_plotYK()
         self.dataView.update_chartView("redraw", self)
@@ -771,7 +771,7 @@ class YKScan_DataView(Base_DataView):
         #------------------------------------------------------------------------------
         if sysconfig.SIMULATE:   self.myDataSrc = Fake_YKScanLink_DataSrc(self, link)
         else:                    self.myDataSrc = IBert_YKScanLink_DataSrc(self, link)
-        self.setup_worker_thread()
+        self.myDataSrc.setup_worker_thread()
 
         #------------------------------------------------------------------------------
         self.myFigure = plt.figure(FigureClass=MyYK_Figure, num=self.myName, layout='constrained', edgecolor='black', linewidth=3, figsize=[sysconfig.FIG_SIZE_X, sysconfig.FIG_SIZE_Y])   # facecolor='yellow', dpi=100
@@ -825,7 +825,7 @@ class YKScan_DataView(Base_DataView):
         #BPrint("QTable_VAL: bits={}, err={}, ber={}, snr={}".format(     self.myDataSrc.bit_count,       self.myDataSrc.error_count,       self.myDataSrc.ber,       self.myDataSrc.snr),  level=DBG_LEVEL_WIP)
 
     def start_dataSource(self):
-        self.s_start_FSM_Worker.emit()
+        self.myDataSrc.s_start_FSM_Worker.emit()
 
     def finish_object(self):
         self.myDataSrc.finish_object()

@@ -346,7 +346,7 @@ class Base_DataSource(QtCore.QObject):
 
                 case 10: # main state, main-loop for polling, sporadically fetching or stopping
                     lvl = self.dataView.mydbg_TRACE
-                    self.fsmFunc_refresh_plots()
+                    self.fsmFunc_running()
 
                 #case 2: # inital stop
                 #case 3: # sporadically fetching
@@ -361,7 +361,7 @@ class Base_DataSource(QtCore.QObject):
     #def stop_data(self):              pass    # Abstract method: to stop data-source engine, like YK.stop()
     #def async_update_data(self):      pass    # Abstract method: to update data from ource engine, asynchronously by call-back
     def fsmFunc_watchdog(self):        pass    # Abstract method: long  timer polling function
-    def fsmFunc_refresh_plots(self):   pass    # Abstract method: FSM function, polling periodically
+    def fsmFunc_running(self):         pass    # Abstract method: FSM function, polling periodically
     def fsmFunc_reset(self):           pass    # Abstract method: FSM function, resetting initially
     #----------------------------------------------------------------------------------
 
@@ -440,7 +440,7 @@ class Base_YKScanLink_DataSrc(Base_DataSource):
         self.dataView.myFigure.update_yk_scan(self)
         self.BPrt_traceData( self.BPrt_HEAD_WATER() + f"refresh_plotYK.{v}.{self.YKScan_slicer_viewPointer}: BER: {self.ber:.2e}  SNR: {self.snr:6.2f}  Elapsed:{self.elapsed}" )
 
-    def fsmFunc_refresh_plots(self):
+    def fsmFunc_running(self):
         self.sync_refresh_plotBER()
         self.sync_refresh_plotYK()
         self.dataView.myCanvas.draw()       # myCanvas.draw_idle(): not good, easier with lagging, non-responsive
