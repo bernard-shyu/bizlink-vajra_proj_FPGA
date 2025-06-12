@@ -8,41 +8,43 @@
 - In-System IBERT IP (installed through Vivado)
 - [ChipScoPy Python for Xilinx hardware debug solutions](https://xilinx.github.io/chipscopy/2025.1/index.html)
 
-### GUI of this project, vs Xilinx Vivado
+### GUI for SNR/BER measurement of HPC cables - Xilinx Vivado
 
-- Xilinx way to check BERT performance - Vivado
+- Xilinx way to check BER/SNR performance - Vivado
   - 16 entries table to show BER of QSFP-DD cable channels simultaneously
   - 1 figure to show SNR, slicer eye diagram, histogram, one-by-one by manually selection
 
 ![Figure 1](images/Vivado-iBERT-GUI.png "Vivado iBERT GUI")
 
-- BizLink python application
-  - 16 entries table to show BER of QSFP-DD cable channels simultaneously
-  - 16 figures to show SNR, slicer eye diagram, histogram,  simultaneously
+### GUI for SNR/BER measurement of HPC cables - This python application
+
+- Python application for Multichannel High Speed Cable testing, based on Xilinx CHipScoPy to access in-system iBERT realtime measured data (BER, datarate, etc.)
+  - Currently supports QSFP-DD. But can be applied to OSFP-DD, and others as well.
+  - This application leverage Xilinx VPK120, which supports 112G per channel.
+
+- GUI comparison vs Vivado
+  - 16 entries table to show BER of QSFP-DD cable channels simultaneously (similar to Vivado, with more columns)
+  - 16 figures to show SNR, slicer eye diagram, histogram, simultaneously (significantly better than Vivado)
 
 ![Figure 2](ChipScoPy/misc/HPC_Cable_BERT_YK_Scan.screenshot-2024-0607.B2-53G.png "iBERT ChipScoPy Cable Testing GUI")
 
-### ChipScoPy Multichannel High Speed Cable testing
+## Test setup
 
-- Python application for Multichannel High Speed Cable testing, based on Xilinx CHipScoPy to access in-system iBERT realtime measured data (BER, datarate, etc.)
-- Currently supports QSFP-DD. But can be applied to OSFP-DD, and others as well.
-- This application leverage Xilinx VPK120, which supports 112G per channel.
+- For below testing videos, they applied 'self loop connection'
 
-## Execution results
-
-### Test setup
-
-# cross connection for 2 cables on 2 VPK120 board, jointly
+### cross connection for 2 cables on 2 VPK120 board, jointly
 
 ![Figure 1](images/connect-diagram.cross.png "cross connection diagram")
 ![Figure 2](images/cable_A1_B1.cross-connect.VPK120_sn111_sn112.jpg "cross connection picture")
 
-# self loop connection for 2 cables on 2 VPK120 board, respectively
+### self loop connection for 2 cables on 2 VPK120 board, respectively
 
 ![Figure 3](images/connect-diagram.selfloop.png "self-loop connection diagram")
 ![Figure 4](images/cable_A1_B1.selfloop-connect.VPK120_sn111_sn112.jpg "self-loop connection picture")
 
-### Measurement result report
+## Execution results
+
+### Test Report of Measurement result
 
 ![Figure 5](images/IBERT_HPC_CABLE_TESTING-1.png "Test Report 1")
 ![Figure 5](images/IBERT_HPC_CABLE_TESTING-2.png "Test Report 2")
